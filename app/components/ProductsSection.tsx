@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { CarouselSection } from "./CarouselSection";
+import { CategoryGridSection } from "./CategoryGridSection";
 
 const IMAGES = {
   tote: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&q=85&fit=crop",
@@ -99,8 +100,10 @@ export function ProductsSection() {
           </div>
         </div>
       </div>
-      {/* Product grid — same width as banner (inset mx-10 md:mx-20) */}
-      <div className="mx-10 mt-20 px-10 md:mx-20 md:px-20">
+      {/* Category grid (white-framed images, yellow labels) */}
+      <CategoryGridSection />
+      {/* Product grid — same width as category cards above */}
+      <div className="mx-10 mt-20 md:mx-20">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           {PRODUCTS.map((p) => (
             <ProductCard key={p.name} name={p.name} price={p.price} category={p.category} image={p.image} slug={p.slug} />

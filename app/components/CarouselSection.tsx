@@ -3,8 +3,23 @@
 import { useRef } from "react";
 import Image from "next/image";
 
-const CARD_IMAGE =
-  "https://behno.com/cdn/shop/files/DANNY_FLATIRON_BAG_NAPPA_BLACK_GRAY_BACKGROUND_FRONT_RESIZE.jpg?v=1760099680";
+const ITEM_IMAGES = [
+  "/Item pictures/2nd_Green_Bag-removebg-preview.png",
+  "/Item pictures/basket_bag-removebg-preview.png",
+  "/Item pictures/Black_bag-removebg-preview.png",
+  "/Item pictures/Blue_bag-removebg-preview.png",
+  "/Item pictures/orange_bag-removebg-preview.png",
+  "/Item pictures/snake_skin_bag-removebg-preview.png",
+];
+
+const SECONDARY_IMAGES = [
+  "/Secondary Item pictures/Gemini_Generated_Image_4f96m74f96m74f96.png",
+  "/Secondary Item pictures/Gemini_Generated_Image_7cdr8q7cdr8q7cdr.png",
+  "/Secondary Item pictures/Gemini_Generated_Image_j289ipj289ipj289.png",
+  "/Secondary Item pictures/Gemini_Generated_Image_n4ci04n4ci04n4ci.png",
+  "/Secondary Item pictures/Gemini_Generated_Image_s6lerks6lerks6le.png",
+  "/Secondary Item pictures/Gemini_Generated_Image_v1an9gv1an9gv1an.png",
+];
 
 const CAROUSEL_DATA = [
   {
@@ -109,19 +124,30 @@ export function CarouselSection() {
         ref={scrollRef}
         className="hide-scrollbar flex gap-4 overflow-x-auto px-0 pb-2 snap-x snap-mandatory"
       >
-        {CAROUSEL_DATA.map((item) => (
+        {CAROUSEL_DATA.map((item, i) => (
           <div
             key={item.title}
             className="group relative min-w-[calc((100%-3rem)/4)] shrink-0 cursor-pointer overflow-hidden snap-start"
           >
             <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-white transition-all duration-700">
-              <Image
-                src={CARD_IMAGE}
-                alt={item.title}
-                width={480}
-                height={480}
-                className="h-auto w-[94%] object-contain transition-all duration-1000 group-hover:-translate-y-14 group-hover:scale-90 group-hover:opacity-10 group-hover:blur-[1px] [filter:contrast(1.35)_brightness(1.12)]"
-              />
+              <div className="relative h-full w-full flex items-center justify-center">
+                <div className="relative w-[70%] aspect-square">
+                  <Image
+                    src={ITEM_IMAGES[i % ITEM_IMAGES.length]}
+                    alt={item.title}
+                    fill
+                    className="object-contain transition-all duration-500 ease-out group-hover:opacity-0"
+                    sizes="(max-width: 768px) 40vw, 20vw"
+                  />
+                  <Image
+                    src={SECONDARY_IMAGES[i % SECONDARY_IMAGES.length]}
+                    alt={`${item.title} — alternate view`}
+                    fill
+                    className="object-contain opacity-0 scale-95 transition-all duration-500 ease-out group-hover:opacity-100 group-hover:scale-100"
+                    sizes="(max-width: 768px) 40vw, 20vw"
+                  />
+                </div>
+              </div>
               <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center translate-y-8 opacity-0 transition-all duration-700 ease-out group-hover:translate-y-0 group-hover:opacity-100">
                 <span className="mb-1 text-[7px] uppercase tracking-[0.4em] text-neutral-400">
                   {item.category}
