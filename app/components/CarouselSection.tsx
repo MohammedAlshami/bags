@@ -12,15 +12,6 @@ const ITEM_IMAGES = [
   "/Item pictures/snake_skin_bag-removebg-preview.png",
 ];
 
-const SECONDARY_IMAGES = [
-  "/Secondary Item pictures/Gemini_Generated_Image_4f96m74f96m74f96.png",
-  "/Secondary Item pictures/Gemini_Generated_Image_7cdr8q7cdr8q7cdr.png",
-  "/Secondary Item pictures/Gemini_Generated_Image_j289ipj289ipj289.png",
-  "/Secondary Item pictures/Gemini_Generated_Image_n4ci04n4ci04n4ci.png",
-  "/Secondary Item pictures/Gemini_Generated_Image_s6lerks6lerks6le.png",
-  "/Secondary Item pictures/Gemini_Generated_Image_v1an9gv1an9gv1an.png",
-];
-
 const CAROUSEL_DATA = [
   {
     title: "Winter Edit",
@@ -60,15 +51,18 @@ const CAROUSEL_DATA = [
   },
 ];
 
+const serif = { fontFamily: "var(--font-cormorant), serif" };
+
 export function CarouselSection() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   return (
     <section className="relative mx-10 overflow-hidden bg-white py-4 md:mx-20" aria-label="Collections carousel">
-      <div className="mb-1 px-0">
-        <h3 className="text-[10px] font-semibold uppercase tracking-widest text-neutral-900">
-          Fall Colors.
-        </h3>
+      <div className="mb-6 px-0">
+        <p className="text-[10px] uppercase tracking-[0.35em] text-neutral-500">Collections</p>
+        <h2 className="mt-2 text-3xl font-light text-neutral-900 md:text-4xl" style={serif}>
+          Fall colors
+        </h2>
       </div>
 
       <div className="pointer-events-none absolute inset-y-0 left-0 z-20 flex items-center">
@@ -127,38 +121,19 @@ export function CarouselSection() {
         {CAROUSEL_DATA.map((item, i) => (
           <div
             key={item.title}
-            className="group relative min-w-[calc((100%-3rem)/4)] shrink-0 cursor-pointer overflow-hidden snap-start"
+            className="group relative min-w-[calc((100%-3rem)/4)] shrink-0 cursor-pointer overflow-hidden rounded-sm snap-start"
           >
-            <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-white transition-all duration-700">
+            <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-neutral-50 transition-all duration-300 ease-out group-hover:shadow-md">
               <div className="relative h-full w-full flex items-center justify-center">
-                <div className="relative w-[70%] aspect-square">
+                <div className="relative w-[70%] aspect-square transition-transform duration-300 ease-out group-hover:scale-[1.04]">
                   <Image
                     src={ITEM_IMAGES[i % ITEM_IMAGES.length]}
                     alt={item.title}
                     fill
-                    className="object-contain transition-all duration-500 ease-out group-hover:opacity-0"
-                    sizes="(max-width: 768px) 40vw, 20vw"
-                  />
-                  <Image
-                    src={SECONDARY_IMAGES[i % SECONDARY_IMAGES.length]}
-                    alt={`${item.title} — alternate view`}
-                    fill
-                    className="object-contain opacity-0 scale-95 transition-all duration-500 ease-out group-hover:opacity-100 group-hover:scale-100"
+                    className="object-contain"
                     sizes="(max-width: 768px) 40vw, 20vw"
                   />
                 </div>
-              </div>
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center translate-y-8 opacity-0 transition-all duration-700 ease-out group-hover:translate-y-0 group-hover:opacity-100">
-                <span className="mb-1 text-[7px] uppercase tracking-[0.4em] text-neutral-400">
-                  {item.category}
-                </span>
-                <h4 className="font-serif text-3xl italic leading-none tracking-tighter text-neutral-900 mb-2">
-                  {item.title}
-                </h4>
-                <p className="max-w-[190px] font-light leading-tight text-neutral-500 text-[9px]">
-                  {item.desc}
-                </p>
-                <div className="mt-4 h-[1px] w-6 bg-neutral-900 scale-x-0 transition-transform duration-700 group-hover:scale-x-100" />
               </div>
             </div>
           </div>

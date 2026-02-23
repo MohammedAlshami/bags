@@ -5,35 +5,10 @@ import Image from "next/image";
 import { CarouselSection } from "./CarouselSection";
 import { CategoryGridSection } from "./CategoryGridSection";
 
-const IMAGES = {
-  tote: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&q=85&fit=crop",
-  crossbody: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&q=85&fit=crop",
-  weekender: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&q=85&fit=crop",
-  satchel: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&q=85&fit=crop",
-  bucket: "https://images.unsplash.com/photo-1591561954657-c8b331b96b52?w=800&q=85&fit=crop",
-  shoulder: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=85&fit=crop",
-};
+export type ProductItem = { name: string; price: string; category: string; image: string; slug: string };
 
 // Collection banner background image (in public folder)
 const COLLECTION_BANNER_IMAGE = "/Pixalated.png";
-
-const PRODUCTS = [
-  // Row 1
-  { name: "The Signature Tote", price: "$1,280", category: "Handbags", image: IMAGES.tote, slug: "signature-tote" },
-  { name: "Leather Crossbody", price: "$980", category: "Handbags", image: IMAGES.crossbody, slug: "leather-crossbody" },
-  { name: "Travel Weekender", price: "$1,450", category: "Travel", image: IMAGES.weekender, slug: "travel-weekender" },
-  { name: "Evening Clutch", price: "$720", category: "Evening", image: IMAGES.tote, slug: "evening-clutch" },
-  // Row 2
-  { name: "Classic Satchel", price: "$1,120", category: "Handbags", image: IMAGES.satchel, slug: "classic-satchel" },
-  { name: "Leather Bucket Bag", price: "$890", category: "Handbags", image: IMAGES.bucket, slug: "leather-bucket-bag" },
-  { name: "Structured Shoulder", price: "$1,050", category: "Handbags", image: IMAGES.shoulder, slug: "structured-shoulder" },
-  { name: "Mini Tote", price: "$650", category: "Handbags", image: IMAGES.tote, slug: "mini-tote" },
-  // Row 3
-  { name: "City Crossbody", price: "$780", category: "Handbags", image: IMAGES.crossbody, slug: "city-crossbody" },
-  { name: "Overnight Bag", price: "$1,380", category: "Travel", image: IMAGES.weekender, slug: "overnight-bag" },
-  { name: "Evening Mini", price: "$580", category: "Evening", image: IMAGES.bucket, slug: "evening-mini" },
-  { name: "Woven Tote", price: "$920", category: "Handbags", image: IMAGES.shoulder, slug: "woven-tote" },
-];
 
 const serif = { fontFamily: "var(--font-cormorant), serif" };
 const bgWhite = { backgroundColor: "#ffffff" };
@@ -75,7 +50,7 @@ function ProductCard({
   );
 }
 
-export function ProductsSection() {
+export function ProductsSection({ products }: { products: ProductItem[] }) {
   return (
     <section className="pt-6 pb-24 md:pt-8 md:pb-32" style={bgWhite} aria-label="Products">
       {/* Carousel first */}
@@ -91,6 +66,11 @@ export function ProductsSection() {
             sizes="100vw"
             priority
           />
+          <div
+            className="absolute inset-2 border-4 pointer-events-none"
+            style={{ borderColor: "#facc15" }}
+            aria-hidden
+          />
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
             <div className="text-center text-white">
               <h2 className="text-4xl font-light md:text-6xl" style={serif}>
@@ -104,9 +84,15 @@ export function ProductsSection() {
       <CategoryGridSection />
       {/* Product grid — same width as category cards above */}
       <div className="mx-10 mt-20 md:mx-20">
+        <div className="mb-8">
+          <p className="text-[10px] uppercase tracking-[0.35em] text-gray-500">Handbags &amp; accessories</p>
+          <h2 className="mt-2 text-3xl font-light text-neutral-900 md:text-4xl" style={serif}>
+            Shop the collection
+          </h2>
+        </div>
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-          {PRODUCTS.map((p) => (
-            <ProductCard key={p.name} name={p.name} price={p.price} category={p.category} image={p.image} slug={p.slug} />
+          {products.map((p) => (
+            <ProductCard key={p.slug} name={p.name} price={p.price} category={p.category} image={p.image} slug={p.slug} />
           ))}
         </div>
       </div>

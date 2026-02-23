@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useCart } from "@/app/context/CartContext";
+
+const FALL_COLORS_IMAGES = [
+  "/Item pictures/2nd_Green_Bag-removebg-preview.png",
+  "/Item pictures/basket_bag-removebg-preview.png",
+  "/Item pictures/Black_bag-removebg-preview.png",
+];
 
 const MenuIcon = ({ className }: { className?: string }) => (
   <svg
@@ -25,6 +34,15 @@ const MenuIcon = ({ className }: { className?: string }) => (
 export default function Navbar() {
   const brandStyle = { fontFamily: "var(--font-cormorant), serif" };
   const [activeMenu, setActiveMenu] = useState<"menu" | "collections" | null>(null);
+  const [user, setUser] = useState<{ username: string; role: string } | null>(null);
+  const pathname = usePathname();
+  const { count } = useCart();
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => setUser(data.user ?? null));
+  }, [pathname]);
 
   return (
     <header
@@ -32,36 +50,47 @@ export default function Navbar() {
       style={{ backgroundColor: "#ffffff" }}
       onMouseLeave={() => setActiveMenu(null)}
     >
-      <nav className="relative z-50 flex w-full flex-col items-center gap-4 px-14 md:px-24">
-        <Link href="/" className="text-3xl font-medium tracking-wide text-black" style={brandStyle}>
+      <nav className="relative z-50 flex w-full flex-col items-center gap-4 px-4 sm:px-8 md:px-14 lg:px-24">
+        <Link href="/" className="text-2xl sm:text-3xl font-medium tracking-wide text-black" style={brandStyle}>
           Carol Bouwer
         </Link>
-        <div className="flex w-full items-center justify-between border-t border-black/[0.06] pt-4">
+        <div className="flex w-full items-center justify-between border-t border-black/[0.06] pt-4 gap-4">
           <button
             onMouseEnter={() => setActiveMenu("menu")}
             onClick={() => setActiveMenu(activeMenu === "menu" ? null : "menu")}
-            className="flex items-center gap-2 text-gray-600 transition-colors hover:text-black"
+            className="flex items-center gap-2 text-gray-600 transition-colors hover:text-black shrink-0"
           >
             <MenuIcon className="h-5 w-5" />
             <span className="text-sm font-medium">Menu</span>
           </button>
-          <div className="flex items-center gap-8 text-sm font-medium text-gray-600">
-            <Link href="#shop" className="transition-colors hover:text-black hover:underline">
+          <div className="flex items-center gap-4 sm:gap-6 md:gap-8 text-sm font-medium text-gray-600 shrink-0">
+            <Link href="/shop" className="transition-colors hover:text-black hover:underline whitespace-nowrap">
               Shop
             </Link>
-            <button
+            <Link
+              href="/shop"
               onMouseEnter={() => setActiveMenu("collections")}
-              className="transition-colors hover:text-black hover:underline focus:outline-none"
+              className="transition-colors hover:text-black hover:underline whitespace-nowrap"
             >
               Collections
-            </button>
-            <Link href="#about" className="transition-colors hover:text-black hover:underline">
+            </Link>
+            <Link href="#about" className="transition-colors hover:text-black hover:underline whitespace-nowrap hidden sm:inline">
               About
             </Link>
           </div>
-          <div className="flex items-center gap-4 text-sm font-medium text-gray-600">
-            <span>Search</span>
-            <span>Cart (0)</span>
+          <div className="flex items-center gap-4 sm:gap-6 shrink-0">
+            {user ? (
+              <Link href="/profile" className="text-sm font-medium text-gray-600 hover:text-black transition-colors whitespace-nowrap">
+                Profile
+              </Link>
+            ) : (
+              <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-black transition-colors whitespace-nowrap">
+                Login
+              </Link>
+            )}
+            <Link href="/cart" className="text-sm font-medium text-gray-600 hover:text-black transition-colors whitespace-nowrap">
+              Cart ({count})
+            </Link>
           </div>
         </div>
       </nav>
@@ -78,10 +107,10 @@ export default function Navbar() {
         onMouseEnter={() => setActiveMenu(activeMenu)}
         onMouseLeave={() => setActiveMenu(null)}
       >
-        <div className="flex w-full gap-16 px-10 py-14 md:px-20">
-          <div className="w-1/4">
+        <div className="flex w-full flex-col md:flex-row gap-8 md:gap-16 px-6 py-8 sm:px-10 sm:py-14 md:px-20">
+          <div className="w-full md:w-1/4 shrink-0">
             <p
-              className="mb-6 text-2xl italic text-gray-400"
+              className="mb-6 text-xl sm:text-2xl italic text-gray-400"
               style={{ fontFamily: "var(--font-cormorant), serif" }}
             >
               {activeMenu === "menu" ? "Explore" : "Collections"}
@@ -99,14 +128,20 @@ export default function Navbar() {
               ))}
             </ul>
           </div>
-          <div className="flex flex-1 gap-8">
-            {[1, 2, 3].map((i) => (
-              <Link key={i} href="#" className="group flex-1">
-                <div className="mb-4 aspect-[3/4] overflow-hidden bg-black/[0.04]">
-                  <div className="h-full w-full bg-black/[0.06] transition-transform duration-700 group-hover:scale-[1.02]" />
+          <div className="flex gap-4 sm:gap-6 md:gap-8 justify-start md:justify-start flex-wrap max-w-2xl">
+            {FALL_COLORS_IMAGES.map((src, i) => (
+              <Link key={i} href="/shop" className="group w-[120px] sm:w-[140px] md:w-[160px] shrink-0">
+                <div className="relative mb-2 aspect-[3/4] overflow-hidden bg-neutral-100">
+                  <Image
+                    src={src}
+                    alt={`Fall colors ${i + 1}`}
+                    fill
+                    className="object-contain object-center transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+                    sizes="(max-width: 640px) 120px, (max-width: 768px) 140px, 160px"
+                  />
                 </div>
-                <p className="text-sm font-medium text-black/80">Featured {i}</p>
-                <p className="text-xs text-gray-500 tracking-wide">Shop Now</p>
+                <p className="text-xs sm:text-sm font-medium text-black/80">Fall colors</p>
+                <p className="text-[10px] sm:text-xs text-gray-500 tracking-wide">Shop Now</p>
               </Link>
             ))}
           </div>

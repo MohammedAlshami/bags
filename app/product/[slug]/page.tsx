@@ -1,40 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useCart } from "@/app/context/CartContext";
+
+type ProductItem = { name: string; price: string; category: string; image: string; slug: string };
 
 const serif = { fontFamily: "var(--font-cormorant), serif" };
 const bgWhite = { backgroundColor: "#ffffff" };
 
-// Mock data
-const PRODUCT = {
-  name: "The Signature Tote",
-  price: "$1,280",
-  description:
-    "Handcrafted from full-grain Italian leather, the Signature Tote is designed for the modern journey. Featuring a spacious interior, brass hardware, and a timeless silhouette that ages beautifully.",
-  details: [
-    "Full-grain Italian leather",
-    "Solid brass hardware",
-    "Interior zip pocket",
-    "15\" laptop sleeve",
-    "Handmade in Cape Town",
-  ],
-  images: [
-    "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=1200&q=85&fit=crop",
+const DEFAULT_DESCRIPTION =
+  "Handcrafted from full-grain Italian leather, designed for the modern journey. Featuring a spacious interior, brass hardware, and a timeless silhouette that ages beautifully.";
+const DEFAULT_DETAILS = [
+  "Full-grain Italian leather",
+  "Solid brass hardware",
+  "Interior zip pocket",
+  "15\" laptop sleeve",
+  "Handmade in Cape Town",
+];
+
+function ProductMainSection({
+  product,
+  description,
+  details,
+}: {
+  product: ProductItem;
+  description: string;
+  details: string[];
+}) {
+  const { addToCart } = useCart();
+
+  const images = [
+    product.image,
     "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=1200&q=85&fit=crop",
     "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1200&q=85&fit=crop",
     "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1200&q=85&fit=crop",
-  ],
-};
+  ];
 
-function ProductMainSection() {
   return (
     <div className="mx-auto max-w-[1920px] px-6 py-12 md:px-12 pt-24 md:pt-32">
       <div className="grid gap-12 lg:grid-cols-12">
         {/* Left: Gallery Grid */}
         <div className="lg:col-span-8">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {PRODUCT.images.map((img, i) => (
+            {images.map((img, i) => (
               <div key={i} className={`relative bg-gray-100 ${i === 0 ? "aspect-[4/5] md:col-span-2" : "aspect-[3/4]"}`}>
                 <Image src={img} alt="" fill className="object-cover" />
               </div>
@@ -44,15 +55,15 @@ function ProductMainSection() {
 
         {/* Right: Sticky Details (Classic Split style) */}
         <div className="lg:col-span-4 lg:sticky lg:top-32 lg:h-fit lg:pl-12">
-          <span className="text-xs uppercase tracking-widest text-gray-500">Handbags</span>
+          <span className="text-xs uppercase tracking-widest text-gray-500">{product.category}</span>
           <h1 className="mt-4 text-4xl font-light text-black md:text-5xl" style={serif}>
-            {PRODUCT.name}
+            {product.name}
           </h1>
-          <p className="mt-4 text-xl text-black/70">{PRODUCT.price}</p>
-          <p className="mt-8 text-sm leading-relaxed text-black/70">{PRODUCT.description}</p>
+          <p className="mt-4 text-xl text-black/70">{product.price}</p>
+          <p className="mt-8 text-sm leading-relaxed text-black/70">{description}</p>
           
           <div className="mt-10 space-y-4 border-t border-black/10 pt-8">
-            {PRODUCT.details.map((detail) => (
+            {details.map((detail) => (
               <div key={detail} className="flex items-center gap-3 text-sm text-black/60">
                 <span className="h-1 w-1 rounded-full bg-black/40" />
                 {detail}
@@ -60,7 +71,11 @@ function ProductMainSection() {
             ))}
           </div>
 
-          <button className="mt-12 w-full bg-black py-4 text-xs font-bold uppercase tracking-widest text-white hover:bg-black/90 transition-colors">
+          <button
+            type="button"
+            onClick={() => addToCart({ slug: product.slug, name: product.name, price: product.price, image: product.image })}
+            className="mt-12 w-full bg-black py-4 text-xs font-bold uppercase tracking-widest text-white hover:bg-black/90 transition-colors"
+          >
             Add to Cart
           </button>
 
@@ -139,12 +154,48 @@ function StorySection() {
 }
 
 export default function ProductPage() {
+  const params = useParams();
+  const slug = typeof params.slug === "string" ? params.slug : "";
+  const [product, setProduct] = useState<ProductItem | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
+    fetch(`/api/products/${encodeURIComponent(slug)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then(setProduct)
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen pt-32 pb-24 flex items-center justify-center" style={bgWhite}>
+        <p className="text-neutral-500" style={serif}>Loading…</p>
+      </main>
+    );
+  }
+
+  if (!product) {
+    return (
+      <main className="min-h-screen pt-32 pb-24" style={bgWhite}>
+        <div className="mx-10 md:mx-20 text-center">
+          <h1 className="text-2xl font-light text-black" style={serif}>Product not found</h1>
+          <Link href="/shop" className="mt-4 inline-block text-sm underline text-neutral-600 hover:text-black">Back to shop</Link>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen pt-20" style={bgWhite}>
-      {/* Main Product Section (Fixed Layout) */}
-      <ProductMainSection />
-
-      {/* Story Section (Long Scroll) */}
+      <ProductMainSection
+        product={product}
+        description={DEFAULT_DESCRIPTION}
+        details={DEFAULT_DETAILS}
+      />
       <StorySection />
     </main>
   );

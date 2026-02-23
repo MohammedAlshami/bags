@@ -13,6 +13,7 @@ const FOOTER_LINKS = {
     { label: "Gift Guide", href: "#" },
   ],
   help: [
+    { label: "Track order", href: "/track" },
     { label: "Contact", href: "#" },
     { label: "Shipping", href: "#" },
     { label: "Returns", href: "#" },
