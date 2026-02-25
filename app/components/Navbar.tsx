@@ -68,7 +68,7 @@ export default function Navbar() {
               Shop
             </Link>
             <Link
-              href="/shop"
+              href="/collections"
               onMouseEnter={() => setActiveMenu("collections")}
               className="transition-colors hover:text-black hover:underline whitespace-nowrap"
             >
@@ -130,7 +130,7 @@ export default function Navbar() {
           </div>
           <div className="flex gap-4 sm:gap-6 md:gap-8 justify-start md:justify-start flex-wrap max-w-2xl">
             {FALL_COLORS_IMAGES.map((src, i) => (
-              <Link key={i} href="/shop" className="group w-[120px] sm:w-[140px] md:w-[160px] shrink-0">
+              <Link key={i} href="/collections" className="group w-[120px] sm:w-[140px] md:w-[160px] shrink-0">
                 <div className="relative mb-2 aspect-[3/4] overflow-hidden bg-neutral-100">
                   <Image
                     src={src}

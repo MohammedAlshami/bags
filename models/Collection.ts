@@ -6,6 +6,9 @@ const CollectionSchema = new mongoose.Schema(
     slug: { type: String, required: true, unique: true },
     image: { type: String, default: "" },
     description: { type: String, default: "" },
+    story: { type: String, default: "" },
+    material: { type: String, default: "" },
+    quality: { type: String, default: "" },
   },
   { timestamps: true, collection: "collections" }
 );

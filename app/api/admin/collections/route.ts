@@ -27,10 +27,13 @@ export async function POST(request: Request) {
     const slug = String(body.slug ?? "").trim() || name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
     const image = String(body.image ?? "").trim();
     const description = String(body.description ?? "").trim();
+    const story = String(body.story ?? "").trim();
+    const material = String(body.material ?? "").trim();
+    const quality = String(body.quality ?? "").trim();
     if (!name) return NextResponse.json({ error: "Name required" }, { status: 400 });
     const existing = await Collection.findOne({ slug });
     if (existing) return NextResponse.json({ error: "Slug already taken" }, { status: 400 });
-    const doc = await Collection.create({ name, slug, image, description });
+    const doc = await Collection.create({ name, slug, image, description, story, material, quality });
     return NextResponse.json(doc.toObject());
   } catch (err) {
     const e = err as { status?: number };

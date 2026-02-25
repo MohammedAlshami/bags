@@ -5,7 +5,7 @@ import Link from "next/link";
 
 const serif = { fontFamily: "var(--font-cormorant), serif" };
 
-type Collection = { _id: string; name: string; slug: string; image?: string; description?: string };
+type Collection = { _id: string; name: string; slug: string; image?: string; description?: string; story?: string; material?: string; quality?: string };
 
 export default function AdminCollectionsPage() {
   const [list, setList] = useState<Collection[]>([]);
@@ -17,6 +17,9 @@ export default function AdminCollectionsPage() {
   const [slug, setSlug] = useState("");
   const [image, setImage] = useState("");
   const [description, setDescription] = useState("");
+  const [story, setStory] = useState("");
+  const [material, setMaterial] = useState("");
+  const [quality, setQuality] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [productCounts, setProductCounts] = useState<Record<string, number>>({});
@@ -45,6 +48,9 @@ export default function AdminCollectionsPage() {
     setSlug("");
     setImage("");
     setDescription("");
+    setStory("");
+    setMaterial("");
+    setQuality("");
     setShowForm(true);
   };
 
@@ -54,6 +60,9 @@ export default function AdminCollectionsPage() {
     setSlug(c.slug);
     setImage(c.image ?? "");
     setDescription(c.description ?? "");
+    setStory(c.story ?? "");
+    setMaterial(c.material ?? "");
+    setQuality(c.quality ?? "");
     setShowForm(true);
   };
 
@@ -65,7 +74,7 @@ export default function AdminCollectionsPage() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, slug, image, description }),
+        body: JSON.stringify({ name, slug, image, description, story, material, quality }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -170,12 +179,42 @@ export default function AdminCollectionsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-widest text-neutral-500 mb-1">Description</label>
+              <label className="block text-xs uppercase tracking-widest text-neutral-500 mb-1">Description (short / hero)</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full border border-neutral-200 px-3 py-2 text-sm"
-                rows={3}
+                rows={2}
+              />
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-neutral-500 mb-1">Story section</label>
+              <textarea
+                value={story}
+                onChange={(e) => setStory(e.target.value)}
+                className="w-full border border-neutral-200 px-3 py-2 text-sm"
+                rows={4}
+                placeholder="The story behind this collection…"
+              />
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-neutral-500 mb-1">Material section</label>
+              <textarea
+                value={material}
+                onChange={(e) => setMaterial(e.target.value)}
+                className="w-full border border-neutral-200 px-3 py-2 text-sm"
+                rows={4}
+                placeholder="Leather, hardware, sourcing…"
+              />
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-widest text-neutral-500 mb-1">Quality section</label>
+              <textarea
+                value={quality}
+                onChange={(e) => setQuality(e.target.value)}
+                className="w-full border border-neutral-200 px-3 py-2 text-sm"
+                rows={4}
+                placeholder="Craft, durability, care…"
               />
             </div>
             <div className="flex gap-2">

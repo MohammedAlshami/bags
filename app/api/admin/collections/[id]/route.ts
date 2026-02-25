@@ -45,6 +45,9 @@ export async function PUT(
     if (body.slug != null) updates.slug = String(body.slug).trim();
     if (body.image != null) updates.image = String(body.image).trim();
     if (body.description != null) updates.description = String(body.description).trim();
+    if (body.story != null) updates.story = String(body.story).trim();
+    if (body.material != null) updates.material = String(body.material).trim();
+    if (body.quality != null) updates.quality = String(body.quality).trim();
     const doc = await Collection.findByIdAndUpdate(id, { $set: updates }, { new: true }).lean();
     if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(doc);
