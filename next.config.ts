@@ -30,6 +30,24 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "sleek-theme-demo.myshopify.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "palo-alto-theme-main.myshopify.com",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "release-serenity.myshopify.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 };

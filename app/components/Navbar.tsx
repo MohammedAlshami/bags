@@ -12,31 +12,18 @@ const FALL_COLORS_IMAGES = [
   "/Item pictures/Black_bag-removebg-preview.png",
 ];
 
-const MenuIcon = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <line x1="4" x2="20" y1="12" y2="12" />
-    <line x1="4" x2="20" y1="6" y2="6" />
-    <line x1="4" x2="20" y1="18" y2="18" />
-  </svg>
-);
+const SCROLL_THRESHOLD = 24;
 
 export default function Navbar() {
   const brandStyle = { fontFamily: "var(--font-cormorant), serif" };
   const [activeMenu, setActiveMenu] = useState<"menu" | "collections" | null>(null);
   const [user, setUser] = useState<{ username: string; role: string } | null>(null);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const { count } = useCart();
+
+  const isHome = pathname === "/";
+  const isTransparent = isHome && !scrolled;
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -44,54 +31,55 @@ export default function Navbar() {
       .then((data) => setUser(data.user ?? null));
   }, [pathname]);
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(typeof window !== "undefined" ? window.scrollY > SCROLL_THRESHOLD : false);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
     <header
-      className="fixed left-0 right-0 top-0 z-50 pt-3 pb-6 transition-all duration-300"
-      style={{ backgroundColor: "#ffffff" }}
+      className="fixed left-0 right-0 top-0 z-50 transition-all duration-300"
+      style={{ backgroundColor: isTransparent ? "transparent" : "#ffffff" }}
       onMouseLeave={() => setActiveMenu(null)}
     >
-      <nav className="relative z-50 flex w-full flex-col items-center gap-4 px-4 sm:px-8 md:px-14 lg:px-24">
-        <Link href="/" className="text-2xl sm:text-3xl font-medium tracking-wide text-black" style={brandStyle}>
+      <nav className="relative z-50 flex w-full flex-row items-center justify-between px-4 sm:px-8 md:px-14 lg:px-24 py-3">
+        <div className={`flex flex-1 items-center justify-start gap-4 sm:gap-6 md:gap-8 text-sm font-medium min-w-0 ${isTransparent ? "text-white/90" : "text-gray-600"}`}>
+          <Link href="/shop" className={`transition-colors hover:underline whitespace-nowrap ${isTransparent ? "hover:text-white" : "hover:text-black"}`}>
+            Shop
+          </Link>
+          <Link
+            href="/collections"
+            onMouseEnter={() => setActiveMenu("collections")}
+            className={`transition-colors hover:underline whitespace-nowrap ${isTransparent ? "hover:text-white" : "hover:text-black"}`}
+          >
+            Collections
+          </Link>
+          <Link href="#about" className={`transition-colors hover:underline whitespace-nowrap hidden sm:inline ${isTransparent ? "hover:text-white" : "hover:text-black"}`}>
+            About
+          </Link>
+        </div>
+        <Link
+          href="/"
+          className={`text-xl sm:text-2xl font-medium tracking-wide transition-colors duration-300 shrink-0 absolute left-1/2 -translate-x-1/2 ${isTransparent ? "text-white" : "text-black"}`}
+          style={brandStyle}
+        >
           Carol Bouwer
         </Link>
-        <div className="flex w-full items-center justify-between border-t border-black/[0.06] pt-4 gap-4">
-          <button
-            onMouseEnter={() => setActiveMenu("menu")}
-            onClick={() => setActiveMenu(activeMenu === "menu" ? null : "menu")}
-            className="flex items-center gap-2 text-gray-600 transition-colors hover:text-black shrink-0"
-          >
-            <MenuIcon className="h-5 w-5" />
-            <span className="text-sm font-medium">Menu</span>
-          </button>
-          <div className="flex items-center gap-4 sm:gap-6 md:gap-8 text-sm font-medium text-gray-600 shrink-0">
-            <Link href="/shop" className="transition-colors hover:text-black hover:underline whitespace-nowrap">
-              Shop
+        <div className={`flex flex-1 items-center justify-end gap-4 sm:gap-6 md:gap-8 text-sm font-medium min-w-0 ${isTransparent ? "text-white/90" : "text-gray-600"}`}>
+          {user ? (
+            <Link href="/profile" className={`transition-colors whitespace-nowrap ${isTransparent ? "hover:text-white" : "hover:text-black"}`}>
+              Profile
             </Link>
-            <Link
-              href="/collections"
-              onMouseEnter={() => setActiveMenu("collections")}
-              className="transition-colors hover:text-black hover:underline whitespace-nowrap"
-            >
-              Collections
+          ) : (
+            <Link href="/login" className={`transition-colors whitespace-nowrap ${isTransparent ? "hover:text-white" : "hover:text-black"}`}>
+              Login
             </Link>
-            <Link href="#about" className="transition-colors hover:text-black hover:underline whitespace-nowrap hidden sm:inline">
-              About
-            </Link>
-          </div>
-          <div className="flex items-center gap-4 sm:gap-6 shrink-0">
-            {user ? (
-              <Link href="/profile" className="text-sm font-medium text-gray-600 hover:text-black transition-colors whitespace-nowrap">
-                Profile
-              </Link>
-            ) : (
-              <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-black transition-colors whitespace-nowrap">
-                Login
-              </Link>
-            )}
-            <Link href="/cart" className="text-sm font-medium text-gray-600 hover:text-black transition-colors whitespace-nowrap">
-              Cart ({count})
-            </Link>
-          </div>
+          )}
+          <Link href="/cart" className={`transition-colors whitespace-nowrap ${isTransparent ? "hover:text-white" : "hover:text-black"}`}>
+            Cart ({count})
+          </Link>
         </div>
       </nav>
 

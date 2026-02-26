@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { CarouselSection } from "./CarouselSection";
-import { CategoryGridSection } from "./CategoryGridSection";
 
 export type ProductItem = { name: string; price: string; category: string; image: string; slug: string };
 
@@ -80,9 +79,7 @@ export function ProductsSection({ products }: { products: ProductItem[] }) {
           </div>
         </div>
       </div>
-      {/* Category grid (white-framed images, yellow labels) */}
-      <CategoryGridSection />
-      {/* Product grid — same width as category cards above */}
+      {/* Product grid */}
       <div className="mx-10 mt-20 md:mx-20">
         <div className="mb-8">
           <p className="text-[10px] uppercase tracking-[0.35em] text-gray-500">Handbags &amp; accessories</p>
