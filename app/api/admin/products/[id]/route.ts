@@ -1,11 +1,23 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import Product from "@/models/Product";
-import Collection from "@/models/Collection";
+import { sql } from "@/lib/db";
+import { mapProduct, type ProductRow } from "@/lib/db-mappers";
 import { requireAdmin } from "@/lib/auth";
-import mongoose from "mongoose";
+import { isUuid } from "@/lib/id";
 
 export const dynamic = "force-dynamic";
+
+async function fetchProductJoined(id: string) {
+  const rows = await sql`
+    SELECT p.id, p.name, p.price, p.category, p.image, p.slug, p.collection_id,
+           p.created_at, p.updated_at,
+           c.id AS col_id, c.name AS col_name, c.slug AS col_slug
+    FROM products p
+    LEFT JOIN collections c ON c.id = p.collection_id
+    WHERE p.id = ${id}::uuid
+    LIMIT 1
+  `;
+  return rows[0] as ProductRow | undefined;
+}
 
 export async function GET(
   _request: Request,
@@ -13,14 +25,13 @@ export async function GET(
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
     const { id } = await params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!isUuid(id)) {
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
-    const doc = await Product.findById(id).populate("collection", "name slug").lean();
+    const doc = await fetchProductJoined(id);
     if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json(doc);
+    return NextResponse.json(mapProduct(doc, true));
   } catch (err) {
     const e = err as { status?: number };
     if (e.status === 403) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -34,34 +45,66 @@ export async function PUT(
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
     const { id } = await params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!isUuid(id)) {
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
     const body = await request.json();
-    const updates: Record<string, unknown> = {};
-    if (body.name != null) updates.name = String(body.name).trim();
-    if (body.price != null) updates.price = String(body.price).trim();
-    if (body.category != null) updates.category = String(body.category).trim();
-    if (body.image != null) updates.image = String(body.image).trim();
-    if (body.slug != null) updates.slug = String(body.slug).trim();
+
+    let collectionId: string | null | undefined;
     if (body.collection != null) {
-      if (body.collection && body.collection !== "general" && mongoose.Types.ObjectId.isValid(body.collection)) {
-        const col = await Collection.findById(body.collection).lean();
-        if (col) updates.collection = col._id;
+      if (body.collection && body.collection !== "general" && isUuid(String(body.collection))) {
+        const colRows = await sql`
+          SELECT id FROM collections WHERE id = ${String(body.collection)}::uuid LIMIT 1
+        `;
+        if (colRows[0]) collectionId = colRows[0].id as string;
         else {
-          const defaultCol = await Collection.findOne({ slug: "essentials" }).lean();
-          if (defaultCol) updates.collection = defaultCol._id;
+          const defRows = await sql`
+            SELECT id FROM collections WHERE slug = ${"essentials"} LIMIT 1
+          `;
+          if (defRows[0]) collectionId = defRows[0].id as string;
         }
       } else {
-        const defaultCol = await Collection.findOne({ slug: "essentials" }).lean();
-        if (defaultCol) updates.collection = defaultCol._id;
+        const defRows = await sql`
+          SELECT id FROM collections WHERE slug = ${"essentials"} LIMIT 1
+        `;
+        if (defRows[0]) collectionId = defRows[0].id as string;
       }
     }
-    const doc = await Product.findByIdAndUpdate(id, { $set: updates }, { new: true }).populate("collection", "name slug").lean();
+
+    const cur = await fetchProductJoined(id);
+    if (!cur) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const name = body.name != null ? String(body.name).trim() : cur.name;
+    const price = body.price != null ? String(body.price).trim() : cur.price;
+    const category = body.category != null ? String(body.category).trim() : cur.category;
+    const image = body.image != null ? String(body.image).trim() : cur.image;
+    const slug = body.slug != null ? String(body.slug).trim() : cur.slug;
+    const col =
+      collectionId !== undefined ? collectionId : (cur.collection_id as string | null);
+
+    if (slug !== cur.slug) {
+      const clash = await sql`
+        SELECT id FROM products WHERE slug = ${slug} AND id <> ${id}::uuid LIMIT 1
+      `;
+      if (clash.length > 0) return NextResponse.json({ error: "Slug already taken" }, { status: 400 });
+    }
+
+    await sql`
+      UPDATE products SET
+        name = ${name},
+        price = ${price},
+        category = ${category},
+        image = ${image},
+        slug = ${slug},
+        collection_id = ${col},
+        updated_at = now()
+      WHERE id = ${id}::uuid
+    `;
+
+    const doc = await fetchProductJoined(id);
     if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json(doc);
+    return NextResponse.json(mapProduct(doc, true));
   } catch (err) {
     const e = err as { status?: number };
     if (e.status === 403) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -75,13 +118,14 @@ export async function DELETE(
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
     const { id } = await params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!isUuid(id)) {
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
-    const doc = await Product.findByIdAndDelete(id);
-    if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const deleted = await sql`
+      DELETE FROM products WHERE id = ${id}::uuid RETURNING id
+    `;
+    if (deleted.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch (err) {
     const e = err as { status?: number };

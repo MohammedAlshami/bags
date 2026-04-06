@@ -3,10 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Package, Truck, MapPin, LogOut, ChevronRight } from "lucide-react";
-
-const serif = { fontFamily: "var(--font-cormorant), serif" };
-const bgWhite = { backgroundColor: "#ffffff" };
+import { Package, Truck, MapPin, LogOut, ChevronLeft } from "lucide-react";
+import { sans, pagePaddingX } from "@/lib/page-theme";
 
 type Order = {
   _id: string;
@@ -18,6 +16,23 @@ type Order = {
   shippedAt?: string | null;
   items?: { name?: string; quantity?: number; price?: string }[];
 };
+
+function formatSar(n: number) {
+  return (
+    new Intl.NumberFormat("ar-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + " ر.س"
+  );
+}
+
+function statusAr(s: string) {
+  const m: Record<string, string> = {
+    pending: "قيد الانتظار",
+    processing: "قيد التجهيز",
+    shipped: "تم الشحن",
+    delivered: "تم التسليم",
+    cancelled: "ملغاة",
+  };
+  return m[s] ?? s;
+}
 
 export default function ProfileTrackPage() {
   const router = useRouter();
@@ -56,8 +71,10 @@ export default function ProfileTrackPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex flex-col pt-24 pb-24 items-center justify-center" style={bgWhite}>
-        <p className="text-neutral-500" style={serif}>Loading…</p>
+      <main className="flex min-h-screen flex-col items-center justify-center bg-white pb-24 pt-24" dir="rtl">
+        <p className="text-neutral-500" style={sans}>
+          جاري التحميل…
+        </p>
       </main>
     );
   }
@@ -65,31 +82,33 @@ export default function ProfileTrackPage() {
   if (!user || user.role === "admin") return null;
 
   const navItems = [
-    { label: "My orders", href: "/profile", icon: <Package className="w-5 h-5" strokeWidth={1.25} /> },
-    { label: "Track order", href: "/profile/track", icon: <Truck className="w-5 h-5" strokeWidth={1.25} />, current: true },
-    { label: "Billing & shipping", href: "/profile?tab=billing", icon: <MapPin className="w-5 h-5" strokeWidth={1.25} /> },
+    { label: "طلباتي", href: "/profile", icon: <Package className="h-5 w-5" strokeWidth={1.25} /> },
+    { label: "تتبع الطلب", href: "/profile/track", icon: <Truck className="h-5 w-5" strokeWidth={1.25} />, current: true },
+    { label: "الفوترة والشحن", href: "/profile?tab=billing", icon: <MapPin className="h-5 w-5" strokeWidth={1.25} /> },
   ];
 
   return (
-    <main className="min-h-screen pt-24 pb-24 md:pt-32 md:pb-32" style={bgWhite}>
-      <div className="w-full px-4 sm:px-8 md:px-14 lg:px-24">
-        <p className="text-[10px] uppercase tracking-[0.35em] text-gray-500">Account</p>
-        <h1 className="mt-2 text-3xl font-light text-neutral-900 md:text-4xl" style={serif}>
-          Track your orders
+    <main className="min-h-screen bg-white pb-24 pt-24 md:pb-32 md:pt-32" dir="rtl">
+      <div className={`w-full ${pagePaddingX}`}>
+        <p className="text-xs text-neutral-500" style={sans}>
+          الحساب
+        </p>
+        <h1 className="mt-2 text-3xl font-medium text-neutral-900 md:text-4xl" style={sans}>
+          تتبع طلباتك
         </h1>
-        <p className="mt-1 text-sm text-neutral-600">
-          Your orders and tracking details. No need to enter your email — you’re logged in.
+        <p className="mt-1 text-sm text-neutral-600" style={sans}>
+          تفاصيل الطلبات والشحن دون إدخال البريد — أنتِ مسجّلة الدخول.
         </p>
 
-        <div className="mt-10 flex flex-col md:flex-row gap-8">
-          {/* Sidebar - same as profile */}
-          <aside className="w-full md:w-56 shrink-0 border border-black/10 rounded-sm p-4 md:p-0 md:border-0">
-            <nav className="flex flex-row md:flex-col gap-0 overflow-x-auto md:overflow-visible hide-scrollbar">
-              {navItems.map((item) => (
+        <div className="mt-10 flex flex-col gap-8 md:flex-row">
+          <aside className="w-full shrink-0 rounded-sm border border-black/10 p-4 md:w-56 md:border-0">
+            <nav className="hide-scrollbar flex flex-row gap-0 overflow-x-auto md:flex-col md:overflow-visible">
+              {navItems.map((item) =>
                 item.current ? (
                   <span
                     key={item.label}
-                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-black border-b border-black/10"
+                    className="flex items-center gap-3 whitespace-nowrap border-b border-black/10 px-4 py-3 text-sm font-semibold text-black"
+                    style={sans}
                   >
                     {item.icon}
                     {item.label}
@@ -98,92 +117,108 @@ export default function ProfileTrackPage() {
                   <Link
                     key={item.label}
                     href={item.href}
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-neutral-600 hover:text-black border-b border-black/10"
+                    className="flex items-center gap-3 whitespace-nowrap border-b border-black/10 px-4 py-3 text-sm text-neutral-600 hover:text-black"
+                    style={sans}
                   >
                     {item.icon}
                     {item.label}
-                    <ChevronRight className="w-4 h-4 ml-auto md:hidden" />
+                    <ChevronLeft className="mr-auto h-4 w-4 md:hidden" />
                   </Link>
                 )
-              ))}
+              )}
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex items-center gap-3 px-4 py-3 md:mt-4 text-left text-sm text-neutral-600 hover:text-black border-t border-black/10 md:border-t"
+                className="flex items-center gap-3 border-t border-black/10 px-4 py-3 text-end text-sm text-neutral-600 hover:text-black md:mt-4 md:border-t"
+                style={sans}
               >
-                <LogOut className="w-5 h-5" strokeWidth={1.25} />
-                Sign out
+                <LogOut className="h-5 w-5" strokeWidth={1.25} />
+                تسجيل الخروج
               </button>
             </nav>
           </aside>
 
-          {/* Tracking content */}
-          <div className="flex-1 min-w-0 bg-white border border-black/10 rounded-sm p-6 md:p-8">
+          <div className="min-w-0 flex-1 rounded-sm border border-black/10 bg-white p-6 md:p-8">
             {orders.length === 0 ? (
-              <p className="text-sm text-neutral-500">You haven’t placed any orders yet.</p>
+              <p className="text-sm text-neutral-500" style={sans}>
+                لم تقدّمي أي طلبات بعد.
+              </p>
             ) : (
               <ul className="space-y-6">
                 {orders.map((o) => (
-                  <li key={o._id} className="border border-black/10 rounded-sm p-6">
+                  <li key={o._id} className="rounded-sm border border-black/10 p-6">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
-                        <p className="text-sm font-medium text-black">
-                          Order {String(o._id).slice(-8)}
+                        <p className="text-sm font-medium text-black" style={sans}>
+                          طلب {String(o._id).slice(-8)}
                         </p>
-                        <p className="text-xs text-neutral-500 mt-0.5">
-                          Placed {new Date(o.createdAt ?? "").toLocaleDateString(undefined, { dateStyle: "medium" })}
+                        <p className="mt-0.5 text-xs text-neutral-500" style={sans}>
+                          بتاريخ{" "}
+                          {new Date(o.createdAt ?? "").toLocaleDateString("ar-SA", { dateStyle: "medium" })}
                         </p>
-                        <p className="mt-2 text-sm">
-                          Total {o.total != null ? `$${Number(o.total).toFixed(2)}` : "—"}
+                        <p className="mt-2 text-sm" style={sans}>
+                          الإجمالي {o.total != null ? formatSar(Number(o.total)) : "—"}
                         </p>
                       </div>
-                      <span className={`inline-flex px-3 py-1 text-xs font-medium capitalize rounded-sm ${
-                        o.status === "shipped" ? "bg-green-100 text-green-800" :
-                        o.status === "cancelled" ? "bg-red-100 text-red-800" :
-                        "bg-neutral-100 text-neutral-800"
-                      }`}>
-                        {o.status}
+                      <span
+                        className={`inline-flex rounded-sm px-3 py-1 text-xs font-medium ${
+                          o.status === "shipped"
+                            ? "bg-green-100 text-green-800"
+                            : o.status === "cancelled"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-neutral-100 text-neutral-800"
+                        }`}
+                        style={sans}
+                      >
+                        {statusAr(o.status)}
                       </span>
                     </div>
 
-                    {/* Tracking details - only show section if we have tracking or shipped */}
-                    {(o.trackingNumber || o.carrier || o.shippedAt) ? (
-                      <div className="mt-4 pt-4 border-t border-black/10">
-                        <p className="text-[10px] uppercase tracking-widest text-neutral-500 mb-2">
-                          Tracking
+                    {o.trackingNumber || o.carrier || o.shippedAt ? (
+                      <div className="mt-4 border-t border-black/10 pt-4">
+                        <p className="mb-2 text-xs text-neutral-500" style={sans}>
+                          التتبع
                         </p>
-                        <dl className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                        <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
                           {o.carrier && (
                             <div>
-                              <dt className="text-neutral-500">Carrier</dt>
-                              <dd className="font-medium">{o.carrier}</dd>
+                              <dt className="text-neutral-500" style={sans}>
+                                الناقل
+                              </dt>
+                              <dd className="font-medium" style={sans}>
+                                {o.carrier}
+                              </dd>
                             </div>
                           )}
                           {o.trackingNumber && (
                             <div>
-                              <dt className="text-neutral-500">Tracking number</dt>
+                              <dt className="text-neutral-500" style={sans}>
+                                رقم التتبع
+                              </dt>
                               <dd className="font-mono">{o.trackingNumber}</dd>
                             </div>
                           )}
                           {o.shippedAt && (
                             <div>
-                              <dt className="text-neutral-500">Shipped</dt>
-                              <dd>
-                                {new Date(o.shippedAt).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                              <dt className="text-neutral-500" style={sans}>
+                                الشحن
+                              </dt>
+                              <dd style={sans}>
+                                {new Date(o.shippedAt).toLocaleDateString("ar-SA", { dateStyle: "medium" })}
                               </dd>
                             </div>
                           )}
                         </dl>
                         {o.carrier && o.trackingNumber && (
-                          <p className="text-xs text-neutral-500 mt-2">
-                            Track with {o.carrier} using the number above, or check your email for a tracking link.
+                          <p className="mt-2 text-xs text-neutral-500" style={sans}>
+                            يمكنك التتبع عبر الناقل أو من رابط أرسلناه لبريدك.
                           </p>
                         )}
                       </div>
                     ) : (
                       o.status !== "cancelled" && (
-                        <p className="mt-4 pt-4 border-t border-black/10 text-sm text-neutral-500">
-                          Tracking not yet available. We’ll email you when your order ships.
+                        <p className="mt-4 border-t border-black/10 pt-4 text-sm text-neutral-500" style={sans}>
+                          التتبع غير متاح بعد. سنرسل لكِ بريداً عند الشحن.
                         </p>
                       )
                     )}
@@ -195,8 +230,8 @@ export default function ProfileTrackPage() {
         </div>
 
         <p className="mt-8 text-center">
-          <Link href="/profile" className="text-sm text-gray-600 hover:text-black hover:underline">
-            ← Back to profile
+          <Link href="/profile" className="text-sm text-neutral-600 hover:text-black hover:underline" style={sans}>
+            العودة لحسابي
           </Link>
         </p>
       </div>

@@ -1,5 +1,5 @@
 /**
- * Run seed using Mongoose. Loads .env.local from project root.
+ * Run seed against Neon (PostgreSQL). Loads .env.local from project root.
  * Usage: npm run seed   (from project root)
  */
 import { readFileSync, existsSync } from "fs";
@@ -25,122 +25,169 @@ const SEED_CUSTOMER_USERNAME = "customer";
 const SEED_CUSTOMER_PASSWORD = "customer";
 
 async function main() {
-  const mongoose = await import("mongoose");
-  const { SEED_PRODUCTS, SEED_COLLECTIONS, SEED_LANDING } = await import("../lib/seed-data");
+  const { sql } = await import("../lib/db");
+  const {
+    SEED_PRODUCTS,
+    SEED_COLLECTIONS,
+    SEED_LANDING,
+    SEED_CUSTOMER_PROFILE,
+    SEED_SHIPPING_ADDRESS,
+  } = await import("../lib/seed-data");
   const { parsePrice } = await import("../lib/cart");
-
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    throw new Error("MONGODB_URI not set in .env.local");
-  }
-
-  await mongoose.default.connect(uri);
-
-  const Product = (await import("../models/Product")).default;
-  const Landing = (await import("../models/Landing")).default;
-  const Collection = (await import("../models/Collection")).default;
-  const User = (await import("../models/User")).default;
-  const Order = (await import("../models/Order")).default;
   const { hash } = await import("bcryptjs");
 
-  console.log("Seeding carol_Bouwer...");
-  await Product.deleteMany({});
-  await Landing.deleteMany({});
-  await Collection.deleteMany({});
+  const uri = process.env.DATABASE_URL;
+  if (!uri) {
+    throw new Error("DATABASE_URL not set in .env.local");
+  }
 
-  const collections = await Collection.insertMany(SEED_COLLECTIONS);
+  console.log("جاري إدخال البيانات التجريبية…");
+
+  await sql`DELETE FROM orders`;
+  await sql`DELETE FROM products`;
+  await sql`DELETE FROM landing`;
+  await sql`DELETE FROM collections`;
+
   const collectionBySlug = new Map<string, string>();
-  collections.forEach((c: { slug: string; _id: unknown }) => {
-    collectionBySlug.set(c.slug, String(c._id));
-  });
-  const productsWithCollection = SEED_PRODUCTS.map(
-    (p: { collectionSlug: string; name: string; price: string; category: string; image: string; slug: string }) => {
-      const collectionId = collectionBySlug.get(p.collectionSlug) ?? collectionBySlug.get("essentials");
-      const { collectionSlug: _s, ...rest } = p;
-      return { ...rest, collection: collectionId };
-    }
-  );
-  const products = await Product.insertMany(productsWithCollection);
-  const landing = await Landing.create(SEED_LANDING);
-  console.log("Collections inserted:", collections.length, "Products inserted:", products.length);
+  for (const c of SEED_COLLECTIONS) {
+    const inserted = await sql`
+      INSERT INTO collections (name, slug, image, description, story, material, quality)
+      VALUES (
+        ${c.name},
+        ${c.slug},
+        ${c.image ?? ""},
+        ${c.description ?? ""},
+        ${""},
+        ${""},
+        ${""}
+      )
+      RETURNING id, slug
+    `;
+    const row = inserted[0];
+    collectionBySlug.set(row.slug as string, row.id as string);
+  }
 
-  const existingAdmin = await User.findOne({ username: "admin" });
-  if (!existingAdmin) {
-    await User.create({
-      username: "admin",
-      password: await hash("admin", 10),
-      role: "admin",
-    });
+  const products: { id: string; slug: string; name: string; price: string }[] = [];
+  for (const p of SEED_PRODUCTS) {
+    const collectionId =
+      collectionBySlug.get(p.collectionSlug) ?? collectionBySlug.get("essentials");
+    if (!collectionId) throw new Error("Missing collection for product");
+    const ins = await sql`
+      INSERT INTO products (name, price, category, image, slug, collection_id)
+      VALUES (${p.name}, ${p.price}, ${p.category}, ${p.image}, ${p.slug}, ${collectionId}::uuid)
+      RETURNING id, slug, name, price
+    `;
+    products.push(ins[0] as { id: string; slug: string; name: string; price: string });
+  }
+
+  await sql`
+    INSERT INTO landing (id, data)
+    VALUES (1, ${JSON.stringify(SEED_LANDING)}::jsonb)
+  `;
+
+  console.log("Collections inserted:", SEED_COLLECTIONS.length, "Products inserted:", products.length);
+
+  const existingAdmin = await sql`SELECT id FROM users WHERE username = ${"admin"} LIMIT 1`;
+  if (existingAdmin.length === 0) {
+    await sql`
+      INSERT INTO users (username, password, role)
+      VALUES (${"admin"}, ${await hash("admin", 10)}, ${"admin"})
+    `;
     console.log("Admin user created (username: admin, password: admin)");
   }
 
-  let seedCustomer = await User.findOne({ username: SEED_CUSTOMER_USERNAME, role: "customer" });
-  if (!seedCustomer) {
-    seedCustomer = await User.create({
-      username: SEED_CUSTOMER_USERNAME,
-      password: await hash(SEED_CUSTOMER_PASSWORD, 10),
-      role: "customer",
-      email: "customer@example.com",
-      fullName: "Seed Customer",
-      address: "123 Main Street\nCape Town 8001\nSouth Africa",
-      phone: "+27 21 123 4567",
-    });
+  let seedCustomerId: string;
+  const seedUserRows = await sql`
+    SELECT id FROM users WHERE username = ${SEED_CUSTOMER_USERNAME} AND role = 'customer' LIMIT 1
+  `;
+  if (seedUserRows.length === 0) {
+    const ins = await sql`
+      INSERT INTO users (username, password, role, email, full_name, address, phone)
+      VALUES (
+        ${SEED_CUSTOMER_USERNAME},
+        ${await hash(SEED_CUSTOMER_PASSWORD, 10)},
+        ${"customer"},
+        ${SEED_CUSTOMER_PROFILE.email},
+        ${SEED_CUSTOMER_PROFILE.fullName},
+        ${SEED_CUSTOMER_PROFILE.address},
+        ${SEED_CUSTOMER_PROFILE.phone}
+      )
+      RETURNING id
+    `;
+    seedCustomerId = ins[0].id as string;
     console.log("Customer created (username: customer, password: customer)");
+  } else {
+    seedCustomerId = seedUserRows[0].id as string;
   }
 
-  const shippingAddress = {
-    fullName: "Seed Customer",
-    line1: "123 Main Street",
-    line2: "",
-    city: "Cape Town",
-    state: "Western Cape",
-    postCode: "8001",
-    country: "South Africa",
-  };
+  await sql`
+    UPDATE users SET
+      email = ${SEED_CUSTOMER_PROFILE.email},
+      full_name = ${SEED_CUSTOMER_PROFILE.fullName},
+      address = ${SEED_CUSTOMER_PROFILE.address},
+      phone = ${SEED_CUSTOMER_PROFILE.phone},
+      updated_at = now()
+    WHERE id = ${seedCustomerId}::uuid
+  `;
+
+  const shippingAddress = SEED_SHIPPING_ADDRESS;
+
   const firstProduct = products[0];
   const priceNum = parsePrice(firstProduct.price);
-  const openOrderExists = await Order.findOne({ status: "pending", customer: seedCustomer._id });
-  if (!openOrderExists) {
-    await Order.create({
-      customer: seedCustomer._id,
-      items: [
-        { slug: firstProduct.slug, name: firstProduct.name, price: firstProduct.price, quantity: 1 },
-      ],
-      total: priceNum * 1,
-      status: "pending",
-      shippingAddress,
-    });
+  const openRows = await sql`
+    SELECT id FROM orders WHERE status = 'pending' AND customer_id = ${seedCustomerId}::uuid LIMIT 1
+  `;
+  if (openRows.length === 0) {
+    await sql`
+      INSERT INTO orders (customer_id, items, total, status, shipping_address)
+      VALUES (
+        ${seedCustomerId}::uuid,
+        ${JSON.stringify([
+          {
+            slug: firstProduct.slug,
+            name: firstProduct.name,
+            price: firstProduct.price,
+            quantity: 1,
+          },
+        ])}::jsonb,
+        ${priceNum},
+        ${"pending"},
+        ${JSON.stringify(shippingAddress)}::jsonb
+      )
+    `;
     console.log("Open order created (1 item, shipping info added)");
   }
 
-  const secondProduct = products[1];
-  const shippedOrderExists = await Order.findOne({
-    status: "shipped",
-    customer: seedCustomer._id,
-  });
-  if (!shippedOrderExists && secondProduct) {
-    await Order.create({
-      customer: seedCustomer._id,
-      items: [
-        {
-          slug: secondProduct.slug,
-          name: secondProduct.name,
-          price: secondProduct.price,
-          quantity: 1,
-        },
-      ],
-      total: parsePrice(secondProduct.price),
-      status: "shipped",
-      shippingAddress,
-      trackingNumber: "CBW123456789ZA",
-      carrier: "DHL",
-      shippedAt: new Date(),
-    });
+  const shippedRows = await sql`
+    SELECT id FROM orders WHERE status = 'shipped' AND customer_id = ${seedCustomerId}::uuid LIMIT 1
+  `;
+  if (shippedRows.length === 0) {
+    const secondProduct = products[1];
+    const secondPriceNum = parsePrice(secondProduct?.price ?? "189.00 ر.س");
+    await sql`
+      INSERT INTO orders (customer_id, items, total, status, shipping_address, tracking_number, carrier, shipped_at)
+      VALUES (
+        ${seedCustomerId}::uuid,
+        ${JSON.stringify([
+          {
+            slug: secondProduct?.slug ?? "leather-crossbody",
+            name: secondProduct?.name ?? "تونر أساسي",
+            price: secondProduct?.price ?? "189.00 ر.س",
+            quantity: 1,
+          },
+        ])}::jsonb,
+        ${secondPriceNum},
+        ${"shipped"},
+        ${JSON.stringify(shippingAddress)}::jsonb,
+        ${"TRK-SA-9876543210"},
+        ${"أرامكس"},
+        ${new Date().toISOString()}
+      )
+    `;
     console.log("Shipped order created (with tracking)");
   }
 
-  console.log("Done. Landing inserted:", landing ? 1 : 0);
-  await mongoose.default.disconnect();
+  console.log("اكتمل: تم إدخال بيانات الصفحة الرئيسية.");
 }
 
 main().catch((err) => {

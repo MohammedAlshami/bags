@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
-  serverExternalPackages: ["mongoose"],
   images: {
     remotePatterns: [
       {
@@ -47,6 +46,12 @@ const nextConfig: NextConfig = {
         hostname: "release-serenity.myshopify.com",
         port: "",
         pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "wonder-theme-beauty.myshopify.com",
+        port: "",
+        pathname: "/cdn/shop/**",
       },
     ],
   },

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import Order from "@/models/Order";
-import mongoose from "mongoose";
+import { sql } from "@/lib/db";
+import { isUuid } from "@/lib/id";
 
 export const dynamic = "force-dynamic";
 
@@ -17,31 +16,35 @@ export async function GET(request: Request) {
         { status: 400 }
       );
     }
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    if (!isUuid(orderId)) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    await dbConnect();
-    const order = await Order.findById(orderId)
-      .populate("customer", "email")
-      .lean();
+    const rows = await sql`
+      SELECT o.id, o.status, o.tracking_number, o.carrier, o.shipped_at, u.email AS customer_email
+      FROM orders o
+      JOIN users u ON u.id = o.customer_id
+      WHERE o.id = ${orderId}::uuid
+      LIMIT 1
+    `;
+    const order = rows[0];
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    const customerEmail = (order.customer as { email?: string })?.email ?? "";
+    const customerEmail = order.customer_email ?? "";
     if (customerEmail.toLowerCase() !== email.toLowerCase()) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
     return NextResponse.json({
-      orderId: order._id,
+      orderId: order.id,
       status: order.status,
-      trackingNumber: order.trackingNumber || null,
+      trackingNumber: order.tracking_number || null,
       carrier: order.carrier || null,
-      shippedAt: order.shippedAt || null,
+      shippedAt: order.shipped_at || null,
     });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to look up order" },
       { status: 500 }

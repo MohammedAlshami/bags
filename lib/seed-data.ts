@@ -1,25 +1,86 @@
 /**
- * Data used to seed the carol_Bouwer database (products + landing page).
- * Matches current landing page and shop content.
+ * Data used to seed the database (products + landing metadata).
+ * Arabic copy aligned with the public site.
  */
 
 import { PRODUCTS } from "./products";
 
+/** بيانات العميل التجريبي (اسم الدخول يبقى customer). */
+export const SEED_CUSTOMER_PROFILE = {
+  email: "customer@example.com",
+  fullName: "عميل تجريبي",
+  address:
+    "شارع الملك عبدالعزيز، حي النخيل\nالرياض ١٢٣٤٥\nالمملكة العربية السعودية",
+  phone: "+966 50 123 4567",
+};
+
+/** عنوان الشحن الافتراضي في الطلبات التجريبية */
+export const SEED_SHIPPING_ADDRESS = {
+  fullName: "عميل تجريبي",
+  line1: "شارع الملك عبدالعزيز، حي النخيل",
+  line2: "",
+  city: "الرياض",
+  state: "منطقة الرياض",
+  postCode: "12345",
+  country: "المملكة العربية السعودية",
+};
+
 export const SEED_COLLECTIONS = [
-  { name: "Essentials", slug: "essentials", image: "", description: "Foundational pieces for every day." },
-  { name: "Winter Edit", slug: "winter-edit", image: "/Item pictures/2nd_Green_Bag-removebg-preview.png", description: "A study in monochromatic layering and architectural silhouettes." },
-  { name: "Maison", slug: "maison", image: "/Item pictures/basket_bag-removebg-preview.png", description: "Foundational pieces crafted for the modern global citizen." },
-  { name: "Soirée", slug: "soiree", image: "/Item pictures/Black_bag-removebg-preview.png", description: "Evening wear redefined through precise tailoring." },
-  { name: "Object", slug: "object", image: "/Item pictures/Blue_bag-removebg-preview.png", description: "Sculptural hardware and leather goods for daily elevation." },
-  { name: "Archive", slug: "archive", image: "/Item pictures/orange_bag-removebg-preview.png", description: "A retrospective of the silhouettes that defined our house." },
-  { name: "Nordic", slug: "nordic", image: "/Item pictures/snake_skin_bag-removebg-preview.png", description: "Inspired by the raw textures of Northern landscapes." },
+  {
+    name: "أساسيات",
+    slug: "essentials",
+    image: "",
+    description: "قطع أساسية للعناية اليومية.",
+  },
+  {
+    name: "تعديل شتوي",
+    slug: "winter-edit",
+    image: "/Item pictures/2nd_Green_Bag-removebg-preview.png",
+    description: "طبقات لونية هادئة وخطوط بسيطة.",
+  },
+  {
+    name: "ميزون",
+    slug: "maison",
+    image: "/Item pictures/basket_bag-removebg-preview.png",
+    description: "منتجات مختارة لروتين عصري.",
+  },
+  {
+    name: "سهرة",
+    slug: "soiree",
+    image: "/Item pictures/Black_bag-removebg-preview.png",
+    description: "للمظهر المميز في المناسبات.",
+  },
+  {
+    name: "أوبجكت",
+    slug: "object",
+    image: "/Item pictures/Blue_bag-removebg-preview.png",
+    description: "تفاصيل دقيقة ترتقي بيومك.",
+  },
+  {
+    name: "أرشيف",
+    slug: "archive",
+    image: "/Item pictures/orange_bag-removebg-preview.png",
+    description: "لمحات من أسلوب العلامة عبر الزمن.",
+  },
+  {
+    name: "نورديك",
+    slug: "nordic",
+    image: "/Item pictures/snake_skin_bag-removebg-preview.png",
+    description: "إلهام من الطبيعة الهادئة.",
+  },
 ];
 
 /** Map product category to collection slug. Every product must link to a collection. */
 export const CATEGORY_TO_COLLECTION_SLUG: Record<string, string> = {
-  Handbags: "essentials",
-  Travel: "archive",
-  Evening: "soiree",
+  أعشاب: "essentials",
+  زيوت: "essentials",
+  سيروم: "archive",
+  كريم: "soiree",
+  عناية: "maison",
+  ماسك: "winter-edit",
+  تنظيف: "essentials",
+  مجموعات: "archive",
+  تونر: "object",
 };
 
 const DEFAULT_COLLECTION_SLUG = "essentials";
@@ -36,64 +97,64 @@ export const SEED_PRODUCTS = PRODUCTS.map((p) => ({
 export const SEED_LANDING = {
   type: "landing",
   hero: {
-    title: "Carol Bouwer",
+    title: "الملكة جولد",
     subtitle:
-      "Handcrafted in South Africa using the finest ethically sourced leathers. A tribute to heritage and style.",
-    ctaText: "Discover the collection →",
+      "صُنعت بعناية من أجود المكوّنات. تحية للتراث والأناقة والعناية الحقيقية.",
+    ctaText: "اكتشف المجموعة ←",
     ctaHref: "#shop",
     videoSrc: "/8798403-uhd_4096_2160_25fps.mp4",
   },
   carousel: {
-    sectionTitle: "Fall colors",
-    sectionSubtitle: "Collections",
+    sectionTitle: "ألوان الموسم",
+    sectionSubtitle: "المجموعات",
     items: [
       {
-        title: "Winter Edit",
-        category: "Collection",
-        year: "2025",
-        desc: "A study in monochromatic layering and architectural silhouettes.",
+        title: "تعديل شتوي",
+        category: "مجموعة",
+        year: "٢٠٢٥",
+        desc: "طبقات لونية هادئة وخطوط بسيطة.",
         image: "/Item pictures/2nd_Green_Bag-removebg-preview.png",
       },
       {
-        title: "Maison",
-        category: "Essentials",
-        year: "2025",
-        desc: "Foundational pieces crafted for the modern global citizen.",
+        title: "ميزون",
+        category: "أساسيات",
+        year: "٢٠٢٥",
+        desc: "منتجات مختارة لروتين عصري.",
         image: "/Item pictures/basket_bag-removebg-preview.png",
       },
       {
-        title: "Soirée",
-        category: "Limited",
-        year: "2025",
-        desc: "Evening wear redefined through precise tailoring.",
+        title: "سهرة",
+        category: "محدود",
+        year: "٢٠٢٥",
+        desc: "للمظهر المميز في المناسبات.",
         image: "/Item pictures/Black_bag-removebg-preview.png",
       },
       {
-        title: "Object",
-        category: "Accessories",
-        year: "2024",
-        desc: "Sculptural hardware and leather goods for daily elevation.",
+        title: "أوبجكت",
+        category: "إكسسوارات",
+        year: "٢٠٢٤",
+        desc: "تفاصيل دقيقة ترتقي بيومك.",
         image: "/Item pictures/Blue_bag-removebg-preview.png",
       },
       {
-        title: "Archive",
-        category: "Heritage",
-        year: "2024",
-        desc: "A retrospective of the silhouettes that defined our house.",
+        title: "أرشيف",
+        category: "تراث",
+        year: "٢٠٢٤",
+        desc: "لمحات من أسلوب العلامة عبر الزمن.",
         image: "/Item pictures/orange_bag-removebg-preview.png",
       },
       {
-        title: "Nordic",
-        category: "Seasonal",
-        year: "2025",
-        desc: "Inspired by the raw textures of Northern landscapes.",
+        title: "نورديك",
+        category: "موسمي",
+        year: "٢٠٢٥",
+        desc: "إلهام من الطبيعة الهادئة.",
         image: "/Item pictures/snake_skin_bag-removebg-preview.png",
       },
     ],
   },
   banner: {
     imagePath: "/Pixalated.png",
-    headline: "Carry the moment.",
+    headline: "احملي اللحظة.",
   },
   navImages: [
     "/Item pictures/2nd_Green_Bag-removebg-preview.png",

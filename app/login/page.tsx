@@ -3,9 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { sans, pagePaddingX } from "@/lib/page-theme";
 
-const serif = { fontFamily: "var(--font-cormorant), serif" };
-const bgWhite = { backgroundColor: "#ffffff" };
+function mapLoginError(msg: string): string {
+  if (msg.includes("Invalid") || msg.includes("password")) return "اسم المستخدم أو كلمة المرور غير صحيحة.";
+  if (msg.includes("required")) return "يرجى إدخال اسم المستخدم وكلمة المرور.";
+  return msg || "تعذّر تسجيل الدخول.";
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,7 +27,7 @@ export default function LoginPage() {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setError(data.error || "Invalid username or password");
+      setError(mapLoginError(typeof data.error === "string" ? data.error : ""));
       return;
     }
     router.push("/");
@@ -31,73 +35,73 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col pt-24 pb-24 md:pt-32 md:pb-32" style={bgWhite}>
-      <div className="flex-1 flex flex-col items-center justify-center mx-10 md:mx-20 py-12">
-        <div className="w-full max-w-md">
-          <p className="text-[10px] uppercase tracking-[0.35em] text-gray-500">Account</p>
-          <h1 className="mt-2 text-4xl font-light text-neutral-900 md:text-5xl" style={serif}>
-            Login
-          </h1>
+    <main className="flex min-h-screen flex-col bg-white pb-24 pt-24 md:pb-32 md:pt-32" dir="rtl">
+      <div className={`mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center py-12 ${pagePaddingX}`}>
+        <p className="text-xs text-neutral-500" style={sans}>
+          الحساب
+        </p>
+        <h1 className="mt-2 text-3xl font-medium text-neutral-900 md:text-4xl" style={sans}>
+          تسجيل الدخول
+        </h1>
 
-          {error && (
-            <p className="mt-4 text-sm text-red-600" role="alert">{error}</p>
-          )}
-          <form onSubmit={handleSubmit} className="mt-10 space-y-8">
-            <div>
-              <label htmlFor="login-username" className="block text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">
-                Username
-              </label>
-              <input
-                id="login-username"
-                type="text"
-                autoComplete="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="admin"
-                required
-                className="w-full border-b border-neutral-200 bg-transparent py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none transition-colors"
-              />
-            </div>
-            <div>
-              <label htmlFor="login-password" className="block text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">
-                Password
-              </label>
-              <input
-                id="login-password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full border-b border-neutral-200 bg-transparent py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none transition-colors"
-              />
-            </div>
-            <div className="flex flex-col gap-6">
-              <button
-                type="submit"
-                className="w-full border border-black bg-black py-4 text-sm font-medium text-white uppercase tracking-widest transition-colors hover:bg-neutral-800"
-              >
-                Sign in
-              </button>
-              <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
-                <Link
-                  href="/login/forgot-password"
-                  className="text-gray-600 transition-colors hover:text-black hover:underline"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-            </div>
-          </form>
-
-          <p className="mt-12 text-center text-xs text-gray-500">
-            By signing in, you agree to our{" "}
-            <Link href="#" className="underline hover:text-black">Terms</Link>
-            {" "}and{" "}
-            <Link href="#" className="underline hover:text-black">Privacy Policy</Link>.
+        {error && (
+          <p className="mt-4 text-sm text-red-600" role="alert" style={sans}>
+            {error}
           </p>
-        </div>
+        )}
+        <form onSubmit={handleSubmit} className="mt-10 space-y-8">
+          <div>
+            <label htmlFor="login-username" className="mb-2 block text-xs text-neutral-500" style={sans}>
+              اسم المستخدم
+            </label>
+            <input
+              id="login-username"
+              type="text"
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              className="w-full border-b border-neutral-200 bg-transparent py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
+              style={sans}
+            />
+          </div>
+          <div>
+            <label htmlFor="login-password" className="mb-2 block text-xs text-neutral-500" style={sans}>
+              كلمة المرور
+            </label>
+            <input
+              id="login-password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full border-b border-neutral-200 bg-transparent py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
+              style={sans}
+            />
+          </div>
+          <div className="flex flex-col gap-6">
+            <button
+              type="submit"
+              className="w-full rounded-full bg-neutral-900 py-4 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+              style={sans}
+            >
+              دخول
+            </button>
+            <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
+              <Link href="/login/forgot-password" className="text-neutral-600 transition-colors hover:text-black hover:underline" style={sans}>
+                نسيت كلمة المرور؟
+              </Link>
+            </div>
+          </div>
+        </form>
+
+        <p className="mt-10 text-center text-xs text-neutral-500" style={sans}>
+          ليس لديك حساب؟{" "}
+          <Link href="/register" className="font-medium text-neutral-900 underline underline-offset-2 hover:no-underline">
+            إنشاء حساب
+          </Link>
+        </p>
       </div>
     </main>
   );

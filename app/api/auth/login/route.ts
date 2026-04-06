@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import User from "@/models/User";
+import { sql } from "@/lib/db";
 import { compare } from "bcryptjs";
 import { signToken, getCookieName } from "@/lib/auth";
 
@@ -16,12 +15,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Username and password required" }, { status: 400 });
     }
 
-    await dbConnect();
-    const user = await User.findOne({ username }).lean();
+    const rows = await sql`
+      SELECT id, username, password, role, disabled
+      FROM users
+      WHERE username = ${username}
+      LIMIT 1
+    `;
+    const user = rows[0];
     if (!user) {
       return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
     }
-    if ((user as { disabled?: boolean }).disabled) {
+    if (user.disabled) {
       return NextResponse.json({ error: "Account is disabled" }, { status: 401 });
     }
 
@@ -33,7 +37,7 @@ export async function POST(request: Request) {
     const token = await signToken({
       username: user.username,
       role: user.role,
-      sub: String(user._id),
+      sub: String(user.id),
     });
 
     const res = NextResponse.json({ ok: true });
@@ -45,7 +49,7 @@ export async function POST(request: Request) {
       path: "/",
     });
     return res;
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Login failed" }, { status: 500 });
   }
 }

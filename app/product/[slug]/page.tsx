@@ -5,20 +5,18 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/app/context/CartContext";
+import { sans, IMAGE_WELL as IMAGE_BG } from "@/lib/page-theme";
 
 type ProductItem = { name: string; price: string; category: string; image: string; slug: string };
 
-const serif = { fontFamily: "var(--font-cormorant), serif" };
-const bgWhite = { backgroundColor: "#ffffff" };
-
-const DEFAULT_DESCRIPTION =
-  "Handcrafted from full-grain Italian leather, designed for the modern journey. Featuring a spacious interior, brass hardware, and a timeless silhouette that ages beautifully.";
-const DEFAULT_DETAILS = [
-  "Full-grain Italian leather",
-  "Solid brass hardware",
-  "Interior zip pocket",
-  "15\" laptop sleeve",
-  "Handmade in Cape Town",
+const DEFAULT_DESCRIPTION_AR =
+  "صُنع بعناية ليدعم بشرتك بنضارة طبيعية وملمس ناعم. تركيبة متوازنة تناسب الاستخدام اليومي، مع التزامنا بجودة العناية التي تليق بعلامة الملكة جولد.";
+const DEFAULT_DETAILS_AR = [
+  "مناسب للاستخدام اليومي",
+  "تركيبة مختبرة ومتوازنة",
+  "عبوة عملية للسفر والاستخدام السريع",
+  "تغليف أنيق يحافظ على المنتج",
+  "صُنع بعناية وفخر محلي",
 ];
 
 function ProductMainSection({
@@ -32,41 +30,47 @@ function ProductMainSection({
 }) {
   const { addToCart } = useCart();
 
-  const images = [
-    product.image,
-    "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=1200&q=85&fit=crop",
-    "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1200&q=85&fit=crop",
-    "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1200&q=85&fit=crop",
-  ];
-
   return (
-    <div className="mx-auto max-w-[1920px] px-6 py-12 md:px-12 pt-24 md:pt-32">
+    <div className="mx-auto max-w-[1920px] px-4 py-12 pt-24 sm:px-8 md:px-14 md:pt-32 lg:px-24">
       <div className="grid gap-12 lg:grid-cols-12">
-        {/* Left: Gallery Grid */}
-        <div className="lg:col-span-8">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {images.map((img, i) => (
-              <div key={i} className={`relative bg-gray-100 ${i === 0 ? "aspect-[4/5] md:col-span-2" : "aspect-[3/4]"}`}>
-                <Image src={img} alt="" fill className="object-cover" />
-              </div>
-            ))}
+        <div className="lg:col-span-7">
+          <div
+            className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl p-6 sm:p-8 md:p-10"
+            style={{ backgroundColor: IMAGE_BG }}
+          >
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              className="object-contain object-center p-4 sm:p-5"
+              sizes="(max-width: 1024px) 100vw, 58vw"
+              priority
+            />
           </div>
         </div>
 
-        {/* Right: Sticky Details (Classic Split style) */}
-        <div className="lg:col-span-4 lg:sticky lg:top-32 lg:h-fit lg:pl-12">
-          <span className="text-xs uppercase tracking-widest text-gray-500">{product.category}</span>
-          <h1 className="mt-4 text-4xl font-light text-black md:text-5xl" style={serif}>
+        <div className="lg:col-span-5 lg:sticky lg:top-32 lg:h-fit lg:self-start lg:ps-10" dir="rtl">
+          <span className="text-xs text-neutral-500" style={sans}>
+            {product.category}
+          </span>
+          <h1
+            className="mt-3 text-3xl font-medium leading-tight tracking-tight text-neutral-900 md:text-4xl lg:text-[2.75rem]"
+            style={sans}
+          >
             {product.name}
           </h1>
-          <p className="mt-4 text-xl text-black/70">{product.price}</p>
-          <p className="mt-8 text-sm leading-relaxed text-black/70">{description}</p>
-          
-          <div className="mt-10 space-y-4 border-t border-black/10 pt-8">
+          <p className="mt-5 text-xl text-neutral-900 md:text-2xl" style={sans}>
+            {product.price}
+          </p>
+          <p className="mt-8 text-sm leading-relaxed text-neutral-600 md:text-base" style={sans}>
+            {description}
+          </p>
+
+          <div className="mt-10 space-y-3 border-t border-neutral-200/90 pt-8">
             {details.map((detail) => (
-              <div key={detail} className="flex items-center gap-3 text-sm text-black/60">
-                <span className="h-1 w-1 rounded-full bg-black/40" />
-                {detail}
+              <div key={detail} className="flex items-start gap-3 text-sm text-neutral-700 md:text-base" style={sans}>
+                <span className="mt-2.5 h-1 w-1 shrink-0 rounded-full bg-neutral-400" aria-hidden />
+                <span>{detail}</span>
               </div>
             ))}
           </div>
@@ -74,23 +78,29 @@ function ProductMainSection({
           <button
             type="button"
             onClick={() => addToCart({ slug: product.slug, name: product.name, price: product.price, image: product.image })}
-            className="mt-12 w-full bg-black py-4 text-xs font-bold uppercase tracking-widest text-white hover:bg-black/90 transition-colors"
+            className="mt-12 w-full rounded-full bg-neutral-900 py-4 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+            style={sans}
           >
-            Add to Cart
+            أضف إلى السلة
           </button>
 
-          {/* Shipping & Returns */}
-          <div className="mt-12 space-y-6 border-t border-black/10 pt-8">
+          <div className="mt-12 space-y-8 border-t border-neutral-200/90 pt-8">
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-black mb-2">Shipping</h3>
-              <p className="text-sm text-black/60 leading-relaxed">
-                Complimentary global shipping on all orders. Each piece is made to order and ships within 2-3 weeks.
+              <h3 className="mb-2 text-sm font-semibold text-neutral-900" style={sans}>
+                الشحن
+              </h3>
+              <p className="text-sm leading-relaxed text-neutral-600 md:text-base" style={sans}>
+                شحن مجاني على الطلبات ضمن المملكة. تُجهّز الطلبات خلال 2–5 أيام عمل، مع تتبع يصلكِ عبر البريد أو
+                الرسائل.
               </p>
             </div>
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest text-black mb-2">Returns</h3>
-              <p className="text-sm text-black/60 leading-relaxed">
-                We accept returns within 14 days of delivery. Items must be unused and in original packaging.
+              <h3 className="mb-2 text-sm font-semibold text-neutral-900" style={sans}>
+                الإرجاع
+              </h3>
+              <p className="text-sm leading-relaxed text-neutral-600 md:text-base" style={sans}>
+                يمكنك طلب الإرجاع خلال 14 يوماً من الاستلام، بشرط أن يبقى المنتج غير مفتوح، وبحالته الأصلية مع
+                التغليف.
               </p>
             </div>
           </div>
@@ -102,54 +112,20 @@ function ProductMainSection({
 
 function StorySection() {
   return (
-    <div className="w-full">
-      {/* 4. Atelier: Behind the scenes */}
-      <section className="py-24 md:py-32 text-center" style={bgWhite}>
-        <div className="mx-auto max-w-5xl px-6">
-          <span className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-6 block">The Atelier</span>
-          <h2 className="text-5xl md:text-7xl font-light mb-16" style={serif}>Where magic happens.</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-            <div className="relative aspect-square bg-gray-100">
-              <Image src="https://images.unsplash.com/photo-1605518216938-7c31b7b14ad0?w=1000&q=85&fit=crop" alt="Atelier 1" fill className="object-cover" />
-            </div>
-            <div className="relative aspect-square bg-gray-100">
-              <Image src="https://images.unsplash.com/photo-1618331835717-801e976710b2?w=1000&q=85&fit=crop" alt="Atelier 2" fill className="object-cover" />
-            </div>
-          </div>
-          <p className="mt-16 text-lg md:text-xl font-light max-w-3xl mx-auto leading-relaxed">
-            "We don't just make bags; we engineer heirlooms. Our atelier is a place of quiet focus, where tradition meets innovation."
-          </p>
-        </div>
-      </section>
-
-      {/* 5. Interview: Q&A style */}
-      <section className="py-24 md:py-32 border-t border-black/5" style={bgWhite}>
-        <div className="mx-auto max-w-4xl px-6">
-          <div className="flex flex-col md:flex-row gap-12 items-start">
-            <div className="w-24 h-24 relative shrink-0 rounded-full overflow-hidden bg-gray-100">
-               <Image src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=85&fit=crop" alt="Designer" fill className="object-cover" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-3xl font-light mb-12" style={serif}>In conversation with the designer</h2>
-              <div className="space-y-12">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest mb-3 text-black/40">Q: What inspired this collection?</p>
-                  <p className="text-lg text-black/80 leading-relaxed font-light">
-                    "I wanted to capture the essence of the South African landscape—the raw textures, the warm earth tones. It's about grounding yourself in something real and tangible."
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest mb-3 text-black/40">Q: Why full-grain leather?</p>
-                  <p className="text-lg text-black/80 leading-relaxed font-light">
-                    "Because it lives. It breathes. It changes with you. Synthetic materials stay the same, but leather tells a story. I want our bags to look better in ten years than they do today."
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+    <section className="border-t border-neutral-200/80 bg-white py-20 md:py-28" dir="rtl">
+      <div className="mx-auto max-w-3xl px-4 text-center sm:px-8">
+        <p className="text-xs text-neutral-500" style={sans}>
+          من الملكة جولد
+        </p>
+        <h2 className="mt-4 text-2xl font-medium leading-snug text-neutral-800 md:text-3xl" style={sans}>
+          عناية تليق بكِ
+        </h2>
+        <p className="mt-6 text-base leading-relaxed text-neutral-600 md:text-lg" style={sans}>
+          نؤمن بأن العناية الحقيقية تبدأ من التفاصيل. نختار مكوّنات بعناية، ونقدّم لكِ تجربة بسيطة وأنيقة تعكس
+          ثقتكِ بنفسكِ في كل خطوة.
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -166,36 +142,50 @@ export default function ProductPage() {
     }
     fetch(`/api/products/${encodeURIComponent(slug)}`)
       .then((res) => (res.ok ? res.json() : null))
-      .then(setProduct)
+      .then((data) => {
+        if (!data || typeof data !== "object" || !("name" in data)) {
+          setProduct(null);
+          return;
+        }
+        setProduct({
+          name: String(data.name),
+          price: String(data.price),
+          category: String(data.category),
+          image: String(data.image),
+          slug: String(data.slug),
+        });
+      })
       .finally(() => setLoading(false));
   }, [slug]);
 
   if (loading) {
     return (
-      <main className="min-h-screen pt-32 pb-24 flex items-center justify-center" style={bgWhite}>
-        <p className="text-neutral-500" style={serif}>Loading…</p>
+      <main className="min-h-screen flex items-center justify-center bg-white pb-24 pt-32" dir="rtl">
+        <p className="text-neutral-500" style={sans}>
+          جاري التحميل…
+        </p>
       </main>
     );
   }
 
   if (!product) {
     return (
-      <main className="min-h-screen pt-32 pb-24" style={bgWhite}>
-        <div className="mx-10 md:mx-20 text-center">
-          <h1 className="text-2xl font-light text-black" style={serif}>Product not found</h1>
-          <Link href="/shop" className="mt-4 inline-block text-sm underline text-neutral-600 hover:text-black">Back to shop</Link>
+      <main className="min-h-screen bg-white pb-24 pt-32" dir="rtl">
+        <div className="mx-auto max-w-lg px-6 text-center">
+          <h1 className="text-2xl font-medium text-neutral-900" style={sans}>
+            المنتج غير متوفر
+          </h1>
+          <Link href="/shop" className="mt-6 inline-block text-sm text-neutral-600 underline-offset-4 hover:text-neutral-900 hover:underline" style={sans}>
+            العودة إلى المتجر
+          </Link>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen pt-20" style={bgWhite}>
-      <ProductMainSection
-        product={product}
-        description={DEFAULT_DESCRIPTION}
-        details={DEFAULT_DETAILS}
-      />
+    <main className="min-h-screen bg-white pt-20" dir="rtl">
+      <ProductMainSection product={product} description={DEFAULT_DESCRIPTION_AR} details={DEFAULT_DETAILS_AR} />
       <StorySection />
     </main>
   );

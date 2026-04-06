@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-const serif = { fontFamily: "var(--font-cormorant), serif" };
+const brandName = { fontFamily: "var(--font-playpen-arabic), sans-serif" };
 
 export function HeroSection() {
   return (
@@ -26,15 +26,18 @@ export function HeroSection() {
       />
       <div className="absolute inset-0 z-10 flex flex-col justify-end pb-16 md:pb-24 px-10 md:px-20">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-          <h1 className="text-5xl md:text-8xl text-white font-light leading-none" style={serif}>
-            Carol Bouwer
+          <h1 className="text-5xl md:text-8xl text-white font-light leading-none" style={brandName}>
+            الملكة جولد
           </h1>
           <div className="flex flex-col gap-4 max-w-xs">
-            <p className="text-white/90 text-sm leading-relaxed">
-              Handcrafted in South Africa using the finest ethically sourced leathers. A tribute to heritage and style.
+            <p className="text-white/90 text-sm leading-relaxed text-start">
+              صُنعت يدوياً في جنوب أفريقيا باستخدام أجود أنواع الجلود من مصادر أخلاقية. تحية للتراث والأناقة.
             </p>
-            <Link href="#shop" className="text-white text-xs uppercase tracking-widest hover:underline">
-              Discover the collection →
+            <Link
+              href="#shop"
+              className="text-white text-xs uppercase tracking-widest hover:underline text-start"
+            >
+              اكتشف المجموعة
             </Link>
           </div>
         </div>

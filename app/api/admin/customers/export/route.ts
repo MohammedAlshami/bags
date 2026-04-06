@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import User from "@/models/User";
+import { sql } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -8,17 +7,22 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     await requireAdmin();
-    await dbConnect();
-    const users = await User.find({ role: "customer" })
-      .select("username email fullName address createdAt")
-      .sort({ createdAt: -1 })
-      .lean();
+    const users = await sql`
+      SELECT username, email, full_name, address, created_at
+      FROM users
+      WHERE role = 'customer'
+      ORDER BY created_at DESC
+    `;
     const header = "username,email,fullName,address,createdAt\n";
     const rows = users.map(
       (u) =>
-        [csvEsc(u.username), csvEsc(u.email ?? ""), csvEsc(u.fullName ?? ""), csvEsc(u.address ?? ""), (u as { createdAt?: Date }).createdAt?.toISOString() ?? ""].join(
-          ","
-        )
+        [
+          csvEsc(u.username as string),
+          csvEsc((u.email as string) ?? ""),
+          csvEsc((u.full_name as string) ?? ""),
+          csvEsc((u.address as string) ?? ""),
+          u.created_at ? new Date(u.created_at as string).toISOString() : "",
+        ].join(",")
     );
     const csv = header + rows.join("\n");
     return new NextResponse(csv, {

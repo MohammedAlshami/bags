@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import Collection from "@/models/Collection";
+import { sql } from "@/lib/db";
+import { mapCollection, type CollectionRow } from "@/lib/db-mappers";
 
 export const dynamic = "force-dynamic";
 
@@ -12,11 +12,16 @@ export async function GET(
   try {
     const { slug } = await params;
     if (!slug?.trim()) return NextResponse.json({ error: "Slug required" }, { status: 400 });
-    await dbConnect();
-    const doc = await Collection.findOne({ slug: slug.trim() }).lean();
-    if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json(doc);
-  } catch (err) {
+    const rows = await sql`
+      SELECT id, name, slug, image, description, story, material, quality, created_at, updated_at
+      FROM collections
+      WHERE slug = ${slug.trim()}
+      LIMIT 1
+    `;
+    const row = rows[0] as CollectionRow | undefined;
+    if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json(mapCollection(row));
+  } catch {
     return NextResponse.json({ error: "Failed to fetch collection" }, { status: 500 });
   }
 }

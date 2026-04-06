@@ -175,7 +175,7 @@ export default function AdminCollectionDetailPage() {
         </div>
 
         {showAddForm && (
-          <form onSubmit={addProduct} className="p-6 md:p-8 border-b border-black/10 bg-neutral-50/50">
+          <form onSubmit={addProduct} className="p-6 md:p-8 border-b border-black/10 bg-white">
             <h4 className="text-base font-light mb-4" style={serif}>New product in {collection.name}</h4>
             <div className="grid gap-4 max-w-2xl md:grid-cols-2">
               <div>
@@ -271,7 +271,7 @@ export default function AdminCollectionDetailPage() {
             </thead>
             <tbody>
               {products.map((p) => (
-                <tr key={p._id} className="border-b border-black/5">
+                <tr key={p._id} className="border-b border-black/5 bg-white">
                   <td className="p-4">
                     <Link href={`/admin/products`} className="text-black underline hover:no-underline">
                       {p.name}

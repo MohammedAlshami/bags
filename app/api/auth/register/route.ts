@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import User from "@/models/User";
+import { sql } from "@/lib/db";
 import { hash } from "bcryptjs";
 
 export const dynamic = "force-dynamic";
@@ -16,16 +15,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Username and password required" }, { status: 400 });
     }
 
-    await dbConnect();
-    const existing = await User.findOne({ username });
-    if (existing) {
+    const existing = await sql`
+      SELECT id FROM users WHERE username = ${username} LIMIT 1
+    `;
+    if (existing.length > 0) {
       return NextResponse.json({ error: "Username already taken" }, { status: 400 });
     }
 
     const hashed = await hash(password, 10);
-    await User.create({ username, password: hashed, role });
+    await sql`
+      INSERT INTO users (username, password, role)
+      VALUES (${username}, ${hashed}, ${role})
+    `;
     return NextResponse.json({ ok: true });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Registration failed" }, { status: 500 });
   }
 }

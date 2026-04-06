@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import Order from "@/models/Order";
+import { sql } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -14,23 +13,25 @@ export async function GET() {
     if (session.role !== "customer") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    await dbConnect();
-    const orders = await Order.find({ customer: session.sub })
-      .sort({ createdAt: -1 })
-      .lean();
+    const orders = await sql`
+      SELECT id, items, total, status, tracking_number, carrier, shipped_at, created_at
+      FROM orders
+      WHERE customer_id = ${session.sub}::uuid
+      ORDER BY created_at DESC
+    `;
     return NextResponse.json(
       orders.map((o) => ({
-        _id: o._id,
+        _id: o.id,
         status: o.status,
         total: o.total,
-        createdAt: o.createdAt,
-        trackingNumber: o.trackingNumber,
+        createdAt: o.created_at,
+        trackingNumber: o.tracking_number,
         carrier: o.carrier,
-        shippedAt: o.shippedAt,
+        shippedAt: o.shipped_at,
         items: o.items,
       }))
     );
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 });
   }
 }

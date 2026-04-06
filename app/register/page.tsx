@@ -1,71 +1,106 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-
-const serif = { fontFamily: "var(--font-cormorant), serif" };
-const bgWhite = { backgroundColor: "#ffffff" };
+import { sans, pagePaddingX } from "@/lib/page-theme";
 
 export default function RegisterPage() {
-  const [email, setEmail] = useState("");
+  const router = useRouter();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Placeholder: wire up to your auth provider later
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: username.trim(), password, role: "customer" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = typeof data.error === "string" ? data.error : "";
+        if (msg.includes("taken")) setError("اسم المستخدم مستخدم مسبقاً.");
+        else if (msg.includes("required")) setError("يرجى إدخال اسم المستخدم وكلمة المرور.");
+        else setError(msg || "تعذّر إنشاء الحساب.");
+        return;
+      }
+      router.push("/login");
+      router.refresh();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <main className="min-h-screen flex flex-col pt-24 pb-24 md:pt-32 md:pb-32" style={bgWhite}>
-      <div className="flex-1 flex flex-col items-center justify-center mx-10 md:mx-20 py-12">
-        <div className="w-full max-w-md">
-          <p className="text-[10px] uppercase tracking-[0.35em] text-gray-500">Account</p>
-          <h1 className="mt-2 text-4xl font-light text-neutral-900 md:text-5xl" style={serif}>
-            Register
-          </h1>
-          <form onSubmit={handleSubmit} className="mt-10 space-y-8">
-            <div>
-              <label htmlFor="register-email" className="block text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">
-                Email
-              </label>
-              <input
-                id="register-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                className="w-full border-b border-neutral-200 bg-transparent py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none transition-colors"
-              />
-            </div>
-            <div>
-              <label htmlFor="register-password" className="block text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">
-                Password
-              </label>
-              <input
-                id="register-password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full border-b border-neutral-200 bg-transparent py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none transition-colors"
-              />
-            </div>
-            <div className="flex flex-col gap-6">
-              <button
-                type="submit"
-                className="w-full border border-black bg-black py-4 text-sm font-medium text-white uppercase tracking-widest transition-colors hover:bg-neutral-800"
-              >
-                Create account
-              </button>
-              <p className="text-center text-sm text-gray-600">
-                Already have an account?{" "}
-                <Link href="/login" className="hover:text-black hover:underline">Sign in</Link>
-              </p>
-            </div>
-          </form>
-        </div>
+    <main className="flex min-h-screen flex-col bg-white pb-24 pt-24 md:pb-32 md:pt-32" dir="rtl">
+      <div className={`mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center py-12 ${pagePaddingX}`}>
+        <p className="text-xs text-neutral-500" style={sans}>
+          الحساب
+        </p>
+        <h1 className="mt-2 text-3xl font-medium text-neutral-900 md:text-4xl" style={sans}>
+          إنشاء حساب
+        </h1>
+
+        {error && (
+          <p className="mt-4 text-sm text-red-600" role="alert" style={sans}>
+            {error}
+          </p>
+        )}
+
+        <form onSubmit={handleSubmit} className="mt-10 space-y-8">
+          <div>
+            <label htmlFor="register-username" className="mb-2 block text-xs text-neutral-500" style={sans}>
+              اسم المستخدم
+            </label>
+            <input
+              id="register-username"
+              type="text"
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              className="w-full border-b border-neutral-200 bg-transparent py-3 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+              style={sans}
+            />
+          </div>
+          <div>
+            <label htmlFor="register-password" className="mb-2 block text-xs text-neutral-500" style={sans}>
+              كلمة المرور
+            </label>
+            <input
+              id="register-password"
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              className="w-full border-b border-neutral-200 bg-transparent py-3 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none"
+              style={sans}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-full bg-neutral-900 py-4 text-sm font-semibold text-white transition-colors hover:bg-neutral-800 disabled:opacity-50"
+            style={sans}
+          >
+            {loading ? "جاري الإنشاء…" : "إنشاء الحساب"}
+          </button>
+        </form>
+
+        <p className="mt-10 text-center text-sm text-neutral-600" style={sans}>
+          لديك حساب؟{" "}
+          <Link href="/login" className="font-medium text-neutral-900 underline underline-offset-2 hover:no-underline">
+            تسجيل الدخول
+          </Link>
+        </p>
       </div>
     </main>
   );

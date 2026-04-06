@@ -1,13 +1,3 @@
-export const IMAGES = {
-  tote: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&q=85&fit=crop",
-  crossbody: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&q=85&fit=crop",
-  weekender: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&q=85&fit=crop",
-  satchel: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&q=85&fit=crop",
-  bucket: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&q=85&fit=crop",
-  shoulder: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=85&fit=crop",
-  eveningMini: "https://i.ebayimg.com/images/g/6t4AAOSwtBlkCZ5i/s-l1200.jpg",
-} as const;
-
 export type Product = {
   name: string;
   price: string;
@@ -16,19 +6,102 @@ export type Product = {
   slug: string;
 };
 
+/** Seeded catalog — Arabic copy, prices in ر.س, images under /public */
 export const PRODUCTS: Product[] = [
-  { name: "The Signature Tote", price: "$1,280", category: "Handbags", image: IMAGES.tote, slug: "signature-tote" },
-  { name: "Leather Crossbody", price: "$980", category: "Handbags", image: IMAGES.crossbody, slug: "leather-crossbody" },
-  { name: "Travel Weekender", price: "$1,450", category: "Travel", image: IMAGES.weekender, slug: "travel-weekender" },
-  { name: "Evening Clutch", price: "$720", category: "Evening", image: IMAGES.tote, slug: "evening-clutch" },
-  { name: "Classic Satchel", price: "$1,120", category: "Handbags", image: IMAGES.satchel, slug: "classic-satchel" },
-  { name: "Leather Bucket Bag", price: "$890", category: "Handbags", image: IMAGES.bucket, slug: "leather-bucket-bag" },
-  { name: "Structured Shoulder", price: "$1,050", category: "Handbags", image: IMAGES.shoulder, slug: "structured-shoulder" },
-  { name: "Mini Tote", price: "$650", category: "Handbags", image: IMAGES.tote, slug: "mini-tote" },
-  { name: "City Crossbody", price: "$780", category: "Handbags", image: IMAGES.crossbody, slug: "city-crossbody" },
-  { name: "Overnight Bag", price: "$1,380", category: "Travel", image: IMAGES.weekender, slug: "overnight-bag" },
-  { name: "Evening Mini", price: "$580", category: "Evening", image: IMAGES.eveningMini, slug: "evening-mini" },
-  { name: "Woven Tote", price: "$920", category: "Handbags", image: IMAGES.shoulder, slug: "woven-tote" },
+  {
+    name: "خلطة أعشاب طبيعية",
+    price: "242.00 ر.س",
+    category: "أعشاب",
+    image: "/losing_weigh_herbs.png",
+    slug: "signature-tote",
+  },
+  {
+    name: "تونر أساسي",
+    price: "189.00 ر.س",
+    category: "زيوت",
+    image: "/Item pictures/basket_bag-removebg-preview.png",
+    slug: "leather-crossbody",
+  },
+  {
+    name: "سيروم نضارة البشرة",
+    price: "119.00 ر.س",
+    category: "سيروم",
+    image: "/Item pictures/Black_bag-removebg-preview.png",
+    slug: "travel-weekender",
+  },
+  {
+    name: "كريم بيو ريتينول",
+    price: "207.00 ر.س",
+    category: "كريم",
+    image: "/Item pictures/Blue_bag-removebg-preview.png",
+    slug: "evening-clutch",
+  },
+  {
+    name: "حقيبة يومية كلاسيكية",
+    price: "298.00 ر.س",
+    category: "عناية",
+    image: "/Item pictures/2nd_Green_Bag-removebg-preview.png",
+    slug: "classic-satchel",
+  },
+  {
+    name: "ماسك ترطيب عميق",
+    price: "165.00 ر.س",
+    category: "ماسك",
+    image: "/Item pictures/orange_bag-removebg-preview.png",
+    slug: "leather-bucket-bag",
+  },
+  {
+    name: "سيروم فيتامين سي",
+    price: "210.00 ر.س",
+    category: "سيروم",
+    image: "/Item pictures/snake_skin_bag-removebg-preview.png",
+    slug: "structured-shoulder",
+  },
+  {
+    name: "غسول لطيف للوجه",
+    price: "95.00 ر.س",
+    category: "تنظيف",
+    image: "/losing_weigh_herbs.png",
+    slug: "mini-tote",
+  },
+  {
+    name: "زيت أرغان للبشرة",
+    price: "178.00 ر.س",
+    category: "زيوت",
+    image: "/Item pictures/basket_bag-removebg-preview.png",
+    slug: "city-crossbody",
+  },
+  {
+    name: "مجموعة سفر للعناية",
+    price: "349.00 ر.س",
+    category: "مجموعات",
+    image: "/Item pictures/Black_bag-removebg-preview.png",
+    slug: "overnight-bag",
+  },
+  {
+    name: "كريم ليلي مجدد",
+    price: "156.00 ر.س",
+    category: "كريم",
+    image: "/Item pictures/Blue_bag-removebg-preview.png",
+    slug: "evening-mini",
+  },
+  {
+    name: "تونر مهدئ بالورد",
+    price: "132.00 ر.س",
+    category: "تونر",
+    image: "/Item pictures/2nd_Green_Bag-removebg-preview.png",
+    slug: "woven-tote",
+  },
 ];
 
-export const CATEGORIES = ["Handbags", "Travel", "Evening"] as const;
+export const CATEGORIES = [
+  "أعشاب",
+  "زيوت",
+  "سيروم",
+  "كريم",
+  "عناية",
+  "ماسك",
+  "تنظيف",
+  "مجموعات",
+  "تونر",
+] as const;

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import Collection from "@/models/Collection";
-import Product from "@/models/Product";
+import { sql } from "@/lib/db";
+import { mapCollection, type CollectionRow } from "@/lib/db-mappers";
 import { requireAdmin } from "@/lib/auth";
-import mongoose from "mongoose";
+import { isUuid } from "@/lib/id";
 
 export const dynamic = "force-dynamic";
 
@@ -13,14 +12,19 @@ export async function GET(
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
     const { id } = await params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!isUuid(id)) {
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
-    const doc = await Collection.findById(id).lean();
+    const rows = await sql`
+      SELECT id, name, slug, image, description, story, material, quality, created_at, updated_at
+      FROM collections
+      WHERE id = ${id}::uuid
+      LIMIT 1
+    `;
+    const doc = rows[0] as CollectionRow | undefined;
     if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json(doc);
+    return NextResponse.json(mapCollection(doc));
   } catch (err) {
     const e = err as { status?: number };
     if (e.status === 403) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -34,23 +38,48 @@ export async function PUT(
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
     const { id } = await params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!isUuid(id)) {
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
     const body = await request.json();
-    const updates: Record<string, string> = {};
-    if (body.name != null) updates.name = String(body.name).trim();
-    if (body.slug != null) updates.slug = String(body.slug).trim();
-    if (body.image != null) updates.image = String(body.image).trim();
-    if (body.description != null) updates.description = String(body.description).trim();
-    if (body.story != null) updates.story = String(body.story).trim();
-    if (body.material != null) updates.material = String(body.material).trim();
-    if (body.quality != null) updates.quality = String(body.quality).trim();
-    const doc = await Collection.findByIdAndUpdate(id, { $set: updates }, { new: true }).lean();
-    if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json(doc);
+
+    const curRows = await sql`
+      SELECT name, slug, image, description, story, material, quality
+      FROM collections WHERE id = ${id}::uuid LIMIT 1
+    `;
+    const cur = curRows[0];
+    if (!cur) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    const name = body.name != null ? String(body.name).trim() : cur.name;
+    const slug = body.slug != null ? String(body.slug).trim() : cur.slug;
+    const image = body.image != null ? String(body.image).trim() : cur.image;
+    const description = body.description != null ? String(body.description).trim() : cur.description;
+    const story = body.story != null ? String(body.story).trim() : cur.story;
+    const material = body.material != null ? String(body.material).trim() : cur.material;
+    const quality = body.quality != null ? String(body.quality).trim() : cur.quality;
+
+    if (slug !== cur.slug) {
+      const clash = await sql`
+        SELECT id FROM collections WHERE slug = ${slug} AND id <> ${id}::uuid LIMIT 1
+      `;
+      if (clash.length > 0) return NextResponse.json({ error: "Slug already taken" }, { status: 400 });
+    }
+
+    const updated = await sql`
+      UPDATE collections SET
+        name = ${name},
+        slug = ${slug},
+        image = ${image},
+        description = ${description},
+        story = ${story},
+        material = ${material},
+        quality = ${quality},
+        updated_at = now()
+      WHERE id = ${id}::uuid
+      RETURNING id, name, slug, image, description, story, material, quality, created_at, updated_at
+    `;
+    return NextResponse.json(mapCollection(updated[0] as CollectionRow));
   } catch (err) {
     const e = err as { status?: number };
     if (e.status === 403) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -64,13 +93,18 @@ export async function DELETE(
 ) {
   try {
     await requireAdmin();
-    await dbConnect();
     const { id } = await params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!isUuid(id)) {
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
-    await Product.updateMany({ collection: id }, { $set: { collection: null } });
-    await Collection.findByIdAndDelete(id);
+    await sql`
+      UPDATE products SET collection_id = NULL, updated_at = now()
+      WHERE collection_id = ${id}::uuid
+    `;
+    const deleted = await sql`
+      DELETE FROM collections WHERE id = ${id}::uuid RETURNING id
+    `;
+    if (deleted.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch (err) {
     const e = err as { status?: number };

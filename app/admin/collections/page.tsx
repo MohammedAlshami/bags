@@ -2,10 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { sans } from "@/lib/page-theme";
+import { adminApiErrorAr } from "@/lib/admin-ar";
 
-const serif = { fontFamily: "var(--font-cormorant), serif" };
-
-type Collection = { _id: string; name: string; slug: string; image?: string; description?: string; story?: string; material?: string; quality?: string };
+type Collection = {
+  _id: string;
+  name: string;
+  slug: string;
+  image?: string;
+  description?: string;
+  story?: string;
+  material?: string;
+  quality?: string;
+};
 
 export default function AdminCollectionsPage() {
   const [list, setList] = useState<Collection[]>([]);
@@ -22,7 +31,6 @@ export default function AdminCollectionsPage() {
   const [quality, setQuality] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [productCounts, setProductCounts] = useState<Record<string, number>>({});
 
   const fetchList = async () => {
     try {
@@ -32,7 +40,7 @@ export default function AdminCollectionsPage() {
       setList(data);
       setError(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error");
+      setError(adminApiErrorAr(e instanceof Error ? e.message : "Error"));
     } finally {
       setLoading(false);
     }
@@ -78,12 +86,13 @@ export default function AdminCollectionsPage() {
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        throw new Error(d.error || "Failed to save");
+        const raw = typeof d.error === "string" ? d.error : "";
+        throw new Error(raw || "Failed to save");
       }
       setShowForm(false);
       fetchList();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error");
+      setError(adminApiErrorAr(e instanceof Error ? e.message : "Error"));
     } finally {
       setSaving(false);
     }
@@ -97,58 +106,78 @@ export default function AdminCollectionsPage() {
       const res = await fetch("/api/admin/upload", { method: "POST", body: form, credentials: "include" });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        throw new Error(d.error || "Upload failed");
+        const raw = typeof d.error === "string" ? d.error : "";
+        throw new Error(raw || "Upload failed");
       }
       const { url } = await res.json();
       setImage(url);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed");
+      setError(adminApiErrorAr(e instanceof Error ? e.message : "Upload failed"));
     } finally {
       setUploading(false);
     }
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Delete this collection? Products in it will move to General.")) return;
+    if (!confirm("حذف هذه المجموعة؟ تُنقل منتجاتها إلى المجموعة الافتراضية.")) return;
     try {
       const res = await fetch(`/api/admin/collections/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete");
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        const raw = typeof d.error === "string" ? d.error : "";
+        throw new Error(raw || "Failed to delete");
+      }
       fetchList();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error");
+      setError(adminApiErrorAr(e instanceof Error ? e.message : "Error"));
     }
   };
 
-  if (loading) return <p className="text-neutral-500" style={serif}>Loading…</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
+  if (loading) {
+    return (
+      <p className="text-neutral-500" style={sans} dir="rtl">
+        جاري التحميل…
+      </p>
+    );
+  }
+  if (error) {
+    return (
+      <p className="text-red-600" style={sans} dir="rtl">
+        {error}
+      </p>
+    );
+  }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-light text-neutral-900" style={serif}>Collections</h2>
+    <div dir="rtl" style={sans}>
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <h2 className="text-xl font-medium text-neutral-900">المجموعات</h2>
         <button
           type="button"
           onClick={openCreate}
-          className="px-4 py-2 bg-black text-white text-sm uppercase tracking-widest hover:bg-neutral-800"
+          className="px-4 py-2 bg-black text-white text-sm hover:bg-neutral-800"
         >
-          Add collection
+          إضافة مجموعة
         </button>
       </div>
 
       {showForm && (
         <div className="bg-white border border-black/10 rounded-sm p-6 mb-8">
-          <h3 className="text-lg font-light mb-4" style={serif}>{editing ? "Edit collection" : "New collection"}</h3>
+          <h3 className="text-lg font-medium mb-4">{editing ? "تعديل مجموعة" : "مجموعة جديدة"}</h3>
           <div className="grid gap-4 max-w-md">
             <div>
-              <label className="block text-xs uppercase tracking-widest text-neutral-500 mb-1">Name</label>
+              <label className="block text-xs text-neutral-500 mb-1">الاسم</label>
               <input
                 value={name}
-                onChange={(e) => { setName(e.target.value); if (!editing) setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")); }}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (!editing) setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""));
+                }}
                 className="w-full border border-neutral-200 px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-widest text-neutral-500 mb-1">Slug</label>
+              <label className="block text-xs text-neutral-500 mb-1">المسار (slug)</label>
               <input
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
@@ -156,7 +185,7 @@ export default function AdminCollectionsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-widest text-neutral-500 mb-1">Cover image</label>
+              <label className="block text-xs text-neutral-500 mb-1">صورة الغلاف</label>
               <div className="flex gap-2 items-center flex-wrap">
                 <input
                   type="file"
@@ -169,17 +198,17 @@ export default function AdminCollectionsPage() {
                     e.target.value = "";
                   }}
                 />
-                {uploading && <span className="text-neutral-500 text-sm">Uploading…</span>}
+                {uploading && <span className="text-neutral-500 text-sm">جاري الرفع…</span>}
               </div>
               <input
                 value={image}
                 onChange={(e) => setImage(e.target.value)}
                 className="w-full border border-neutral-200 px-3 py-2 text-sm mt-2"
-                placeholder="Or paste image URL"
+                placeholder="أو الصق رابط الصورة"
               />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-widest text-neutral-500 mb-1">Description (short / hero)</label>
+              <label className="block text-xs text-neutral-500 mb-1">وصف قصير (ظهور في البطاقة / الهيرو)</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -188,41 +217,41 @@ export default function AdminCollectionsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-widest text-neutral-500 mb-1">Story section</label>
+              <label className="block text-xs text-neutral-500 mb-1">قسم القصة</label>
               <textarea
                 value={story}
                 onChange={(e) => setStory(e.target.value)}
                 className="w-full border border-neutral-200 px-3 py-2 text-sm"
                 rows={4}
-                placeholder="The story behind this collection…"
+                placeholder="قصة المجموعة…"
               />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-widest text-neutral-500 mb-1">Material section</label>
+              <label className="block text-xs text-neutral-500 mb-1">قسم المواد</label>
               <textarea
                 value={material}
                 onChange={(e) => setMaterial(e.target.value)}
                 className="w-full border border-neutral-200 px-3 py-2 text-sm"
                 rows={4}
-                placeholder="Leather, hardware, sourcing…"
+                placeholder="المواد والمكوّنات…"
               />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-widest text-neutral-500 mb-1">Quality section</label>
+              <label className="block text-xs text-neutral-500 mb-1">قسم الجودة</label>
               <textarea
                 value={quality}
                 onChange={(e) => setQuality(e.target.value)}
                 className="w-full border border-neutral-200 px-3 py-2 text-sm"
                 rows={4}
-                placeholder="Craft, durability, care…"
+                placeholder="الجودة والعناية…"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button type="button" onClick={save} disabled={saving} className="px-4 py-2 bg-black text-white text-sm disabled:opacity-50">
-                {saving ? "Saving…" : "Save"}
+                {saving ? "جاري الحفظ…" : "حفظ"}
               </button>
               <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border border-black text-sm">
-                Cancel
+                إلغاء
               </button>
             </div>
           </div>
@@ -232,34 +261,49 @@ export default function AdminCollectionsPage() {
       <div className="bg-white border border-black/10 rounded-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-black/10 text-left">
-              <th className="p-4 font-medium">Name</th>
-              <th className="p-4 font-medium">Slug</th>
-              <th className="p-4 font-medium">Description</th>
-              <th className="p-4 font-medium">Actions</th>
+            <tr className="border-b border-black/10 text-right">
+              <th className="p-4 font-medium">الاسم</th>
+              <th className="p-4 font-medium">المسار</th>
+              <th className="p-4 font-medium">الوصف</th>
+              <th className="p-4 font-medium">إجراءات</th>
             </tr>
           </thead>
           <tbody>
             {list.map((c) => (
-              <tr key={c._id} className="border-b border-black/5 hover:bg-black/[0.02]">
+              <tr key={c._id} className="border-b border-black/5 bg-white">
                 <td className="p-4">
                   <Link href={`/admin/collections/${c._id}`} className="text-black font-medium underline hover:no-underline">
                     {c.name}
                   </Link>
                 </td>
-                <td className="p-4 text-neutral-600">{c.slug}</td>
+                <td className="p-4 text-neutral-600 font-mono text-left" dir="ltr">
+                  {c.slug}
+                </td>
                 <td className="p-4 text-neutral-600 max-w-xs truncate">{c.description || "—"}</td>
                 <td className="p-4">
-                  <Link href={`/admin/collections/${c._id}`} className="text-black underline mr-3">View & add products</Link>
-                  <button type="button" onClick={(e) => { e.preventDefault(); openEdit(c); }} className="text-black underline mr-3">Edit</button>
-                  <button type="button" onClick={() => remove(c._id)} className="text-red-600 underline">Delete</button>
+                  <Link href={`/admin/collections/${c._id}`} className="text-black underline ms-3">
+                    عرض وإضافة منتجات
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openEdit(c);
+                    }}
+                    className="text-black underline ms-3"
+                  >
+                    تعديل
+                  </button>
+                  <button type="button" onClick={() => remove(c._id)} className="text-red-600 underline">
+                    حذف
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
         {list.length === 0 && (
-          <p className="p-8 text-neutral-500 text-center">No collections. Add one or use General for products.</p>
+          <p className="p-8 text-neutral-500 text-center">لا توجد مجموعات. أضف مجموعة أو استخدم الافتراضية للمنتجات.</p>
         )}
       </div>
     </div>

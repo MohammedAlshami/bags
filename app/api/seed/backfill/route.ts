@@ -1,78 +1,86 @@
-import dbConnect from "@/lib/mongodb";
-import User from "@/models/User";
-import Order from "@/models/Order";
+import { sql } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { SEED_CUSTOMER_PROFILE, SEED_SHIPPING_ADDRESS } from "@/lib/seed-data";
 
 export const dynamic = "force-dynamic";
 
 const SEED_CUSTOMER_USERNAME = "customer";
 
-const SEED_ADDRESS = "123 Main Street\nCape Town 8001\nSouth Africa";
-const SEED_PHONE = "+27 21 123 4567";
-const SEED_SHIPPING_ADDRESS = {
-  fullName: "Seed Customer",
-  line1: "123 Main Street",
-  line2: "",
-  city: "Cape Town",
-  state: "Western Cape",
-  postCode: "8001",
-  country: "South Africa",
-};
-
 /** Backfill shipping/address on existing seed customer and their orders. Does not delete or change products/landing. */
 export async function POST() {
   try {
-    await dbConnect();
-
-    const seedCustomer = await User.findOne({
-      username: SEED_CUSTOMER_USERNAME,
-      role: "customer",
-    });
-    if (!seedCustomer) {
+    const seedRows = await sql`
+      SELECT id FROM users WHERE username = ${SEED_CUSTOMER_USERNAME} AND role = 'customer' LIMIT 1
+    `;
+    if (seedRows.length === 0) {
       return NextResponse.json(
-        { ok: false, error: "Seed customer not found. Run full seed first." },
+        { ok: false, error: "لم يُعثر على العميل التجريبي. شغّل الإدخال الكامل أولاً." },
         { status: 400 }
       );
     }
+    const customerId = seedRows[0].id as string;
 
-    const customerId = seedCustomer._id;
+    await sql`
+      UPDATE users SET
+        email = ${SEED_CUSTOMER_PROFILE.email},
+        full_name = ${SEED_CUSTOMER_PROFILE.fullName},
+        address = ${SEED_CUSTOMER_PROFILE.address},
+        phone = ${SEED_CUSTOMER_PROFILE.phone},
+        updated_at = now()
+      WHERE id = ${customerId}::uuid
+    `;
 
-    await User.updateOne(
-      { _id: customerId },
-      { $set: { address: SEED_ADDRESS, phone: SEED_PHONE } }
-    );
+    const orders = await sql`
+      SELECT id, shipping_address, status, tracking_number, carrier, shipped_at
+      FROM orders
+      WHERE customer_id = ${customerId}::uuid
+    `;
 
-    const orders = await Order.find({ customer: customerId }).lean();
     let ordersUpdated = 0;
     for (const order of orders) {
+      const o = order as {
+        id: string;
+        shipping_address?: { line1?: string; city?: string; country?: string };
+        status?: string;
+        tracking_number?: string;
+        carrier?: string;
+        shipped_at?: string | null;
+      };
       const needsShipping =
-        !order.shippingAddress?.line1 &&
-        !order.shippingAddress?.city &&
-        !order.shippingAddress?.country;
+        !o.shipping_address?.line1 &&
+        !o.shipping_address?.city &&
+        !o.shipping_address?.country;
       const needsTracking =
-        order.status === "shipped" && !order.trackingNumber?.trim();
+        o.status === "shipped" && !o.tracking_number?.trim();
 
-      const updates: Record<string, unknown> = {};
-      if (needsShipping) updates.shippingAddress = SEED_SHIPPING_ADDRESS;
-      if (needsTracking) {
-        updates.trackingNumber = "CBW123456789ZA";
-        updates.carrier = "DHL";
-        if (!order.shippedAt) updates.shippedAt = new Date();
-      }
-      if (Object.keys(updates).length > 0) {
-        await Order.updateOne({ _id: order._id }, { $set: updates });
-        ordersUpdated += 1;
-      }
+      if (!needsShipping && !needsTracking) continue;
+
+      const shipping_address = needsShipping ? SEED_SHIPPING_ADDRESS : o.shipping_address;
+      const tracking_number = needsTracking ? "TRK-SA-9876543210" : (o.tracking_number ?? "");
+      const carrier = needsTracking ? "أرامكس" : (o.carrier ?? "");
+      const shipped_at =
+        needsTracking && !o.shipped_at ? new Date().toISOString() : o.shipped_at ?? null;
+
+      await sql`
+        UPDATE orders SET
+          shipping_address = ${JSON.stringify(shipping_address)}::jsonb,
+          tracking_number = ${tracking_number},
+          carrier = ${carrier},
+          shipped_at = ${shipped_at},
+          updated_at = now()
+        WHERE id = ${o.id}::uuid
+      `;
+      ordersUpdated += 1;
     }
 
     return NextResponse.json({
       ok: true,
-      message: "Backfill complete",
+      message: "تم التحديث",
       customerUpdated: true,
       ordersUpdated,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Backfill failed";
+    const message = err instanceof Error ? err.message : "فشل التحديث";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

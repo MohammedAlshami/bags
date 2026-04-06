@@ -22,63 +22,74 @@ if (existsSync(envPath)) {
 }
 
 const SEED_CUSTOMER_USERNAME = "customer";
-const SEED_ADDRESS = "123 Main Street\nCape Town 8001\nSouth Africa";
-const SEED_PHONE = "+27 21 123 4567";
-const SEED_SHIPPING_ADDRESS = {
-  fullName: "Seed Customer",
-  line1: "123 Main Street",
-  line2: "",
-  city: "Cape Town",
-  state: "Western Cape",
-  postCode: "8001",
-  country: "South Africa",
-};
 
 async function main() {
-  const mongoose = await import("mongoose");
-  const uri = process.env.MONGODB_URI;
-  if (!uri) throw new Error("MONGODB_URI not set in .env.local");
+  const { sql } = await import("../lib/db");
+  const { SEED_CUSTOMER_PROFILE, SEED_SHIPPING_ADDRESS } = await import("../lib/seed-data");
+  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set in .env.local");
 
-  await mongoose.default.connect(uri);
-  const User = (await import("../models/User")).default;
-  const Order = (await import("../models/Order")).default;
-
-  const seedCustomer = await User.findOne({
-    username: SEED_CUSTOMER_USERNAME,
-    role: "customer",
-  });
-  if (!seedCustomer) {
-    console.error("Seed customer not found. Run full seed first.");
+  const seedRows = await sql`
+    SELECT id FROM users WHERE username = ${SEED_CUSTOMER_USERNAME} AND role = 'customer' LIMIT 1
+  `;
+  if (seedRows.length === 0) {
+    console.error("لم يُعثر على العميل التجريبي. شغّل الإدخال الكامل أولاً.");
     process.exit(1);
   }
+  const customerId = seedRows[0].id as string;
 
-  await User.updateOne(
-    { _id: seedCustomer._id },
-    { $set: { address: SEED_ADDRESS, phone: SEED_PHONE } }
-  );
-  console.log("Customer address and phone updated.");
+  await sql`
+    UPDATE users SET
+      email = ${SEED_CUSTOMER_PROFILE.email},
+      full_name = ${SEED_CUSTOMER_PROFILE.fullName},
+      address = ${SEED_CUSTOMER_PROFILE.address},
+      phone = ${SEED_CUSTOMER_PROFILE.phone},
+      updated_at = now()
+    WHERE id = ${customerId}::uuid
+  `;
+  console.log("تم تحديث بيانات العميل التجريبي.");
 
-  const orders = await Order.find({ customer: seedCustomer._id }).lean();
+  const orders = await sql`
+    SELECT id, shipping_address, status, tracking_number, carrier, shipped_at
+    FROM orders
+    WHERE customer_id = ${customerId}::uuid
+  `;
+
   let ordersUpdated = 0;
   for (const order of orders) {
-    const o = order as { _id: unknown; shippingAddress?: { line1?: string; city?: string; country?: string }; status?: string; trackingNumber?: string; shippedAt?: Date };
+    const o = order as {
+      id: string;
+      shipping_address?: { line1?: string; city?: string; country?: string };
+      status?: string;
+      tracking_number?: string;
+      carrier?: string;
+      shipped_at?: string | null;
+    };
     const needsShipping =
-      !o.shippingAddress?.line1 && !o.shippingAddress?.city && !o.shippingAddress?.country;
-    const needsTracking = o.status === "shipped" && !o.trackingNumber?.trim();
-    const updates: Record<string, unknown> = {};
-    if (needsShipping) updates.shippingAddress = SEED_SHIPPING_ADDRESS;
-    if (needsTracking) {
-      updates.trackingNumber = "CBW123456789ZA";
-      updates.carrier = "DHL";
-      if (!o.shippedAt) updates.shippedAt = new Date();
-    }
-    if (Object.keys(updates).length > 0) {
-      await Order.updateOne({ _id: o._id }, { $set: updates });
-      ordersUpdated += 1;
-    }
+      !o.shipping_address?.line1 &&
+      !o.shipping_address?.city &&
+      !o.shipping_address?.country;
+    const needsTracking = o.status === "shipped" && !o.tracking_number?.trim();
+
+    if (!needsShipping && !needsTracking) continue;
+
+    const shipping_address = needsShipping ? SEED_SHIPPING_ADDRESS : o.shipping_address;
+    const tracking_number = needsTracking ? "TRK-SA-9876543210" : (o.tracking_number ?? "");
+    const carrier = needsTracking ? "أرامكس" : (o.carrier ?? "");
+    const shipped_at =
+      needsTracking && !o.shipped_at ? new Date().toISOString() : o.shipped_at ?? null;
+
+    await sql`
+      UPDATE orders SET
+        shipping_address = ${JSON.stringify(shipping_address)}::jsonb,
+        tracking_number = ${tracking_number},
+        carrier = ${carrier},
+        shipped_at = ${shipped_at},
+        updated_at = now()
+      WHERE id = ${o.id}::uuid
+    `;
+    ordersUpdated += 1;
   }
-  console.log("Orders updated:", ordersUpdated);
-  await mongoose.default.disconnect();
+  console.log("الطلبات المحدّثة:", ordersUpdated);
 }
 
 main().catch((err) => {

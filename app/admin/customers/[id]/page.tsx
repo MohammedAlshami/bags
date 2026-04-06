@@ -146,7 +146,7 @@ export default function AdminCustomerDetailPage() {
             </thead>
             <tbody>
               {orders.map((o) => (
-                <tr key={o._id} className="border-b border-black/5">
+                <tr key={o._id} className="border-b border-black/5 bg-white">
                   <td className="p-4 text-neutral-600">
                     {o.createdAt
                       ? new Date(o.createdAt).toLocaleDateString(undefined, { dateStyle: "medium" })

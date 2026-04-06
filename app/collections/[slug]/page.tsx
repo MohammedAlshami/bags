@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { sans, pagePaddingX, IMAGE_WELL } from "@/lib/page-theme";
 
 type CollectionDoc = {
   _id: string;
@@ -17,32 +18,38 @@ type CollectionDoc = {
 };
 type ProductItem = { name: string; price: string; category: string; image: string; slug: string };
 
-const serif = { fontFamily: "var(--font-cormorant), serif" };
-const bgWhite = { backgroundColor: "#ffffff" };
-
 const DEFAULT_STORY =
-  "Each piece in this collection is designed for the modern journey—rooted in heritage and made to last. We believe in fewer, better things.";
+  "كل منتج في هذه المجموعة يُختار بعناية ليدعم روتينكِ اليومي — بأسلوب بسيط وأنيق يدوم.";
 const DEFAULT_MATERIAL =
-  "Full-grain leather, ethically sourced. Solid brass hardware. Every detail is considered, from the hide to the finish. Handmade in Cape Town.";
+  "مكوّنات موثوقة ومصادر نعتمد عليها بعناية. نركز على التفاصيل من التركيبة إلى التغليف.";
 const DEFAULT_QUALITY =
-  "Crafted to age beautifully. Reinforced stitching, careful edge finishing, and a commitment to durability without compromise.";
+  "نلتزم بالجودة والشفافية، ونقدّم لكِ دعماً واضحاً في الشحن والإرجاع.";
 
 function ProductCard({ name, price, category, image, slug }: ProductItem) {
   return (
-    <Link href={`/product/${slug}`} className="group block">
-      <div className="relative aspect-[3/4] overflow-hidden">
+    <Link href={`/product/${slug}`} className="group flex flex-col" dir="rtl">
+      <div
+        className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl p-4 sm:p-5"
+        style={{ backgroundColor: IMAGE_WELL }}
+      >
         <Image
           src={image}
           alt={name}
           fill
-          className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="object-contain object-center p-3 transition-transform duration-300 group-hover:scale-[1.03] sm:p-4"
+          sizes="(max-width: 768px) 50vw, 33vw"
         />
       </div>
-      <div className="mt-4 flex flex-col gap-0.5">
-        <span className="text-[10px] uppercase tracking-[0.2em] text-gray-500">{category}</span>
-        <span className="text-sm font-medium text-black/90">{name}</span>
-        <span className="text-sm text-black/60">{price}</span>
+      <div className="mt-4 flex flex-col gap-1 text-center">
+        <span className="text-xs text-neutral-500" style={sans}>
+          {category}
+        </span>
+        <span className="text-sm font-semibold text-neutral-900" style={sans}>
+          {name}
+        </span>
+        <span className="text-sm text-neutral-800" style={sans}>
+          {price}
+        </span>
       </div>
     </Link>
   );
@@ -62,29 +69,22 @@ function Section({
   const isDark = theme === "dark";
   return (
     <section
-      className={`py-24 md:py-32 px-6 md:px-12 ${
-        isDark ? "bg-neutral-900 text-white" : "bg-white text-black"
-      }`}
+      className={`px-6 py-20 md:px-12 md:py-28 ${isDark ? "bg-neutral-900 text-white" : "bg-white text-neutral-900"}`}
+      dir="rtl"
     >
-      <div className="max-w-screen-xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12">
-        <div className="md:col-span-3 md:sticky md:top-32 self-start">
-          <span
-            className={`text-xs font-bold tracking-widest uppercase block mb-2 ${
-              isDark ? "text-white/50" : "text-black/40"
-            }`}
-          >
+      <div className="mx-auto grid max-w-screen-xl grid-cols-1 gap-10 md:grid-cols-12 md:gap-12">
+        <div className="md:sticky md:top-32 md:col-span-4 md:self-start lg:col-span-3">
+          <span className={`mb-2 block text-xs font-semibold ${isDark ? "text-white/50" : "text-neutral-400"}`} style={sans}>
             {number}
           </span>
-          <h2 className="text-2xl md:text-3xl font-light italic" style={serif}>
+          <h2 className="text-2xl font-medium md:text-3xl" style={sans}>
             {title}
           </h2>
         </div>
-        <div className="md:col-span-8 md:col-start-5">
+        <div className="md:col-span-8 md:col-start-5 lg:col-span-8 lg:col-start-5">
           <p
-            className={`text-xl md:text-2xl font-light leading-relaxed whitespace-pre-line ${
-              isDark ? "text-white/90" : "text-black/80"
-            }`}
-            style={serif}
+            className={`text-lg font-normal leading-relaxed md:text-xl ${isDark ? "text-white/90" : "text-neutral-600"}`}
+            style={sans}
           >
             {content}
           </p>
@@ -104,8 +104,8 @@ export default function CollectionPage() {
   const fetchCollection = useCallback(() => {
     if (!slug) return Promise.resolve(null);
     return fetch(`/api/collections/${encodeURIComponent(slug)}`).then((res) => {
-      if (res.status === 404) throw new Error("Collection not found");
-      if (!res.ok) throw new Error("Failed to load collection");
+      if (res.status === 404) throw new Error("المجموعة غير موجودة");
+      if (!res.ok) throw new Error("تعذّر تحميل المجموعة");
       return res.json();
     });
   }, [slug]);
@@ -114,7 +114,7 @@ export default function CollectionPage() {
     if (!slug) return Promise.resolve([]);
     return fetch(`/api/products?collection=${encodeURIComponent(slug)}`)
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to load products");
+        if (!res.ok) throw new Error("تعذّر تحميل المنتجات");
         return res.json();
       })
       .then((data: ProductItem[]) => data);
@@ -122,7 +122,7 @@ export default function CollectionPage() {
 
   useEffect(() => {
     if (!slug) {
-      setLoadError("Invalid collection");
+      setLoadError("رابط غير صالح");
       return;
     }
     setCollection(null);
@@ -133,25 +133,17 @@ export default function CollectionPage() {
         setCollection(col);
         setProducts(Array.isArray(prods) ? prods : []);
       })
-      .catch((err) =>
-        setLoadError(err instanceof Error ? err.message : "Something went wrong")
-      );
+      .catch((err) => setLoadError(err instanceof Error ? err.message : "حدث خطأ"));
   }, [slug, fetchCollection, fetchProducts]);
 
   if (loadError) {
     return (
-      <main
-        className="min-h-screen pt-24 pb-24 flex flex-col items-center justify-center gap-4"
-        style={bgWhite}
-      >
-        <p className="text-neutral-600" style={serif}>
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white pb-24 pt-24" dir="rtl">
+        <p className="text-neutral-600" style={sans}>
           {loadError}
         </p>
-        <Link
-          href="/collections"
-          className="text-sm underline text-neutral-500 hover:text-black"
-        >
-          Back to collections
+        <Link href="/collections" className="text-sm text-neutral-500 underline hover:text-black" style={sans}>
+          العودة إلى المجموعات
         </Link>
       </main>
     );
@@ -159,34 +151,24 @@ export default function CollectionPage() {
 
   if (collection === null) {
     return (
-      <main
-        className="min-h-screen pt-24 pb-24 flex items-center justify-center"
-        style={bgWhite}
-      >
-        <p className="text-neutral-500" style={serif}>
-          Loading…
+      <main className="flex min-h-screen items-center justify-center bg-white pb-24 pt-24" dir="rtl">
+        <p className="text-neutral-500" style={sans}>
+          جاري التحميل…
         </p>
       </main>
     );
   }
 
   const productList = products ?? [];
-  const storyText =
-    collection.story && collection.story.trim()
-      ? collection.story
-      : DEFAULT_STORY;
-  const materialText =
-    collection.material && collection.material.trim()
-      ? collection.material
-      : DEFAULT_MATERIAL;
-  const qualityText =
-    collection.quality && collection.quality.trim()
-      ? collection.quality
-      : DEFAULT_QUALITY;
+  const storyText = collection.story?.trim() ? collection.story : DEFAULT_STORY;
+  const materialText = collection.material?.trim() ? collection.material : DEFAULT_MATERIAL;
+  const qualityText = collection.quality?.trim() ? collection.quality : DEFAULT_QUALITY;
+
+  const pieceCount =
+    productList.length === 0 ? "لا منتجات" : productList.length === 1 ? "منتج واحد" : `${productList.length} منتجات`;
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* 1. Hero Section */}
+    <main className="min-h-screen bg-white" dir="rtl">
       <section className="relative h-[85vh] w-full bg-neutral-100">
         {collection.image ? (
           <Image
@@ -198,82 +180,48 @@ export default function CollectionPage() {
             priority
           />
         ) : (
-          <div
-            className="absolute inset-0 flex items-center justify-center text-neutral-400 text-3xl"
-            style={serif}
-          >
+          <div className="absolute inset-0 flex items-center justify-center text-3xl text-neutral-400" style={sans}>
             {collection.name}
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        <div className="absolute bottom-0 left-0 w-full p-8 md:p-16 lg:p-24 flex flex-col justify-end">
-          <p className="text-white/80 text-xs uppercase tracking-[0.3em] mb-4">
-            Collection
+        <div className="absolute bottom-0 left-0 flex w-full flex-col justify-end p-8 md:p-16 lg:p-24">
+          <p className="mb-4 text-xs text-white/80" style={sans}>
+            مجموعة
           </p>
-          <h1
-            className="text-white text-6xl md:text-8xl font-light mb-6"
-            style={serif}
-          >
+          <h1 className="mb-6 text-5xl font-medium text-white md:text-7xl" style={sans}>
             {collection.name}
           </h1>
           {collection.description && (
-            <p
-              className="text-white/90 text-lg md:text-xl max-w-xl leading-relaxed"
-              style={serif}
-            >
+            <p className="max-w-xl text-lg leading-relaxed text-white/90 md:text-xl" style={sans}>
               {collection.description}
             </p>
           )}
         </div>
       </section>
 
-      {/* 2. Story Section */}
-      <Section
-        number="01"
-        title="The Concept"
-        content={storyText}
-        theme="light"
-      />
+      <Section number="٠١" title="الفكرة" content={storyText} theme="light" />
+      <Section number="٠٢" title="المكوّنات والعناية" content={materialText} theme="light" />
+      <Section number="٠٣" title="وعدنا لكِ" content={qualityText} theme="dark" />
 
-      {/* 3. Material Section */}
-      <Section
-        number="02"
-        title="Material & Craft"
-        content={materialText}
-        theme="light" // Kept light for clean look, could be dark if preferred
-      />
-
-      {/* 4. Quality Section */}
-      <Section
-        number="03"
-        title="Our Promise"
-        content={qualityText}
-        theme="dark"
-      />
-
-      {/* 5. Products Section */}
-      <section className="py-24 md:py-32 px-6 md:px-12 bg-white">
-        <div className="max-w-screen-xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+      <section className={`bg-white py-20 md:py-28 ${pagePaddingX}`}>
+        <div className="mx-auto max-w-screen-xl">
+          <div className="mb-10 flex flex-col justify-between gap-6 md:mb-16 md:flex-row md:items-end">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.35em] text-gray-500 mb-4">
-                Shop
+              <p className="mb-4 text-xs text-neutral-500" style={sans}>
+                المتجر
               </p>
-              <h2
-                className="text-4xl md:text-5xl font-light text-neutral-900"
-                style={serif}
-              >
-                The Collection
+              <h2 className="text-3xl font-medium text-neutral-900 md:text-4xl" style={sans}>
+                المنتجات
               </h2>
             </div>
-            <p className="text-neutral-500 text-sm">
-              {productList.length}{" "}
-              {productList.length === 1 ? "piece" : "pieces"}
+            <p className="text-sm text-neutral-500" style={sans}>
+              {pieceCount}
             </p>
           </div>
 
           {productList.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+            <div className="grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
               {productList.map((p) => (
                 <ProductCard
                   key={p.slug}
@@ -286,25 +234,23 @@ export default function CollectionPage() {
               ))}
             </div>
           ) : (
-            <div className="py-24 text-center border-t border-neutral-100">
-              <p className="text-neutral-500 mb-4" style={serif}>
-                No pieces in this collection yet.
+            <div className="border-t border-neutral-100 py-24 text-center">
+              <p className="mb-4 text-neutral-500" style={sans}>
+                لا توجد منتجات في هذه المجموعة بعد.
               </p>
-              <Link
-                href="/shop"
-                className="text-sm underline text-black hover:opacity-70"
-              >
-                Browse all products
+              <Link href="/shop" className="text-sm text-black underline hover:opacity-70" style={sans}>
+                تصفحي كل المنتجات
               </Link>
             </div>
           )}
 
-          <div className="mt-32 pt-12 border-t border-neutral-100 flex justify-center">
+          <div className="mt-24 flex justify-center border-t border-neutral-100 pt-12">
             <Link
               href="/collections"
-              className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black transition-colors"
+              className="text-xs text-neutral-500 transition-colors hover:text-black"
+              style={sans}
             >
-              View all collections
+              كل المجموعات
             </Link>
           </div>
         </div>

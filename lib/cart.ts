@@ -27,8 +27,10 @@ export function saveCartToStorage(items: CartItem[]) {
   } catch {}
 }
 
-/** Parse price string like "$1,280" to number */
+/** Parse price strings like "$1,280" or "242.00 ر.س" to a number */
 export function parsePrice(price: string): number {
-  const num = price.replace(/[$,]/g, "");
+  const m = price.match(/[\d.,]+/);
+  if (!m) return 0;
+  const num = m[0].replace(/,/g, "");
   return Number(num) || 0;
 }

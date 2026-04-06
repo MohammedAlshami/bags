@@ -191,8 +191,8 @@ export default function AdminOrderDetailPage() {
                     key={s}
                     type="button"
                     onClick={() => updateStatus(s)}
-                    className={`block w-full text-left px-4 py-2 text-sm capitalize hover:bg-neutral-50 ${
-                      order.status === s ? "bg-neutral-100 font-medium" : ""
+                    className={`block w-full text-left px-4 py-2 text-sm capitalize hover:bg-white ${
+                      order.status === s ? "font-semibold" : ""
                     }`}
                   >
                     {s}
@@ -459,7 +459,7 @@ export default function AdminOrderDetailPage() {
                   const num = parseFloat(price.replace(/[$,]/g, "")) || 0;
                   const subtotal = num * qty;
                   return (
-                    <tr key={i} className="border-b border-black/5">
+                    <tr key={i} className="border-b border-black/5 bg-white">
                       <td className="p-4">{item.name ?? "—"}</td>
                       <td className="p-4 text-neutral-600">{price || "—"}</td>
                       <td className="p-4">{qty}</td>
