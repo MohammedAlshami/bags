@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { X } from "lucide-react";
 import { sans } from "@/lib/page-theme";
 import { adminApiErrorAr } from "@/lib/admin-ar";
 
@@ -17,13 +18,19 @@ type Customer = {
   createdAt?: string;
 };
 
+type PanelState = null | { mode: "create" } | { mode: "edit"; customer: Customer };
+
 export default function AdminCustomersPage() {
   const [list, setList] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [bannerError, setBannerError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
-  const [editing, setEditing] = useState<Customer | null>(null);
+  const [panel, setPanel] = useState<PanelState>(null);
+  const [panelError, setPanelError] = useState<string | null>(null);
+  const [formUsername, setFormUsername] = useState("");
+  const [formPassword, setFormPassword] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editFullName, setEditFullName] = useState("");
   const [editAddress, setEditAddress] = useState("");
@@ -44,26 +51,91 @@ export default function AdminCustomersPage() {
     fetchList()
       .then((data) => {
         setList(data);
-        setError(null);
+        setLoadError(null);
       })
-      .catch((e) => setError(adminApiErrorAr(e instanceof Error ? e.message : "Error")))
+      .catch((e) => setLoadError(adminApiErrorAr(e instanceof Error ? e.message : "Error")))
       .finally(() => setLoading(false));
   }, [search]);
 
+  const panelOpen = panel !== null;
+
+  useEffect(() => {
+    if (!panelOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPanel(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [panelOpen]);
+
+  const resetFormFields = () => {
+    setFormUsername("");
+    setFormPassword("");
+    setEditEmail("");
+    setEditFullName("");
+    setEditAddress("");
+    setEditPhone("");
+    setEditDisabled(false);
+    setPanelError(null);
+  };
+
+  const openCreate = () => {
+    resetFormFields();
+    setPanel({ mode: "create" });
+  };
+
   const openEdit = (c: Customer) => {
-    setEditing(c);
+    setFormUsername("");
+    setFormPassword("");
     setEditEmail(c.email ?? "");
     setEditFullName(c.fullName ?? "");
     setEditAddress(c.address ?? "");
     setEditPhone(c.phone ?? "");
     setEditDisabled(c.disabled ?? false);
+    setPanelError(null);
+    setPanel({ mode: "edit", customer: c });
   };
 
-  const saveEdit = async () => {
-    if (!editing) return;
+  const closePanel = () => {
+    setPanel(null);
+    setPanelError(null);
+  };
+
+  const savePanel = async () => {
+    if (!panel) return;
     setSaving(true);
+    setPanelError(null);
     try {
-      const res = await fetch(`/api/admin/customers/${editing._id}`, {
+      if (panel.mode === "create") {
+        const res = await fetch("/api/admin/customers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: formUsername,
+            password: formPassword,
+            email: editEmail,
+            fullName: editFullName,
+            address: editAddress,
+            phone: editPhone,
+            disabled: editDisabled,
+          }),
+        });
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
+          const raw = typeof d.error === "string" ? d.error : "";
+          throw new Error(raw || "Failed to create customer");
+        }
+        closePanel();
+        setList(await fetchList());
+        return;
+      }
+
+      const res = await fetch(`/api/admin/customers/${panel.customer._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -79,10 +151,10 @@ export default function AdminCustomersPage() {
         const raw = typeof d.error === "string" ? d.error : "";
         throw new Error(raw || "Failed to save");
       }
-      setEditing(null);
+      closePanel();
       setList(await fetchList());
     } catch (e) {
-      setError(adminApiErrorAr(e instanceof Error ? e.message : "Error"));
+      setPanelError(adminApiErrorAr(e instanceof Error ? e.message : "Error"));
     } finally {
       setSaving(false);
     }
@@ -101,16 +173,19 @@ export default function AdminCustomersPage() {
         throw new Error(raw || "Failed to update");
       }
       setList(await fetchList());
-      if (editing?._id === c._id) {
+      setBannerError(null);
+      if (panel?.mode === "edit" && panel.customer._id === c._id) {
         setEditDisabled(!c.disabled);
+        setPanel({ mode: "edit", customer: { ...panel.customer, disabled: !c.disabled } });
       }
     } catch (e) {
-      setError(adminApiErrorAr(e instanceof Error ? e.message : "Error"));
+      setBannerError(adminApiErrorAr(e instanceof Error ? e.message : "Error"));
     }
   };
 
   const doExport = () => {
     setExporting(true);
+    setBannerError(null);
     window.location.href = "/api/admin/customers/export";
     setTimeout(() => setExporting(false), 2000);
   };
@@ -122,19 +197,117 @@ export default function AdminCustomersPage() {
       </p>
     );
   }
-  if (error) {
+  if (loadError) {
     return (
       <p className="text-red-600" style={sans} dir="rtl">
-        {error}
+        {loadError}
       </p>
     );
   }
 
+  const formFields = (
+    <div className="grid gap-4">
+      {panel?.mode === "edit" ? (
+        <p className="text-sm text-neutral-600">
+          اسم المستخدم: <span dir="ltr" className="font-mono text-neutral-900">{panel.customer.username}</span>
+        </p>
+      ) : (
+        <>
+          <div>
+            <label className="block text-xs text-neutral-500 mb-1">اسم المستخدم</label>
+            <input
+              value={formUsername}
+              onChange={(e) => setFormUsername(e.target.value)}
+              className="w-full border border-neutral-200 px-3 py-2 text-sm"
+              dir="ltr"
+              autoComplete="username"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-neutral-500 mb-1">كلمة المرور</label>
+            <input
+              type="password"
+              value={formPassword}
+              onChange={(e) => setFormPassword(e.target.value)}
+              className="w-full border border-neutral-200 px-3 py-2 text-sm"
+              dir="ltr"
+              autoComplete="new-password"
+            />
+          </div>
+        </>
+      )}
+      <div>
+        <label className="block text-xs text-neutral-500 mb-1">البريد الإلكتروني</label>
+        <input
+          value={editEmail}
+          onChange={(e) => setEditEmail(e.target.value)}
+          className="w-full border border-neutral-200 px-3 py-2 text-sm"
+          dir="ltr"
+        />
+      </div>
+      <div>
+        <label className="block text-xs text-neutral-500 mb-1">الاسم الكامل</label>
+        <input
+          value={editFullName}
+          onChange={(e) => setEditFullName(e.target.value)}
+          className="w-full border border-neutral-200 px-3 py-2 text-sm"
+        />
+      </div>
+      <div>
+        <label className="block text-xs text-neutral-500 mb-1">الهاتف</label>
+        <input
+          value={editPhone}
+          onChange={(e) => setEditPhone(e.target.value)}
+          className="w-full border border-neutral-200 px-3 py-2 text-sm"
+          dir="ltr"
+        />
+      </div>
+      <div>
+        <label className="block text-xs text-neutral-500 mb-1">العنوان</label>
+        <textarea
+          value={editAddress}
+          onChange={(e) => setEditAddress(e.target.value)}
+          className="w-full border border-neutral-200 px-3 py-2 text-sm"
+          rows={2}
+        />
+      </div>
+      <label className="flex items-center gap-2">
+        <input type="checkbox" checked={editDisabled} onChange={(e) => setEditDisabled(e.target.checked)} />
+        <span className="text-sm">معطّل (لا يمكنه تسجيل الدخول)</span>
+      </label>
+      {panelError ? (
+        <p className="text-sm text-red-600" role="alert">
+          {panelError}
+        </p>
+      ) : null}
+      <div className="flex gap-2 flex-wrap pt-2">
+        <button
+          type="button"
+          onClick={savePanel}
+          disabled={saving}
+          className="px-4 py-2 bg-black text-white text-sm disabled:opacity-50"
+        >
+          {saving ? "جاري الحفظ…" : "حفظ"}
+        </button>
+        <button type="button" onClick={closePanel} className="px-4 py-2 border border-black text-sm">
+          إلغاء
+        </button>
+      </div>
+    </div>
+  );
+
   return (
-    <div dir="rtl" style={sans}>
+    <div dir="rtl" style={sans} className="relative">
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <h2 className="text-xl font-medium text-neutral-900">العملاء</h2>
         <div className="flex gap-2 items-center flex-wrap">
+          <button
+            type="button"
+            onClick={openCreate}
+            className="px-4 py-2 bg-black text-white text-sm hover:bg-neutral-800 rounded-sm"
+          >
+            إضافة عميل
+          </button>
           <input
             type="text"
             value={searchInput}
@@ -157,67 +330,42 @@ export default function AdminCustomersPage() {
         </div>
       </div>
 
-      {editing && (
-        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-10 p-4" dir="rtl">
-          <div className="bg-white border border-black/10 rounded-sm p-6 max-w-md w-full shadow-lg" style={sans}>
-            <h3 className="text-lg font-medium mb-4">تعديل عميل</h3>
-            <div className="grid gap-4">
-              <p className="text-sm text-neutral-600">اسم المستخدم: {editing.username}</p>
-              <div>
-                <label className="block text-xs text-neutral-500 mb-1">البريد الإلكتروني</label>
-                <input
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  className="w-full border border-neutral-200 px-3 py-2 text-sm"
-                  dir="ltr"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-neutral-500 mb-1">الاسم الكامل</label>
-                <input
-                  value={editFullName}
-                  onChange={(e) => setEditFullName(e.target.value)}
-                  className="w-full border border-neutral-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-neutral-500 mb-1">الهاتف</label>
-                <input
-                  value={editPhone}
-                  onChange={(e) => setEditPhone(e.target.value)}
-                  className="w-full border border-neutral-200 px-3 py-2 text-sm"
-                  dir="ltr"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-neutral-500 mb-1">العنوان</label>
-                <textarea
-                  value={editAddress}
-                  onChange={(e) => setEditAddress(e.target.value)}
-                  className="w-full border border-neutral-200 px-3 py-2 text-sm"
-                  rows={2}
-                />
-              </div>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={editDisabled} onChange={(e) => setEditDisabled(e.target.checked)} />
-                <span className="text-sm">معطّل (لا يمكنه تسجيل الدخول)</span>
-              </label>
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={saveEdit}
-                  disabled={saving}
-                  className="px-4 py-2 bg-black text-white text-sm disabled:opacity-50"
-                >
-                  {saving ? "جاري الحفظ…" : "حفظ"}
-                </button>
-                <button type="button" onClick={() => setEditing(null)} className="px-4 py-2 border border-black text-sm">
-                  إلغاء
-                </button>
-              </div>
+      {bannerError ? (
+        <p className="mb-4 text-sm text-red-600" role="alert">
+          {bannerError}
+        </p>
+      ) : null}
+
+      {panelOpen && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-[60] bg-black/40"
+            aria-label="إغلاق"
+            onClick={closePanel}
+          />
+          <aside
+            className="
+              fixed z-[70] flex flex-col bg-white shadow-2xl
+              inset-x-0 bottom-0 max-h-[92vh] rounded-t-2xl border-t border-black/10
+              md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:left-auto md:h-full md:max-h-none md:w-full md:max-w-md md:rounded-none md:border-t-0 md:border-r md:border-black/10
+            "
+          >
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-black/10 px-4 py-3">
+              <h3 className="text-lg font-medium">{panel?.mode === "create" ? "عميل جديد" : "تعديل عميل"}</h3>
+              <button
+                type="button"
+                onClick={closePanel}
+                className="p-2 rounded-sm hover:opacity-70 text-neutral-600"
+                aria-label="إغلاق"
+              >
+                <X className="w-5 h-5" strokeWidth={1.5} />
+              </button>
             </div>
-          </div>
-        </div>
+            <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">{formFields}</div>
+            <div className="h-[env(safe-area-inset-bottom)] shrink-0 md:hidden" aria-hidden />
+          </aside>
+        </>
       )}
 
       <div className="bg-white border border-black/10 rounded-sm overflow-hidden">

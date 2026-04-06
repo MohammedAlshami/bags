@@ -95,7 +95,7 @@ const PLACEHOLDER_PRODUCTS: FeaturedCard[] = [
 function ProductCard({ item }: { item: FeaturedCard }) {
   return (
     <Link href={`/product/${item.slug}`} className="group flex flex-col">
-      <div className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl bg-neutral-100 p-4 sm:p-5 md:p-6 lg:p-7">
+      <div className="relative aspect-[3/5] w-full overflow-hidden rounded-xl bg-neutral-100 p-4 sm:p-5 md:p-6 lg:p-7">
         <Image
           src={item.image}
           alt={item.name}
@@ -124,7 +124,7 @@ export function FeaturedProductsSection() {
 
   return (
     <section className="w-full bg-white py-12 md:py-16" aria-label="منتجات مميزة" dir="rtl">
-      <div className="w-full px-4 sm:px-8 md:px-14 lg:px-24">
+      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12">
         <div className="mb-10 flex flex-col items-center gap-8 text-center">
           <h2 className="max-w-2xl text-xl font-normal leading-snug italic text-neutral-800 md:text-2xl">
             <span>مختاراتنا </span>
@@ -152,7 +152,7 @@ export function FeaturedProductsSection() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-5 lg:gap-6">
           {PLACEHOLDER_PRODUCTS.map((item) => (
             <ProductCard key={item.slug} item={item} />
           ))}

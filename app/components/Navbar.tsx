@@ -65,7 +65,7 @@ export default function Navbar() {
         >
           {user ? (
             <Link
-              href="/profile"
+              href={user.role === "admin" ? "/admin" : "/profile"}
               className={`transition-colors whitespace-nowrap ${isTransparent ? "hover:text-white" : "hover:text-black"}`}
             >
               حسابي

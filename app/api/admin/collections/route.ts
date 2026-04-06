@@ -9,11 +9,18 @@ export async function GET() {
   try {
     await requireAdmin();
     const rows = await sql`
-      SELECT id, name, slug, image, description, story, material, quality, created_at, updated_at
-      FROM collections
-      ORDER BY name ASC
+      SELECT c.id, c.name, c.slug, c.image, c.description, c.story, c.material, c.quality, c.created_at, c.updated_at,
+        (SELECT COUNT(*)::int FROM products p WHERE p.collection_id = c.id) AS product_count
+      FROM collections c
+      ORDER BY c.name ASC
     `;
-    const list = (rows as CollectionRow[]).map((r) => mapCollection(r));
+    const list = (rows as (CollectionRow & { product_count: number })[]).map((r) => {
+      const { product_count, ...row } = r;
+      return {
+        ...mapCollection(row as CollectionRow),
+        productCount: product_count,
+      };
+    });
     return NextResponse.json(list);
   } catch (err) {
     const e = err as { status?: number };
