@@ -36,7 +36,7 @@ export default function Navbar() {
       style={{ backgroundColor: isTransparent ? "transparent" : "#ffffff" }}
     >
       {/* RTL: flex main-start is on the right — nav links sit on the right, login/cart on the left; brand stays physically centered */}
-      <nav className="relative z-50 flex w-full flex-row items-center justify-between px-4 sm:px-8 md:px-14 lg:px-24 py-3">
+      <nav className="relative z-50 flex w-full flex-row items-center justify-between px-4 sm:px-8 md:px-14 lg:px-24 py-4 sm:py-5 md:py-6">
         <div
           className={`flex flex-1 items-center justify-start gap-4 sm:gap-6 md:gap-8 text-sm font-medium min-w-0 ${isTransparent ? "text-white/90" : "text-gray-600"}`}
         >
@@ -51,6 +51,12 @@ export default function Navbar() {
             className={`transition-colors hover:underline whitespace-nowrap hidden sm:inline ${isTransparent ? "hover:text-white" : "hover:text-black"}`}
           >
             من نحن
+          </Link>
+          <Link
+            href="/locations"
+            className={`transition-colors hover:underline whitespace-nowrap hidden sm:inline ${isTransparent ? "hover:text-white" : "hover:text-black"}`}
+          >
+            فروعنا
           </Link>
         </div>
         <Link

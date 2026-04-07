@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Cormorant_Garamond, Playpen_Sans_Arabic } from "next
 import "./globals.css";
 import ConditionalNavbar from "./components/ConditionalNavbar";
 import ConditionalFooter from "./components/ConditionalFooter";
+import { WhatsAppFloat } from "./components/WhatsAppFloat";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,6 +48,7 @@ export default function RootLayout({
           <ConditionalNavbar />
           {children}
           <ConditionalFooter />
+          <WhatsAppFloat />
         </CartProvider>
       </body>
     </html>

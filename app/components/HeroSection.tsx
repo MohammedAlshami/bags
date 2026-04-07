@@ -3,14 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { HERO_SLIDE_URLS } from "@/lib/hero-images";
 
 const brandName = { fontFamily: "var(--font-playpen-arabic), sans-serif" };
 
-const HERO_SLIDES = [
-  "https://images.unsplash.com/photo-1744371386847-ded3b4a66017?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  "https://images.unsplash.com/photo-1697840507245-e6ce44da4e4c?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  "https://images.unsplash.com/photo-1551061031-9e473ec479e2?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-] as const;
+const HERO_SLIDES = HERO_SLIDE_URLS;
 
 const SLIDE_MS = 6000;
 

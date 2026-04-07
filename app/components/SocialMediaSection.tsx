@@ -81,7 +81,7 @@ function ReelCard({ item, onOpen }: { item: ReelItem; onOpen: () => void }) {
         onClick={onOpen}
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
-        className="group relative w-full overflow-hidden rounded-2xl shadow-sm ring-1 ring-black/5 transition-transform hover:scale-[1.01] focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+        className="group relative w-full cursor-pointer overflow-hidden rounded-2xl shadow-sm ring-1 ring-black/5 transition-transform hover:scale-[1.01] focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
         style={{ backgroundColor: WELL_BG }}
         aria-label={`تشغيل الفيديو: ${item.title}`}
       >
@@ -91,7 +91,7 @@ function ReelCard({ item, onOpen }: { item: ReelItem; onOpen: () => void }) {
             alt=""
             fill
             className={`object-cover transition-opacity duration-200 ${hover ? "opacity-0" : "opacity-100"}`}
-            sizes="(max-width: 640px) 98vw, (max-width: 768px) 49vw, (max-width: 1024px) 32vw, 19vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 49vw, (max-width: 1024px) 32vw, 19vw"
             priority={false}
           />
           <video
@@ -148,18 +148,6 @@ export function SocialMediaSection() {
           <p className="mt-3 text-sm text-neutral-600 md:text-base" style={sans}>
             شاهدي المنتجات في فيديوهات قصيرة، وتابعينا للمزيد.
           </p>
-        </div>
-
-        <div className="mx-auto mt-12 grid w-full grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-1 md:grid-cols-3 md:gap-1 lg:grid-cols-5 lg:gap-1">
-          {REELS.map((item) => (
-            <ReelCard key={item.id} item={item} onOpen={() => setOpenId(item.id)} />
-          ))}
-        </div>
-
-        <div className="mx-auto mt-14 max-w-2xl border-t border-neutral-200/80 pt-10 text-center">
-          <p className="text-sm font-medium text-neutral-800" style={sans}>
-            تابعينا
-          </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-6">
             {SOCIAL_LINKS.map(({ href, label, Icon }) => (
               <Link
@@ -176,6 +164,12 @@ export function SocialMediaSection() {
               </Link>
             ))}
           </div>
+        </div>
+
+        <div className="mx-auto mt-12 grid w-full grid-cols-2 gap-1 md:grid-cols-3 md:gap-1 lg:grid-cols-5 lg:gap-1">
+          {REELS.map((item) => (
+            <ReelCard key={item.id} item={item} onOpen={() => setOpenId(item.id)} />
+          ))}
         </div>
       </div>
 

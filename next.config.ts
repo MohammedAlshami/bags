@@ -49,9 +49,21 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "shine-sophisticated.myshopify.com",
+        port: "",
+        pathname: "/cdn/shop/**",
+      },
+      {
+        protocol: "https",
         hostname: "wonder-theme-beauty.myshopify.com",
         port: "",
         pathname: "/cdn/shop/**",
+      },
+      {
+        protocol: "https",
+        hostname: "commons.wikimedia.org",
+        port: "",
+        pathname: "/wiki/Special:FilePath/**",
       },
     ],
   },

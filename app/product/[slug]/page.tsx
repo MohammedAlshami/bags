@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/app/context/CartContext";
-import { sans, IMAGE_WELL as IMAGE_BG } from "@/lib/page-theme";
+import { RecommendedProductsSection } from "@/app/components/RecommendedProductsSection";
+import { sans } from "@/lib/page-theme";
 
 type ProductItem = { name: string; price: string; category: string; image: string; slug: string };
 
@@ -34,15 +35,12 @@ function ProductMainSection({
     <div className="mx-auto max-w-[1920px] px-4 py-12 pt-24 sm:px-8 md:px-14 md:pt-32 lg:px-24">
       <div className="grid gap-12 lg:grid-cols-12">
         <div className="lg:col-span-7">
-          <div
-            className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl p-6 sm:p-8 md:p-10"
-            style={{ backgroundColor: IMAGE_BG }}
-          >
+          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl">
             <Image
               src={product.image}
               alt={product.name}
               fill
-              className="object-contain object-center p-4 sm:p-5"
+              className="object-cover object-center"
               sizes="(max-width: 1024px) 100vw, 58vw"
               priority
             />
@@ -187,6 +185,7 @@ export default function ProductPage() {
     <main className="min-h-screen bg-white pt-20" dir="rtl">
       <ProductMainSection product={product} description={DEFAULT_DESCRIPTION_AR} details={DEFAULT_DETAILS_AR} />
       <StorySection />
+      <RecommendedProductsSection excludeSlug={product.slug} />
     </main>
   );
 }

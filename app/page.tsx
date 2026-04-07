@@ -3,6 +3,7 @@ import { FeaturedProductsSection } from "./components/FeaturedProductsSection";
 import { ShowcaseSplitSection } from "./components/ShowcaseSplitSection";
 import { TrustFeaturesSection } from "./components/TrustFeaturesSection";
 import { SocialMediaSection } from "./components/SocialMediaSection";
+import { StoreLocationsSection } from "./components/StoreLocationsSection";
 
 export default function Home() {
   return (
@@ -11,6 +12,7 @@ export default function Home() {
       <FeaturedProductsSection />
       <ShowcaseSplitSection />
       <SocialMediaSection />
+      <StoreLocationsSection />
       <TrustFeaturesSection />
     </main>
   );

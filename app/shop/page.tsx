@@ -9,12 +9,12 @@ function ProductCard({ product }: { product: Product }) {
   const { name, price, category, image, slug } = product;
   return (
     <Link href={`/product/${slug}`} className="group flex flex-col" dir="rtl">
-      <div className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl bg-neutral-100 p-4 sm:p-5 md:p-6 lg:p-7">
+      <div className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl bg-white">
         <Image
           src={image}
           alt={name}
           fill
-          className="object-contain object-center p-3 transition-transform duration-300 group-hover:scale-[1.03] sm:p-4 md:p-5"
+          className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.03]"
           sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
         />
       </div>
