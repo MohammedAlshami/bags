@@ -2,11 +2,10 @@ import { randomUUID } from "crypto";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { requireCustomer } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-/** Same idea as `/product_Images/...`: store files under `public/` and save the URL string in Neon. */
 const UPLOAD_SUBDIR = "uploads";
 
 const MIME_TO_EXT: Record<string, string> = {
@@ -19,7 +18,7 @@ const MIME_TO_EXT: Record<string, string> = {
 
 export async function POST(request: Request) {
   try {
-    await requireAdmin();
+    await requireCustomer();
     const formData = await request.formData();
     const file = formData.get("file");
     if (!file || !(file instanceof File)) {

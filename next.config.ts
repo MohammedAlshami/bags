@@ -3,6 +3,16 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
+  async redirects() {
+    return [
+      { source: "/users", destination: "/profile", permanent: false },
+      { source: "/collections", destination: "/shop", permanent: false },
+      { source: "/collections/:path*", destination: "/shop", permanent: false },
+      { source: "/admin/collections", destination: "/admin/products", permanent: false },
+      { source: "/admin/collections/:path*", destination: "/admin/products", permanent: false },
+      { source: "/admin/shipping", destination: "/admin/orders", permanent: false },
+    ];
+  },
   images: {
     remotePatterns: [
       {
@@ -20,12 +30,6 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "i.ebayimg.com",
-        port: "",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
         port: "",
         pathname: "/**",
       },

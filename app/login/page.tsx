@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 import { sans, pagePaddingX } from "@/lib/page-theme";
 
 function mapLoginError(msg: string): string {
@@ -11,8 +11,14 @@ function mapLoginError(msg: string): string {
   return msg || "تعذّر تسجيل الدخول.";
 }
 
-export default function LoginPage() {
+function safeNextPath(raw: string | null): string | null {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return null;
+  return raw;
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -24,13 +30,15 @@ export default function LoginPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username: username.trim(), password }),
+      credentials: "include",
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       setError(mapLoginError(typeof data.error === "string" ? data.error : ""));
       return;
     }
-    router.push("/");
+    const next = safeNextPath(searchParams.get("next"));
+    router.push(next ?? "/");
     router.refresh();
   };
 
@@ -104,5 +112,21 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen flex-col items-center justify-center bg-white" dir="rtl">
+          <p className="text-neutral-500" style={sans}>
+            جاري التحميل…
+          </p>
+        </main>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

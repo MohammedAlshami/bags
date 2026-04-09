@@ -11,12 +11,14 @@ import {
   ChevronDown,
   Truck,
   Pencil,
-  ExternalLink,
+  Banknote,
 } from "lucide-react";
 
-import { sans } from "@/lib/page-theme";
+import { adminIconClassName, sans } from "@/lib/page-theme";
 import { formatSar } from "@/lib/format-sar";
 import { adminApiErrorAr, orderStatusAr } from "@/lib/admin-ar";
+import { AdminSkeletonOrderDetailPage } from "@/lib/admin-skeleton";
+import { getStoreLocationById } from "@/lib/store-locations";
 
 type ShippingAddress = {
   fullName?: string;
@@ -35,7 +37,7 @@ type CustomerRef = {
   address?: string;
   phone?: string;
 };
-type OrderItem = { slug?: string; name?: string; price?: string; quantity?: number };
+type OrderItem = { slug?: string; name?: string; price?: string; quantity?: number; image?: string };
 type OrderDetail = {
   _id: string;
   customer: CustomerRef;
@@ -43,6 +45,8 @@ type OrderDetail = {
   total: number;
   status: string;
   shippingAddress?: ShippingAddress;
+  paymentProofUrl?: string | null;
+  branchKey?: string | null;
   trackingNumber?: string;
   carrier?: string;
   shippedAt?: string | null;
@@ -70,6 +74,19 @@ function parseItemPrice(price: string | undefined): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+function paymentStatusSummary(order: OrderDetail): string {
+  if (order.status === "cancelled") return "ملغى — لا يتطلب دفعاً.";
+  if (order.status === "shipped") return "مكتمل — كان قد دُفع أو وُثّق قبل الشحن.";
+  if (order.status === "paid") return "مدفوع — تم تأكيد استلام المبلغ.";
+  if (order.status === "pending") {
+    if (order.paymentProofUrl) {
+      return "في انتظار التأكيد — العميل رفع إثبات تحويل؛ راجع الصورة ثم عيّن الحالة «مدفوع».";
+    }
+    return "في انتظار الدفع — لم يُرفع إثبات تحويل بعد.";
+  }
+  return order.status;
+}
+
 export default function AdminOrderDetailPage() {
   const params = useParams();
   const id = params?.id as string;
@@ -83,6 +100,7 @@ export default function AdminOrderDetailPage() {
   const [editShipping, setEditShipping] = useState<ShippingAddress>({});
   const [editTracking, setEditTracking] = useState("");
   const [editCarrier, setEditCarrier] = useState("");
+  const [paymentBusy, setPaymentBusy] = useState(false);
 
   const fetchOrder = () =>
     fetch(`/api/admin/orders/${id}`)
@@ -128,6 +146,40 @@ export default function AdminOrderDetailPage() {
     }
   };
 
+  const patchPaymentProof = async (paymentProofUrl: string) => {
+    if (!id) return;
+    setPaymentBusy(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentProofUrl }),
+      });
+      if (!res.ok) throw new Error("Failed to update order");
+      const updated = await res.json();
+      setOrder(updated);
+    } catch (e) {
+      setError(adminApiErrorAr(e instanceof Error ? e.message : "Error"));
+    } finally {
+      setPaymentBusy(false);
+    }
+  };
+
+  const uploadPaymentProof = async (file: File) => {
+    const fd = new FormData();
+    fd.set("file", file);
+    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      const raw = typeof d.error === "string" ? d.error : "";
+      throw new Error(raw || "Upload failed");
+    }
+    const data = await res.json();
+    const url = typeof data.url === "string" ? data.url : "";
+    if (!url) throw new Error("Upload failed");
+    await patchPaymentProof(url);
+  };
+
   const saveShippingAndTracking = async () => {
     setSavingShipping(true);
     try {
@@ -152,11 +204,7 @@ export default function AdminOrderDetailPage() {
   };
 
   if (loading) {
-    return (
-      <p className="text-neutral-500" style={sans} dir="rtl">
-        جاري التحميل…
-      </p>
-    );
+    return <AdminSkeletonOrderDetailPage />;
   }
   if (error) {
     return (
@@ -181,7 +229,7 @@ export default function AdminOrderDetailPage() {
         className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-black mb-6"
       >
         العودة إلى الطلبات
-        <ArrowRight className="w-4 h-4 shrink-0" strokeWidth={1.5} aria-hidden />
+        <ArrowRight className={`w-4 h-4 shrink-0 ${adminIconClassName}`} strokeWidth={1.5} aria-hidden />
       </Link>
 
       <p className="text-[10px] uppercase tracking-[0.35em] text-gray-500">طلب</p>
@@ -203,7 +251,7 @@ export default function AdminOrderDetailPage() {
               className="flex items-center gap-1.5 px-3 py-1.5 border border-black/20 rounded-sm text-sm disabled:opacity-50"
             >
               {orderStatusAr(order.status)}
-              <ChevronDown className="w-4 h-4" aria-hidden />
+              <ChevronDown className={`w-4 h-4 ${adminIconClassName}`} aria-hidden />
             </button>
             {statusSelectOpen && (
               <div className="absolute end-0 top-full mt-1 bg-white border border-black/10 rounded-sm shadow-lg py-1 z-10 min-w-[140px]">
@@ -225,10 +273,28 @@ export default function AdminOrderDetailPage() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 mt-8 mb-8">
+      <div className="grid gap-4 md:grid-cols-2 mt-8 mb-8">
+        <section className="bg-white border border-black/10 rounded-sm p-6 md:p-8">
+          <h3 className="text-lg font-light text-black mb-3">الفرع المختار</h3>
+          <p className="text-sm text-neutral-800">
+            {order.branchKey
+              ? getStoreLocationById(order.branchKey)?.name ?? order.branchKey
+              : "—"}
+          </p>
+        </section>
+        <section className="bg-white border border-black/10 rounded-sm p-6 md:p-8">
+          <h3 className="text-lg font-light text-black mb-3">حالة الدفع</h3>
+          <p className="text-sm text-neutral-700 leading-relaxed">{paymentStatusSummary(order)}</p>
+          <p className="mt-2 text-xs text-neutral-500">
+            الحالة الرسمية للطلب: {orderStatusAr(order.status)}
+          </p>
+        </section>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-8 mb-8">
         <section className="bg-white border border-black/10 rounded-sm p-6 md:p-8">
           <h3 className="text-lg font-light text-black mb-5 flex items-center gap-2">
-            <User className="w-5 h-5 text-neutral-500 shrink-0" strokeWidth={1.25} aria-hidden />
+            <User className={`w-5 h-5 shrink-0 ${adminIconClassName}`} strokeWidth={1.25} aria-hidden />
             العميل
           </h3>
           <p className="text-sm text-neutral-900 font-medium">
@@ -253,7 +319,7 @@ export default function AdminOrderDetailPage() {
         <section className="bg-white border border-black/10 rounded-sm p-6 md:p-8">
           <div className="flex items-center justify-between gap-2 mb-5">
             <h3 className="text-lg font-light text-black flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-neutral-500 shrink-0" strokeWidth={1.25} aria-hidden />
+              <MapPin className={`w-5 h-5 shrink-0 ${adminIconClassName}`} strokeWidth={1.25} aria-hidden />
               عنوان الشحن
             </h3>
             <button
@@ -261,7 +327,7 @@ export default function AdminOrderDetailPage() {
               onClick={() => setEditShippingOpen((v) => !v)}
               className="flex items-center gap-1 text-sm text-neutral-600 hover:text-black"
             >
-              <Pencil className="w-4 h-4 shrink-0" aria-hidden />
+              <Pencil className={`w-4 h-4 shrink-0 ${adminIconClassName}`} aria-hidden />
               {editShippingOpen ? "إلغاء" : "تعديل"}
             </button>
           </div>
@@ -345,20 +411,11 @@ export default function AdminOrderDetailPage() {
         </section>
       </div>
 
-      <section className="bg-white border border-black/10 rounded-sm p-6 md:p-8 mb-8">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <h3 className="text-lg font-light text-black flex items-center gap-2">
-            <Truck className="w-5 h-5 text-neutral-500 shrink-0" strokeWidth={1.25} aria-hidden />
-            الشحن والتتبع
-          </h3>
-          <Link
-            href="/admin/shipping"
-            className="inline-flex items-center gap-2 text-sm text-black border border-black/20 px-3 py-2 hover:bg-black hover:text-white transition-colors"
-          >
-            <ExternalLink className="w-4 h-4 shrink-0" strokeWidth={1.5} aria-hidden />
-            صفحة الشحن
-          </Link>
-        </div>
+      <section className="mb-8 rounded-sm border border-black/10 bg-white p-6 md:p-8">
+        <h3 className="mb-6 flex items-center gap-2 text-lg font-light text-black">
+          <Truck className={`w-5 h-5 shrink-0 ${adminIconClassName}`} strokeWidth={1.25} aria-hidden />
+          الشحن والتتبع
+        </h3>
 
         {order.status === "cancelled" ? (
           <p className="text-sm text-neutral-500 mb-6">تم إلغاء الطلب.</p>
@@ -441,39 +498,94 @@ export default function AdminOrderDetailPage() {
                 </div>
               )}
             </dl>
-            <p className="text-xs text-neutral-500 mt-3">
-              أضف شركة الشحن ورقم التتبع عبر <strong>تعديل</strong> في قسم عنوان الشحن أعلاه، أو من{" "}
-              <Link href="/admin/shipping" className="underline">
-                صفحة الشحن
-              </Link>
-              .
+            <p className="mt-3 text-xs text-neutral-500">
+              يمكنك تحديث شركة الشحن ورقم التتبع من زر <strong>تعديل</strong> في قسم عنوان الشحن أعلاه.
             </p>
           </>
         ) : (
           <p className="text-sm text-neutral-500">
-            لا يوجد رقم تتبع بعد. أضف شركة الشحن والتتبع عبر <strong>تعديل</strong> في قسم عنوان الشحن أعلاه، أو من{" "}
-            <Link href="/admin/shipping" className="underline">
-              صفحة الشحن
-            </Link>
-            .
+            لا يوجد رقم تتبع بعد. أضف شركة الشحن والتتبع من زر <strong>تعديل</strong> في قسم عنوان الشحن أعلاه.
           </p>
         )}
       </section>
 
-      <section className="bg-white border border-black/10 rounded-sm overflow-hidden">
-        <div className="p-6 md:p-8 border-b border-black/10 flex items-center gap-2">
-          <Package className="w-5 h-5 text-neutral-500 shrink-0" strokeWidth={1.25} aria-hidden />
+      <section className="mb-8 rounded-sm border border-black/10 bg-white p-6 md:p-8">
+        <h3 className="mb-4 flex items-center gap-2 text-lg font-light text-black">
+          <Banknote className={`w-5 h-5 shrink-0 ${adminIconClassName}`} strokeWidth={1.25} aria-hidden />
+          إثبات الدفع
+        </h3>
+        {order.paymentProofUrl ? (
+          <div className="space-y-3">
+            <div className="relative w-full max-w-md overflow-hidden rounded-sm border border-black/10">
+              {/* eslint-disable-next-line @next/next/no-img-element -- admin upload URLs */}
+              <img
+                src={order.paymentProofUrl}
+                alt="إثبات الدفع"
+                className="max-h-80 w-full object-contain"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-sm border border-black px-3 py-2 text-sm hover:bg-neutral-50">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  disabled={paymentBusy}
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    if (f) uploadPaymentProof(f).catch((err) => setError(adminApiErrorAr(err instanceof Error ? err.message : "Error")));
+                  }}
+                />
+                {paymentBusy ? "جاري الرفع…" : "استبدال الصورة"}
+              </label>
+              <button
+                type="button"
+                disabled={paymentBusy}
+                onClick={() => patchPaymentProof("")}
+                className="rounded-sm border border-red-200 px-3 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
+              >
+                حذف الإثبات
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p className="mb-3 text-sm text-neutral-600">لم يُرفع إثبات دفع بعد.</p>
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-sm bg-black px-4 py-2 text-sm text-white hover:bg-neutral-800">
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                disabled={paymentBusy}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) uploadPaymentProof(f).catch((err) => setError(adminApiErrorAr(err instanceof Error ? err.message : "Error")));
+                }}
+              />
+              {paymentBusy ? "جاري الرفع…" : "رفع صورة إثبات الدفع"}
+            </label>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-sm border border-black/10 bg-white">
+        <div className="border-b border-black/10 p-6 md:p-8 flex items-center gap-2">
+          <Package className={`w-5 h-5 shrink-0 ${adminIconClassName}`} strokeWidth={1.25} aria-hidden />
           <h3 className="text-lg font-light text-black">المنتجات</h3>
         </div>
         {order.items?.length ? (
           <>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto overscroll-x-contain">
+            <table className="w-full min-w-[36rem] text-sm">
               <thead>
                 <tr className="border-b border-black/10 text-start">
+                  <th className="p-4 font-medium">الصورة</th>
                   <th className="p-4 font-medium">المنتج</th>
                   <th className="p-4 font-medium">السعر</th>
                   <th className="p-4 font-medium">الكمية</th>
-                  <th className="p-4 font-medium text-end">المجموع الفرعي</th>
+                  <th className="p-4 text-end font-medium">المجموع الفرعي</th>
                 </tr>
               </thead>
               <tbody>
@@ -484,6 +596,18 @@ export default function AdminOrderDetailPage() {
                   const subtotal = num * qty;
                   return (
                     <tr key={i} className="border-b border-black/5 bg-white">
+                      <td className="p-4 w-20">
+                        {item.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- dynamic product URLs
+                          <img
+                            src={item.image}
+                            alt=""
+                            className="h-14 w-14 rounded-sm object-cover"
+                          />
+                        ) : (
+                          <div className="h-14 w-14 rounded-sm bg-neutral-100" aria-hidden />
+                        )}
+                      </td>
                       <td className="p-4">{item.name ?? "—"}</td>
                       <td className="p-4 text-neutral-600" dir="ltr">
                         {price || "—"}
@@ -495,7 +619,8 @@ export default function AdminOrderDetailPage() {
                 })}
               </tbody>
             </table>
-            <div className="p-6 md:p-8 border-t border-black/10 flex justify-end">
+            </div>
+            <div className="border-t border-black/10 p-6 md:p-8 flex justify-end">
               <p className="text-lg font-light">
                 الإجمالي: <span className="font-medium">{formatSar(Number(order.total))}</span>
               </p>

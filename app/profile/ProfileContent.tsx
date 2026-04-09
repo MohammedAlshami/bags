@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Package, Truck, MapPin, LogOut, ChevronLeft } from "lucide-react";
+import { ChevronLeft, Pencil } from "lucide-react";
 import { sans, pagePaddingX } from "@/lib/page-theme";
+import { ProfileBreadcrumb, ProfileAccountNav } from "@/app/components/profile/ProfileAccountChrome";
+import { formatSar } from "@/lib/format-sar";
 
 type User = { username: string; role: string } | null;
 type Order = {
@@ -27,15 +29,10 @@ type Profile = {
 
 type Tab = "orders" | "billing";
 
-function formatSar(n: number) {
-  return (
-    new Intl.NumberFormat("ar-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + " ر.س"
-  );
-}
-
 function statusAr(s: string) {
   const m: Record<string, string> = {
-    pending: "قيد الانتظار",
+    pending: "في انتظار الدفع",
+    paid: "مدفوع",
     processing: "قيد التجهيز",
     shipped: "تم الشحن",
     delivered: "تم التسليم",
@@ -51,25 +48,25 @@ export default function ProfileContent() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const tabFromUrl = searchParams.get("tab") === "billing" ? "billing" : "orders";
-  const [tab, setTab] = useState<Tab>(tabFromUrl);
-
-  useEffect(() => {
-    setTab(tabFromUrl);
-  }, [tabFromUrl]);
+  const tabParam = searchParams.get("tab");
+  const tabFromUrl: Tab =
+    tabParam === "billing" || tabParam === "details" ? "billing" : "orders";
 
   const [savingProfile, setSavingProfile] = useState(false);
+  const [billingEditing, setBillingEditing] = useState(false);
   const [editEmail, setEditEmail] = useState("");
   const [editFullName, setEditFullName] = useState("");
   const [editAddress, setEditAddress] = useState("");
   const [editPhone, setEditPhone] = useState("");
 
   useEffect(() => {
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => {
-        const u = data.user ?? null;
-        setUser(u);
+    let cancelled = false;
+    (async () => {
+      try {
+        const meRes = await fetch("/api/auth/me", { credentials: "include" });
+        const meData = await meRes.json();
+        const u = meData.user ?? null;
+        if (cancelled) return;
         if (!u) {
           router.replace("/login");
           return;
@@ -78,24 +75,56 @@ export default function ProfileContent() {
           router.replace("/admin");
           return;
         }
-        return Promise.all([
-          fetch("/api/me/profile").then((r) => r.json()),
-          fetch("/api/me/orders").then((r) => r.json()),
+        setUser(u);
+
+        const [pRes, oRes] = await Promise.all([
+          fetch("/api/me/profile", { credentials: "include" }),
+          fetch("/api/me/orders", { credentials: "include" }),
         ]);
-      })
-      .then((result) => {
-        if (result) {
-          setProfile(result[0]);
-          setEditEmail(result[0].email ?? "");
-          setEditFullName(result[0].fullName ?? "");
-          setEditAddress(result[0].address ?? "");
-          setEditPhone(result[0].phone ?? "");
-          setOrders(Array.isArray(result[1]) ? result[1] : []);
+        const pJson = (await pRes.json()) as Record<string, unknown>;
+        const oJson = await oRes.json();
+        if (cancelled) return;
+
+        if (
+          pRes.ok &&
+          pJson &&
+          typeof pJson === "object" &&
+          typeof pJson.error !== "string"
+        ) {
+          const merged: Profile = {
+            username: typeof pJson.username === "string" ? pJson.username : u.username,
+            email: typeof pJson.email === "string" ? pJson.email : undefined,
+            fullName: typeof pJson.fullName === "string" ? pJson.fullName : undefined,
+            address: typeof pJson.address === "string" ? pJson.address : undefined,
+            phone: typeof pJson.phone === "string" ? pJson.phone : undefined,
+          };
+          setProfile(merged);
+          setEditEmail(merged.email ?? "");
+          setEditFullName(merged.fullName ?? "");
+          setEditAddress(merged.address ?? "");
+          setEditPhone(merged.phone ?? "");
+        } else {
+          const fallback: Profile = { username: u.username };
+          setProfile(fallback);
+          setEditEmail("");
+          setEditFullName("");
+          setEditAddress("");
+          setEditPhone("");
         }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+
+        setOrders(Array.isArray(oJson) ? oJson : []);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
+
+  useEffect(() => {
+    if (tabFromUrl === "billing") setBillingEditing(false);
+  }, [tabFromUrl]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -117,14 +146,34 @@ export default function ProfileContent() {
         }),
       });
       if (!res.ok) throw new Error("save");
-      const data = await res.json();
-      setProfile(data);
+      const data = (await res.json()) as Profile & { _id?: string };
+      setProfile({
+        username: data.username ?? profile?.username ?? user?.username ?? "",
+        email: data.email,
+        fullName: data.fullName,
+        address: data.address,
+        phone: data.phone,
+      });
+      setBillingEditing(false);
     } catch (e) {
       console.error(e);
     } finally {
       setSavingProfile(false);
     }
   };
+
+  const cancelBillingEdit = () => {
+    if (profile) {
+      setEditEmail(profile.email ?? "");
+      setEditFullName(profile.fullName ?? "");
+      setEditAddress(profile.address ?? "");
+      setEditPhone(profile.phone ?? "");
+    }
+    setBillingEditing(false);
+  };
+
+  const displayOrDash = (v: string | undefined) =>
+    v != null && String(v).trim() !== "" ? v : "—";
 
   if (loading) {
     return (
@@ -138,107 +187,76 @@ export default function ProfileContent() {
 
   if (!user || user.role === "admin") return null;
 
-  const navItems: (
-    | { type: "tab"; id: Tab; label: string; icon: React.ReactNode }
-    | { type: "link"; href: string; label: string; icon: React.ReactNode }
-  )[] = [
-    { type: "tab", id: "orders", label: "طلباتي", icon: <Package className="h-5 w-5" strokeWidth={1.25} /> },
-    { type: "link", href: "/profile/track", label: "تتبع الطلب", icon: <Truck className="h-5 w-5" strokeWidth={1.25} /> },
-    { type: "tab", id: "billing", label: "الفوترة والشحن", icon: <MapPin className="h-5 w-5" strokeWidth={1.25} /> },
-  ];
+  const navCurrent = tabFromUrl === "billing" ? "billing" : "orders";
+
+  const breadcrumbTitle = tabFromUrl === "billing" ? "بياناتي" : "طلباتي";
 
   return (
     <main className="min-h-screen bg-white pb-24 pt-24 md:pb-32 md:pt-32" dir="rtl">
-      <div className={`w-full ${pagePaddingX}`}>
-        <p className="text-xs text-neutral-500" style={sans}>
-          الحساب
-        </p>
-        <h1 className="mt-2 text-3xl font-medium text-neutral-900 md:text-4xl" style={sans}>
-          حسابي
-        </h1>
+      <div className={`mx-auto w-full max-w-[1920px] ${pagePaddingX}`}>
+        <ProfileBreadcrumb
+          items={[
+            { label: "الرئيسية", href: "/" },
+            { label: "حسابي", href: "/profile" },
+            { label: breadcrumbTitle },
+          ]}
+        />
 
-        <div className="mt-10 flex flex-col gap-8 md:flex-row">
-          <aside className="w-full shrink-0 rounded-sm border border-black/10 p-4 md:w-56 md:border-0 md:bg-transparent md:p-0">
-            <nav className="hide-scrollbar flex flex-row gap-0 overflow-x-auto md:flex-col md:overflow-visible">
-              {navItems.map((item) =>
-                item.type === "link" ? (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="flex items-center gap-3 whitespace-nowrap border-b border-black/10 px-4 py-3 text-end text-sm text-neutral-600 hover:text-black md:py-3"
-                    style={sans}
-                  >
-                    {item.icon}
-                    {item.label}
-                    <ChevronLeft className="mr-auto h-4 w-4 md:hidden" />
-                  </Link>
-                ) : (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setTab(item.id)}
-                    className={`flex items-center gap-3 whitespace-nowrap border-b border-black/10 px-4 py-3 text-end text-sm md:py-3 ${
-                      tab === item.id ? "border-black/20 font-semibold text-black" : "text-neutral-600 hover:text-black"
-                    }`}
-                    style={sans}
-                  >
-                    {item.icon}
-                    {item.label}
-                    <ChevronLeft className="mr-auto h-4 w-4 md:hidden" />
-                  </button>
-                )
-              )}
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="flex items-center gap-3 border-t border-black/10 px-4 py-3 text-end text-sm text-neutral-600 hover:text-black md:mt-4 md:border-t"
-                style={sans}
-              >
-                <LogOut className="h-5 w-5" strokeWidth={1.25} />
-                تسجيل الخروج
-              </button>
-            </nav>
+        <div className="flex flex-col gap-10 lg:flex-row lg:gap-12">
+          <aside className="w-full shrink-0 lg:w-56">
+            <ProfileAccountNav current={navCurrent} onLogout={handleLogout} />
           </aside>
 
-          <div className="min-w-0 flex-1 rounded-sm border border-black/10 bg-white p-6 md:p-8">
-            {tab === "orders" && (
+          <div className="min-w-0 flex-1">
+            {tabFromUrl === "orders" && (
               <>
-                <h2 className="mb-6 text-lg font-medium text-black" style={sans}>
+                <h1 className="text-2xl font-medium text-neutral-900 md:text-3xl" style={sans}>
                   طلباتي
-                </h2>
+                </h1>
+                <p className="mt-1 text-sm text-neutral-600" style={sans}>
+                  اختاري طلباً لعرض المنتجات والدفع والتتبع.
+                </p>
                 {orders.length === 0 ? (
-                  <p className="text-sm text-neutral-500" style={sans}>
+                  <p className="mt-8 text-sm text-neutral-500" style={sans}>
                     لم تقدّمي أي طلبات بعد.
                   </p>
                 ) : (
-                  <ul className="space-y-4">
+                  <ul className="mt-8 space-y-4">
                     {orders.map((o) => (
-                      <li key={o._id} className="rounded-sm border border-black/10 p-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
+                      <li key={o._id}>
+                        <Link
+                          href={`/profile/orders/${o._id}`}
+                          className="group flex flex-col justify-between gap-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/[0.04] transition-[box-shadow] hover:shadow-md sm:flex-row sm:items-center"
+                        >
                           <div>
-                            <p className="text-sm font-medium" style={sans}>
-                              طلب {String(o._id).slice(-8)} ·{" "}
-                              {new Date(o.createdAt ?? "").toLocaleDateString("ar-SA")}
+                            <p className="text-sm font-medium text-neutral-900" style={sans}>
+                              طلب {String(o._id).slice(-8)}
                             </p>
                             <p className="mt-0.5 text-xs text-neutral-500" style={sans}>
+                              {new Date(o.createdAt ?? "").toLocaleDateString("ar-SA", { dateStyle: "medium" })}
+                            </p>
+                            <p className="mt-1 text-xs text-neutral-600" style={sans}>
                               {statusAr(o.status)}
                             </p>
+                            {o.trackingNumber ? (
+                              <p className="mt-2 text-xs text-neutral-500" style={sans}>
+                                {o.carrier ? `${o.carrier} · ` : ""}
+                                {o.trackingNumber}
+                              </p>
+                            ) : null}
                           </div>
-                          <p className="text-sm" style={sans}>
-                            {o.total != null ? formatSar(Number(o.total)) : "—"}
-                          </p>
-                        </div>
-                        {o.trackingNumber && (
-                          <p className="mt-2 text-xs text-neutral-600" style={sans}>
-                            تتبع: {o.carrier} {o.trackingNumber}
-                          </p>
-                        )}
-                        <Link
-                          href="/profile/track"
-                          className="mt-2 inline-block text-xs text-black underline hover:no-underline"
-                          style={sans}
-                        >
-                          عرض التتبع
+                          <div className="flex flex-wrap items-center gap-4 sm:flex-col sm:items-end">
+                            <p className="text-sm font-medium text-neutral-900" style={sans}>
+                              {o.total != null ? formatSar(Number(o.total)) : "—"}
+                            </p>
+                            <span
+                              className="inline-flex items-center gap-1 text-sm font-medium text-[#B63A6B] group-hover:underline"
+                              style={sans}
+                            >
+                              عرض التفاصيل
+                              <ChevronLeft className="h-4 w-4" strokeWidth={2} />
+                            </span>
+                          </div>
                         </Link>
                       </li>
                     ))}
@@ -247,77 +265,145 @@ export default function ProfileContent() {
               </>
             )}
 
-            {tab === "billing" && (
+            {tabFromUrl === "billing" && profile && (
               <>
-                <h2 className="mb-6 text-lg font-medium text-black" style={sans}>
-                  الفوترة والشحن
-                </h2>
-                <div className="grid max-w-md gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <label className="mb-1 block text-xs text-neutral-500" style={sans}>
-                      البريد الإلكتروني
-                    </label>
-                    <input
-                      value={editEmail}
-                      onChange={(e) => setEditEmail(e.target.value)}
-                      className="w-full border border-neutral-200 px-3 py-2 text-sm"
-                      style={sans}
-                    />
+                    <h1 className="text-2xl font-medium text-neutral-900 md:text-3xl" style={sans}>
+                      بياناتي
+                    </h1>
+                    <p className="mt-1 text-sm text-neutral-600" style={sans}>
+                      اسم المستخدم وبيانات التواصل والعنوان المرتبطة بحسابك.
+                    </p>
                   </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-neutral-500" style={sans}>
-                      الاسم الكامل
-                    </label>
-                    <input
-                      value={editFullName}
-                      onChange={(e) => setEditFullName(e.target.value)}
-                      className="w-full border border-neutral-200 px-3 py-2 text-sm"
+                  {!billingEditing ? (
+                    <button
+                      type="button"
+                      onClick={() => setBillingEditing(true)}
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-neutral-200 bg-white px-5 py-2.5 text-sm font-medium text-neutral-800 shadow-sm transition-colors hover:bg-neutral-50"
                       style={sans}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-neutral-500" style={sans}>
-                      الجوال
-                    </label>
-                    <input
-                      value={editPhone}
-                      onChange={(e) => setEditPhone(e.target.value)}
-                      className="w-full border border-neutral-200 px-3 py-2 text-sm"
-                      style={sans}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-xs text-neutral-500" style={sans}>
-                      عنوان الشحن
-                    </label>
-                    <textarea
-                      value={editAddress}
-                      onChange={(e) => setEditAddress(e.target.value)}
-                      className="w-full border border-neutral-200 px-3 py-2 text-sm"
-                      rows={3}
-                      style={sans}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={saveProfile}
-                    disabled={savingProfile}
-                    className="rounded-full bg-neutral-900 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-                    style={sans}
-                  >
-                    {savingProfile ? "جاري الحفظ…" : "حفظ التغييرات"}
-                  </button>
+                    >
+                      <Pencil className="h-4 w-4 text-[#B63A6B]" strokeWidth={1.75} />
+                      تعديل
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="mt-8 max-w-lg rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
+                  {!billingEditing ? (
+                    <dl className="space-y-5 text-sm" style={sans}>
+                      <div>
+                        <dt className="text-xs text-neutral-500">اسم المستخدم</dt>
+                        <dd className="mt-1 font-medium text-neutral-900">{displayOrDash(profile.username)}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-neutral-500">البريد الإلكتروني</dt>
+                        <dd className="mt-1 text-neutral-900" dir="ltr">
+                          {displayOrDash(profile.email)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-neutral-500">الاسم الكامل</dt>
+                        <dd className="mt-1 text-neutral-900">{displayOrDash(profile.fullName)}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-neutral-500">الجوال</dt>
+                        <dd className="mt-1 text-neutral-900" dir="ltr">
+                          {displayOrDash(profile.phone)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-neutral-500">عنوان الشحن</dt>
+                        <dd className="mt-1 whitespace-pre-wrap text-neutral-900">{displayOrDash(profile.address)}</dd>
+                      </div>
+                    </dl>
+                  ) : (
+                    <div className="space-y-4">
+                      <div>
+                        <p className="mb-1 text-xs text-neutral-500" style={sans}>
+                          اسم المستخدم
+                        </p>
+                        <p className="rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600" style={sans}>
+                          {displayOrDash(profile.username)}
+                        </p>
+                        <p className="mt-1 text-xs text-neutral-400" style={sans}>
+                          لا يمكن تغيير اسم المستخدم من هنا.
+                        </p>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs text-neutral-500" style={sans}>
+                          البريد الإلكتروني
+                        </label>
+                        <input
+                          value={editEmail}
+                          onChange={(e) => setEditEmail(e.target.value)}
+                          className="w-full rounded-xl border-0 bg-[#FCF0F2]/40 px-4 py-3 text-sm ring-1 ring-black/[0.06] focus:outline-none focus:ring-2 focus:ring-[#B63A6B]/30"
+                          style={sans}
+                          dir="ltr"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs text-neutral-500" style={sans}>
+                          الاسم الكامل
+                        </label>
+                        <input
+                          value={editFullName}
+                          onChange={(e) => setEditFullName(e.target.value)}
+                          className="w-full rounded-xl border-0 bg-[#FCF0F2]/40 px-4 py-3 text-sm ring-1 ring-black/[0.06] focus:outline-none focus:ring-2 focus:ring-[#B63A6B]/30"
+                          style={sans}
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs text-neutral-500" style={sans}>
+                          الجوال
+                        </label>
+                        <input
+                          value={editPhone}
+                          onChange={(e) => setEditPhone(e.target.value)}
+                          className="w-full rounded-xl border-0 bg-[#FCF0F2]/40 px-4 py-3 text-sm ring-1 ring-black/[0.06] focus:outline-none focus:ring-2 focus:ring-[#B63A6B]/30"
+                          style={sans}
+                          dir="ltr"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs text-neutral-500" style={sans}>
+                          عنوان الشحن
+                        </label>
+                        <textarea
+                          value={editAddress}
+                          onChange={(e) => setEditAddress(e.target.value)}
+                          className="w-full rounded-xl border-0 bg-[#FCF0F2]/40 px-4 py-3 text-sm ring-1 ring-black/[0.06] focus:outline-none focus:ring-2 focus:ring-[#B63A6B]/30"
+                          rows={3}
+                          style={sans}
+                        />
+                      </div>
+                      <div className="flex flex-wrap gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={saveProfile}
+                          disabled={savingProfile}
+                          className="rounded-full bg-[#B63A6B] px-8 py-3 text-sm font-semibold text-white transition-[filter] hover:brightness-110 disabled:opacity-50"
+                          style={sans}
+                        >
+                          {savingProfile ? "جاري الحفظ…" : "حفظ التغييرات"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelBillingEdit}
+                          disabled={savingProfile}
+                          className="rounded-full border border-neutral-200 bg-white px-8 py-3 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-50"
+                          style={sans}
+                        >
+                          إلغاء
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             )}
           </div>
         </div>
-
-        <p className="mt-8 text-center">
-          <Link href="/" className="text-sm text-neutral-600 hover:text-black hover:underline" style={sans}>
-            العودة للرئيسية
-          </Link>
-        </p>
       </div>
     </main>
   );

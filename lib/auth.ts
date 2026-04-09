@@ -47,3 +47,14 @@ export async function requireAdmin(): Promise<SessionPayload> {
   }
   return session;
 }
+
+/** Use in customer-only API routes (orders, uploads). */
+export async function requireCustomer(): Promise<SessionPayload> {
+  const session = await getSession();
+  if (!session || session.role !== "customer") {
+    const err = new Error("Forbidden") as Error & { status?: number };
+    err.status = 403;
+    throw err;
+  }
+  return session;
+}

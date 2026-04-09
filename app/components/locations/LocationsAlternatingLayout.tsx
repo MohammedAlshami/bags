@@ -62,7 +62,7 @@ export function LocationsAlternatingLayout() {
     <div className={`mx-auto w-full max-w-[1920px] ${pagePaddingX}`}>
       <div className="flex flex-col gap-14 md:gap-20 lg:gap-24">
         {STORE_LOCATIONS.map((store, index) => (
-          <LocationRow key={store.name} store={store} index={index} />
+          <LocationRow key={store.id} store={store} index={index} />
         ))}
       </div>
     </div>

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Cormorant_Garamond, Playpen_Sans_Arabic } from "next/font/google";
+import { Geist, Geist_Mono, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import ConditionalNavbar from "./components/ConditionalNavbar";
 import ConditionalFooter from "./components/ConditionalFooter";
 import { WhatsAppFloat } from "./components/WhatsAppFloat";
+import { CartProvider } from "./context/CartContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,18 +22,10 @@ const cormorant = Cormorant_Garamond({
   weight: ["300", "400", "500", "600"],
 });
 
-const playpenSansArabic = Playpen_Sans_Arabic({
-  variable: "--font-playpen-arabic",
-  subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
 export const metadata: Metadata = {
   title: "الملكة جولد",
   description: "عناية مختارة بعناية — منتجات تليق بكِ.",
 };
-
-import { CartProvider } from "./context/CartContext";
 
 export default function RootLayout({
   children,
@@ -41,8 +34,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Playpen+Sans+Arabic:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${playpenSansArabic.variable} antialiased font-sans overflow-x-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} antialiased font-sans overflow-x-hidden`}
       >
         <CartProvider>
           <ConditionalNavbar />

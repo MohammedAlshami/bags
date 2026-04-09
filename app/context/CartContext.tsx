@@ -21,6 +21,7 @@ type CartContextValue = {
   addToCart: (item: Omit<CartItem, "quantity">) => void;
   removeFromCart: (slug: string) => void;
   updateQuantity: (slug: string, quantity: number) => void;
+  clearCart: () => void;
   subtotal: number;
 };
 
@@ -66,6 +67,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const clearCart = useCallback(() => {
+    setItems([]);
+  }, []);
+
   const count = items.reduce((acc, i) => acc + i.quantity, 0);
   const subtotal = items.reduce(
     (acc, i) => acc + parsePrice(i.price) * i.quantity,
@@ -80,6 +85,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         addToCart,
         removeFromCart,
         updateQuantity,
+        clearCart,
         subtotal,
       }}
     >

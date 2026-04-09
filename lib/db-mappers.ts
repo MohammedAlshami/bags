@@ -104,6 +104,8 @@ export type OrderRow = {
   total: number;
   status: string;
   shipping_address: unknown;
+  payment_proof_url?: string | null;
+  branch_key?: string | null;
   tracking_number: string;
   carrier: string;
   shipped_at: string | null;
@@ -122,12 +124,28 @@ function orderCommon(row: OrderRow) {
     row.shipping_address && typeof row.shipping_address === "object"
       ? row.shipping_address
       : {};
+  const sa = shippingAddress as Record<string, unknown>;
+  const branchFromCol = row.branch_key != null && String(row.branch_key).trim() !== "";
+  const branchKey = branchFromCol
+    ? String(row.branch_key)
+    : typeof sa.branchKey === "string" && sa.branchKey.trim()
+      ? sa.branchKey.trim()
+      : null;
+  const proofFromCol =
+    row.payment_proof_url != null && String(row.payment_proof_url).trim() !== "";
+  const paymentProofUrl = proofFromCol
+    ? String(row.payment_proof_url)
+    : typeof sa.paymentProofUrl === "string" && sa.paymentProofUrl.trim()
+      ? sa.paymentProofUrl.trim()
+      : null;
   return {
     _id: row.id,
     items,
     total: row.total,
     status: row.status,
     shippingAddress,
+    paymentProofUrl,
+    branchKey,
     trackingNumber: row.tracking_number,
     carrier: row.carrier,
     shippedAt: row.shipped_at,

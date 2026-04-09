@@ -1,14 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ImagePlus, MoreVertical, X } from "lucide-react";
-import { sans } from "@/lib/page-theme";
+import { ImagePlus, MoreVertical, PackagePlus, X } from "lucide-react";
+import { ConfirmModal } from "@/app/components/ConfirmModal";
+import { adminIconClassName, sans } from "@/lib/page-theme";
 import { CATEGORIES } from "@/lib/products";
+import { formatSar, parseStoredPriceToInputValue } from "@/lib/format-sar";
+import {
+  AdminSkeletonPageHeader,
+  AdminSkeletonProductsGrid,
+} from "@/lib/admin-skeleton";
 
 const API_ERROR_AR: Record<string, string> = {
   Forbidden: "غير مسموح",
+  "Failed to fetch products": "تعذر تحميل المنتجات",
   "Failed to load products": "تعذر تحميل المنتجات",
   "Failed to create product": "تعذر إنشاء المنتج",
   "Failed to update product": "تعذر تحديث المنتج",
@@ -37,10 +44,31 @@ type ProductRow = {
   collection?: Collection | null;
 };
 
+async function parseProductPage(res: Response): Promise<{
+  items: ProductRow[];
+  nextOffset: number | null;
+}> {
+  const d = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const raw = typeof (d as { error?: string }).error === "string" ? (d as { error: string }).error : "";
+    throw new Error(raw || "Failed to load products");
+  }
+  const data = d as { items?: unknown; nextOffset?: unknown };
+  if (!data || !Array.isArray(data.items)) {
+    throw new Error("Failed to load products");
+  }
+  return {
+    items: data.items as ProductRow[],
+    nextOffset: typeof data.nextOffset === "number" ? data.nextOffset : null,
+  };
+}
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextOffset, setNextOffset] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<ProductRow | null>(null);
@@ -54,14 +82,12 @@ export default function AdminProductsPage() {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [detailProduct, setDetailProduct] = useState<ProductRow | null>(null);
   const [imageDropActive, setImageDropActive] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const imageFileInputRef = useRef<HTMLInputElement>(null);
-
-  const fetchProducts = async () => {
-    const res = await fetch("/api/admin/products");
-    if (!res.ok) throw new Error("تعذر تحميل المنتجات");
-    return res.json();
-  };
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+  const loadMoreInFlightRef = useRef(false);
 
   const fetchCollections = async () => {
     const res = await fetch("/api/admin/collections");
@@ -69,16 +95,65 @@ export default function AdminProductsPage() {
     return res.json();
   };
 
+  const loadFirstProductPage = async () => {
+    const res = await fetch("/api/admin/products?limit=8&offset=0");
+    return parseProductPage(res);
+  };
+
   useEffect(() => {
-    Promise.all([fetchProducts(), fetchCollections()])
-      .then(([prods, cols]) => {
-        setProducts(prods);
+    let cancelled = false;
+    setInitialLoading(true);
+    Promise.all([loadFirstProductPage(), fetchCollections()])
+      .then(([page, cols]) => {
+        if (cancelled) return;
+        setProducts(page.items);
+        setNextOffset(page.nextOffset);
         setCollections(cols);
         setError(null);
       })
-      .catch((e) => setError(e instanceof Error ? arApiError(e.message) : "خطأ"))
-      .finally(() => setLoading(false));
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e instanceof Error ? arApiError(e.message) : "خطأ");
+      })
+      .finally(() => {
+        if (!cancelled) setInitialLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  const loadMore = useCallback(async () => {
+    if (nextOffset === null || loadingMore || initialLoading || loadMoreInFlightRef.current) return;
+    loadMoreInFlightRef.current = true;
+    setLoadingMore(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/products?limit=8&offset=${nextOffset}`);
+      const page = await parseProductPage(res);
+      setProducts((prev) => [...prev, ...page.items]);
+      setNextOffset(page.nextOffset);
+    } catch (e) {
+      setError(e instanceof Error ? arApiError(e.message) : "خطأ");
+    } finally {
+      loadMoreInFlightRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [nextOffset, loadingMore, initialLoading]);
+
+  useEffect(() => {
+    const el = loadMoreSentinelRef.current;
+    if (!el || nextOffset === null || initialLoading) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting || loadingMore) return;
+        void loadMore();
+      },
+      { root: null, rootMargin: "240px", threshold: 0 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [nextOffset, loadingMore, initialLoading, loadMore]);
 
   useEffect(() => {
     if (!showForm && !detailProduct) return;
@@ -122,7 +197,7 @@ export default function AdminProductsPage() {
     setDetailProduct(null);
     setEditing(p);
     setName(p.name);
-    setPrice(p.price);
+    setPrice(parseStoredPriceToInputValue(p.price));
     setCategory(p.category);
     setImage(p.image);
     setCollectionId(p.collection?._id ?? collections[0]?._id ?? "general");
@@ -133,11 +208,22 @@ export default function AdminProductsPage() {
   const save = async () => {
     setSaving(true);
     try {
+      const priceTrim = price.trim();
+      if (!priceTrim) {
+        setError("السعر مطلوب.");
+        return;
+      }
+      const priceNum = Number(priceTrim);
+      if (!Number.isFinite(priceNum) || priceNum < 0) {
+        setError("أدخل سعراً صالحاً (رقم موجب).");
+        return;
+      }
+      const priceFormatted = formatSar(priceNum);
       const url = editing ? `/api/admin/products/${editing._id}` : "/api/admin/products";
       const method = editing ? "PUT" : "POST";
       const payload = {
         name,
-        price,
+        price: priceFormatted,
         category,
         image,
         collection: collectionId && collectionId !== "general" ? collectionId : (collections[0]?._id ?? "general"),
@@ -153,8 +239,10 @@ export default function AdminProductsPage() {
         throw new Error(raw || "تعذر الحفظ");
       }
       setShowForm(false);
-      const data = await fetchProducts();
-      setProducts(data);
+      setError(null);
+      const page = await loadFirstProductPage();
+      setProducts(page.items);
+      setNextOffset(page.nextOffset);
     } catch (e) {
       setError(arApiError(e instanceof Error ? e.message : "خطأ"));
     } finally {
@@ -197,9 +285,9 @@ export default function AdminProductsPage() {
     e.target.value = "";
   };
 
-  const remove = async (id: string) => {
+  const performRemove = async (id: string) => {
     setMenuOpenId(null);
-    if (!confirm("حذف هذا المنتج؟")) return;
+    setDeleteBusy(true);
     try {
       const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
       if (!res.ok) {
@@ -207,9 +295,15 @@ export default function AdminProductsPage() {
         const raw = typeof d.error === "string" ? d.error : "";
         throw new Error(raw || "تعذر الحذف");
       }
-      setProducts(await fetchProducts());
+      const page = await loadFirstProductPage();
+      setProducts(page.items);
+      setNextOffset(page.nextOffset);
+      setDeleteConfirmId(null);
+      if (detailProduct?._id === id) setDetailProduct(null);
     } catch (e) {
       setError(arApiError(e instanceof Error ? e.message : "خطأ"));
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
@@ -226,10 +320,15 @@ export default function AdminProductsPage() {
       <div>
         <label className="block text-xs text-neutral-500 mb-1">السعر</label>
         <input
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step="0.01"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
           className="w-full border border-neutral-200 px-3 py-2 text-sm rounded-sm"
-          placeholder="242.00 ر.س"
+          placeholder="242.00"
+          dir="ltr"
         />
       </div>
       <div>
@@ -317,7 +416,7 @@ export default function AdminProductsPage() {
                   fill
                   className="object-contain"
                   sizes="240px"
-                  unoptimized={image.startsWith("http") && !/unsplash|ebayimg|cloudinary/.test(image)}
+                  unoptimized={image.startsWith("http") && !/unsplash|ebayimg/.test(image)}
                 />
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
@@ -348,7 +447,7 @@ export default function AdminProductsPage() {
             </div>
           ) : (
             <>
-              <ImagePlus className="w-11 h-11 text-neutral-400 mb-3" strokeWidth={1.25} aria-hidden />
+              <ImagePlus className={`w-11 h-11 mb-3 ${adminIconClassName}`} strokeWidth={1.25} aria-hidden />
               <p className="text-sm font-medium text-neutral-800" style={sans}>
                 اسحب الصورة هنا
               </p>
@@ -363,7 +462,7 @@ export default function AdminProductsPage() {
           type="button"
           onClick={save}
           disabled={saving}
-          className="px-4 py-2 bg-black text-white text-sm rounded-sm disabled:opacity-50"
+          className="px-4 py-2 bg-[#B63A6B] text-white text-sm rounded-sm hover:brightness-110 transition-[filter] disabled:opacity-50 disabled:hover:brightness-100"
         >
           {saving ? "جاري الحفظ…" : "حفظ"}
         </button>
@@ -378,14 +477,15 @@ export default function AdminProductsPage() {
     </div>
   );
 
-  if (loading) {
+  if (initialLoading) {
     return (
-      <p className="text-neutral-500" style={sans} dir="rtl">
-        جاري التحميل…
-      </p>
+      <div dir="rtl" style={sans} className="relative">
+        <AdminSkeletonPageHeader />
+        <AdminSkeletonProductsGrid count={8} />
+      </div>
     );
   }
-  if (error) {
+  if (error && products.length === 0) {
     return (
       <p className="text-red-600" dir="rtl" style={sans}>
         {error}
@@ -395,13 +495,19 @@ export default function AdminProductsPage() {
 
   return (
     <div dir="rtl" style={sans} className="relative">
+      {error && products.length > 0 ? (
+        <p className="mb-4 text-sm text-red-600" role="alert">
+          {error}
+        </p>
+      ) : null}
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <h2 className="text-xl font-medium text-neutral-900">المنتجات</h2>
         <button
           type="button"
           onClick={openCreate}
-          className="px-4 py-2 bg-black text-white text-sm hover:bg-neutral-800 rounded-sm"
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#B63A6B] text-white text-sm rounded-sm hover:brightness-110 transition-[filter]"
         >
+          <PackagePlus className="w-4 h-4 shrink-0" strokeWidth={1.75} aria-hidden />
           إضافة منتج
         </button>
       </div>
@@ -410,7 +516,7 @@ export default function AdminProductsPage() {
         <>
           <button
             type="button"
-            className="fixed inset-0 z-[60] bg-black/40"
+            className="fixed inset-0 z-[60] cursor-pointer bg-black/40 transition-colors hover:bg-black/50"
             aria-label="إغلاق"
             onClick={() => setShowForm(false)}
           />
@@ -418,10 +524,10 @@ export default function AdminProductsPage() {
             className="
               fixed z-[70] flex flex-col bg-white shadow-2xl
               inset-x-0 bottom-0 max-h-[92vh] rounded-t-2xl border-t border-black/10
-              md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:left-auto md:h-full md:max-h-none md:w-full md:max-w-md md:rounded-none md:border-t-0 md:border-r md:border-black/10
+              md:inset-x-auto md:left-0 md:top-0 md:bottom-0 md:right-auto md:h-full md:max-h-none md:w-full md:max-w-md md:rounded-none md:border-t-0 md:border-l md:border-black/10
             "
           >
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-black/10 px-4 py-3">
+            <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3">
               <h3 className="text-lg font-medium">{editing ? "تعديل منتج" : "منتج جديد"}</h3>
               <button
                 type="button"
@@ -429,7 +535,7 @@ export default function AdminProductsPage() {
                 className="p-2 rounded-sm hover:opacity-70 text-neutral-600"
                 aria-label="إغلاق"
               >
-                <X className="w-5 h-5" strokeWidth={1.5} />
+                <X className={`w-5 h-5 ${adminIconClassName}`} strokeWidth={1.5} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">{formFields}</div>
@@ -442,7 +548,7 @@ export default function AdminProductsPage() {
         <>
           <button
             type="button"
-            className="fixed inset-0 z-[60] bg-black/40"
+            className="fixed inset-0 z-[60] cursor-pointer bg-black/40 transition-colors hover:bg-black/50"
             aria-label="إغلاق"
             onClick={() => setDetailProduct(null)}
           />
@@ -450,10 +556,10 @@ export default function AdminProductsPage() {
             className="
               fixed z-[70] flex flex-col bg-white shadow-2xl
               inset-x-0 bottom-0 max-h-[92vh] rounded-t-2xl border-t border-black/10
-              md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:left-auto md:h-full md:max-h-none md:w-full md:max-w-md md:rounded-none md:border-t-0 md:border-r md:border-black/10
+              md:inset-x-auto md:left-0 md:top-0 md:bottom-0 md:right-auto md:h-full md:max-h-none md:w-full md:max-w-md md:rounded-none md:border-t-0 md:border-l md:border-black/10
             "
           >
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-black/10 px-4 py-3">
+            <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3">
               <h3 className="text-lg font-medium">تفاصيل المنتج</h3>
               <button
                 type="button"
@@ -461,21 +567,21 @@ export default function AdminProductsPage() {
                 className="p-2 rounded-sm hover:opacity-70 text-neutral-600"
                 aria-label="إغلاق"
               >
-                <X className="w-5 h-5" strokeWidth={1.5} />
+                <X className={`w-5 h-5 ${adminIconClassName}`} strokeWidth={1.5} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
-              <div className="relative mx-auto aspect-square w-full max-w-[280px] overflow-hidden rounded-2xl border border-black/10 bg-neutral-100">
+              <div className="relative mx-auto aspect-square w-full max-w-[280px] overflow-hidden rounded-2xl border border-black/10">
                 {detailProduct.image ? (
                   <Image
                     src={detailProduct.image}
                     alt={detailProduct.name}
                     fill
-                    className="object-contain p-4"
+                    className="object-cover object-center"
                     sizes="280px"
                     unoptimized={
                       detailProduct.image.startsWith("http") &&
-                      !/unsplash|ebayimg|cloudinary/.test(detailProduct.image)
+                      !/unsplash|ebayimg/.test(detailProduct.image)
                     }
                   />
                 ) : null}
@@ -524,7 +630,7 @@ export default function AdminProductsPage() {
                 <button
                   type="button"
                   onClick={() => openEdit(detailProduct)}
-                  className="px-4 py-2 bg-black text-white text-sm rounded-sm hover:bg-neutral-800"
+                  className="px-4 py-2 bg-[#B63A6B] text-white text-sm rounded-sm hover:brightness-110 transition-[filter]"
                 >
                   تعديل
                 </button>
@@ -538,89 +644,111 @@ export default function AdminProductsPage() {
       {products.length === 0 ? (
         <p className="py-12 text-neutral-500 text-center border border-black/10 rounded-sm bg-white">لا توجد منتجات بعد.</p>
       ) : (
-        <ul className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6 list-none p-0 m-0">
-          {products.map((p) => (
-            <li key={p._id} className="relative">
-              <article
-                className="group flex h-full flex-col cursor-pointer"
-                role="button"
-                tabIndex={0}
-                onClick={() => {
-                  setMenuOpenId(null);
-                  setDetailProduct(p);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
+        <>
+          <ul className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6 list-none p-0 m-0">
+            {products.map((p) => (
+              <li key={p._id} className="relative">
+                <article
+                  className="group flex h-full flex-col cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
                     setMenuOpenId(null);
                     setDetailProduct(p);
-                  }
-                }}
-              >
-                <div className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl bg-neutral-100 p-4 sm:p-5 md:p-6 lg:p-7">
-                  {p.image && (
-                    <Image
-                      src={p.image}
-                      alt={p.name}
-                      fill
-                      className="object-contain object-center p-3 transition-transform duration-300 group-hover:scale-[1.03] sm:p-4 md:p-5"
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                      unoptimized={p.image.startsWith("http") && !/unsplash|ebayimg|cloudinary/.test(p.image)}
-                    />
-                  )}
-                  <div className="absolute top-2 end-2 z-[1] sm:top-3 sm:end-3" ref={menuOpenId === p._id ? menuRef : undefined}>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMenuOpenId((id) => (id === p._id ? null : p._id));
-                      }}
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-white/95 border border-black/10 shadow-sm text-neutral-700 hover:bg-white"
-                      aria-expanded={menuOpenId === p._id}
-                      aria-haspopup="menu"
-                      aria-label="إجراءات المنتج"
-                    >
-                      <MoreVertical className="w-5 h-5" strokeWidth={1.5} />
-                    </button>
-                    {menuOpenId === p._id && (
-                      <div
-                        role="menu"
-                        className="absolute top-full end-0 mt-1 min-w-[10rem] rounded-sm border border-black/10 bg-white py-1 shadow-lg z-[2]"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          type="button"
-                          role="menuitem"
-                          className="block w-full text-right px-3 py-2 text-sm hover:bg-white"
-                          onClick={() => openEdit(p)}
-                        >
-                          تعديل
-                        </button>
-                        <button
-                          type="button"
-                          role="menuitem"
-                          className="block w-full text-right px-3 py-2 text-sm text-red-600 hover:bg-white"
-                          onClick={() => remove(p._id)}
-                        >
-                          حذف
-                        </button>
-                      </div>
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setMenuOpenId(null);
+                      setDetailProduct(p);
+                    }
+                  }}
+                >
+                  <div className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl">
+                    {p.image && (
+                      <Image
+                        src={p.image}
+                        alt={p.name}
+                        fill
+                        className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.03]"
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        unoptimized={p.image.startsWith("http") && !/unsplash|ebayimg/.test(p.image)}
+                      />
                     )}
+                    <div className="absolute top-2 end-2 z-[1] sm:top-3 sm:end-3" ref={menuOpenId === p._id ? menuRef : undefined}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMenuOpenId((id) => (id === p._id ? null : p._id));
+                        }}
+                        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-black/10 bg-white/95 text-neutral-700 shadow-sm transition-shadow hover:border-black/20 hover:bg-white hover:shadow-md"
+                        aria-expanded={menuOpenId === p._id}
+                        aria-haspopup="menu"
+                        aria-label="إجراءات المنتج"
+                      >
+                        <MoreVertical className={`w-5 h-5 ${adminIconClassName}`} strokeWidth={1.5} />
+                      </button>
+                      {menuOpenId === p._id && (
+                        <div
+                          role="menu"
+                          className="absolute top-full end-0 mt-1 min-w-[10rem] rounded-sm border border-black/10 bg-white py-1 shadow-lg z-[2]"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="block w-full cursor-pointer text-right px-3 py-2 text-sm transition-colors hover:bg-neutral-50"
+                            onClick={() => openEdit(p)}
+                          >
+                            تعديل
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="block w-full cursor-pointer text-right px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
+                            onClick={() => {
+                              setMenuOpenId(null);
+                              setDeleteConfirmId(p._id);
+                            }}
+                          >
+                            حذف
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="mt-4 flex flex-col gap-1 text-center">
-                  <span className="text-xs text-neutral-500">{p.category}</span>
-                  <span className="text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">{p.name}</span>
-                  <span className="text-sm text-neutral-900">{p.price}</span>
-                  {(p.collection as Collection)?.name ? (
-                    <span className="text-xs text-neutral-400">{(p.collection as Collection).name}</span>
-                  ) : null}
-                </div>
-              </article>
-            </li>
-          ))}
-        </ul>
+                  <div className="mt-4 flex flex-col gap-1 text-center">
+                    <span className="text-xs text-neutral-500">{p.category}</span>
+                    <span className="text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">{p.name}</span>
+                    <span className="text-sm text-neutral-900">{p.price}</span>
+                    {(p.collection as Collection)?.name ? (
+                      <span className="text-xs text-neutral-400">{(p.collection as Collection).name}</span>
+                    ) : null}
+                  </div>
+                </article>
+              </li>
+            ))}
+          </ul>
+          {loadingMore ? <AdminSkeletonProductsGrid count={8} /> : null}
+          <div ref={loadMoreSentinelRef} className="h-3 w-full shrink-0" aria-hidden />
+        </>
       )}
+
+      <ConfirmModal
+        open={deleteConfirmId !== null}
+        title="حذف المنتج"
+        message="هل أنت متأكد من حذف هذا المنتج؟ لا يمكن التراجع عن هذا الإجراء."
+        confirmLabel="حذف"
+        cancelLabel="إلغاء"
+        onConfirm={() => {
+          if (deleteConfirmId) void performRemove(deleteConfirmId);
+        }}
+        onCancel={() => {
+          if (!deleteBusy) setDeleteConfirmId(null);
+        }}
+        busy={deleteBusy}
+      />
     </div>
   );
 }

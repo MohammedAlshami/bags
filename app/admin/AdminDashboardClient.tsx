@@ -1,14 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Package,
-  FolderKanban,
-  Users,
-  ShoppingBag,
-  ShoppingCart,
-  UserCircle,
-} from "lucide-react";
+import { Package, Users, ShoppingBag, ShoppingCart, UserCircle } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -21,10 +14,10 @@ import {
   YAxis,
 } from "recharts";
 import { formatSar } from "@/lib/format-sar";
-import { sans } from "@/lib/page-theme";
+import { adminAccentHex, adminIconClassName, sans } from "@/lib/page-theme";
 import { orderStatusAr } from "@/lib/admin-ar";
 
-type StatIconKey = "products" | "collections" | "customers" | "orders";
+type StatIconKey = "products" | "customers" | "orders";
 
 type Stat = { label: string; value: number; href: string; iconKey: StatIconKey };
 type RecentOrder = { _id: string; status?: string; total?: number; customer?: { username?: string } };
@@ -32,7 +25,6 @@ type RecentCustomer = { _id: string; username?: string };
 
 const STAT_ICONS: Record<StatIconKey, React.ComponentType<{ className?: string }>> = {
   products: Package,
-  collections: FolderKanban,
   customers: Users,
   orders: ShoppingBag,
 };
@@ -104,7 +96,7 @@ export function AdminDashboardClient({
       <h2 className="mt-2 text-3xl font-medium text-neutral-900 md:text-4xl mb-10" style={sans}>
         نظرة عامة
       </h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-10">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-10">
         {stats.map(({ label, value, href, iconKey }) => {
           const Icon = STAT_ICONS[iconKey];
           return (
@@ -113,8 +105,8 @@ export function AdminDashboardClient({
               href={href}
               className="block p-6 md:p-8 bg-white border border-black/10 rounded-sm hover:border-black/20 transition-colors group"
             >
-              <span className="inline-flex text-neutral-400 group-hover:text-black/70 transition-colors mb-3">
-                <Icon className="w-5 h-5" strokeWidth={1.25} />
+              <span className="inline-flex mb-3">
+                <Icon className={`w-5 h-5 ${adminIconClassName}`} strokeWidth={1.25} />
               </span>
               <p className="text-3xl font-medium text-black" style={sans}>
                 {value}
@@ -146,8 +138,8 @@ export function AdminDashboardClient({
               <AreaChart data={revenueSeries} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#171717" stopOpacity={0.2} />
-                    <stop offset="100%" stopColor="#171717" stopOpacity={0} />
+                    <stop offset="0%" stopColor={adminAccentHex} stopOpacity={0.28} />
+                    <stop offset="100%" stopColor={adminAccentHex} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
@@ -170,7 +162,7 @@ export function AdminDashboardClient({
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#171717"
+                  stroke={adminAccentHex}
                   strokeWidth={1.5}
                   fill="url(#revFill)"
                 />
@@ -203,7 +195,7 @@ export function AdminDashboardClient({
                   />
                   <YAxis tick={{ fontSize: 10, fill: "#737373" }} allowDecimals={false} />
                   <Tooltip content={<StatusTooltip />} />
-                  <Bar dataKey="count" fill="#171717" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" fill={adminAccentHex} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -214,7 +206,7 @@ export function AdminDashboardClient({
       <div className="grid md:grid-cols-2 gap-8">
         <section className="bg-white border border-black/10 rounded-sm p-6 md:p-8">
           <div className="flex items-center gap-3 mb-5">
-            <ShoppingCart className="w-5 h-5 text-neutral-500" strokeWidth={1.25} />
+            <ShoppingCart className={`w-5 h-5 ${adminIconClassName}`} strokeWidth={1.25} />
             <h3 className="text-lg font-medium text-black" style={sans}>
               أحدث الطلبات
             </h3>
@@ -238,7 +230,7 @@ export function AdminDashboardClient({
         </section>
         <section className="bg-white border border-black/10 rounded-sm p-6 md:p-8">
           <div className="flex items-center gap-3 mb-5">
-            <UserCircle className="w-5 h-5 text-neutral-500" strokeWidth={1.25} />
+            <UserCircle className={`w-5 h-5 ${adminIconClassName}`} strokeWidth={1.25} />
             <h3 className="text-lg font-medium text-black" style={sans}>
               أحدث العملاء
             </h3>

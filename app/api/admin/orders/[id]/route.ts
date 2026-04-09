@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 async function fetchOrderJoined(id: string) {
   const rows = await sql`
     SELECT o.id, o.customer_id, o.items, o.total, o.status, o.shipping_address,
+           o.payment_proof_url,
            o.tracking_number, o.carrier, o.shipped_at, o.created_at, o.updated_at,
            u.username AS customer_username, u.email AS customer_email, u.full_name AS customer_full_name,
            u.address AS customer_address, u.phone AS customer_phone
@@ -97,10 +98,18 @@ export async function PATCH(
       shippedAt = new Date().toISOString();
     }
 
+    let paymentProofUrl =
+      orderBefore.payment_proof_url != null ? String(orderBefore.payment_proof_url) : "";
+    if (body?.paymentProofUrl !== undefined) {
+      paymentProofUrl =
+        typeof body.paymentProofUrl === "string" ? body.paymentProofUrl.trim() : "";
+    }
+
     await sql`
       UPDATE orders SET
         status = ${status},
         shipping_address = ${JSON.stringify(shippingAddress)}::jsonb,
+        payment_proof_url = ${paymentProofUrl || null},
         tracking_number = ${trackingNumber},
         carrier = ${carrier},
         shipped_at = ${shippedAt},

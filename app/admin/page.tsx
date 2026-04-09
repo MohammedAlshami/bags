@@ -30,10 +30,9 @@ export default async function AdminDashboardPage() {
   const session = await getSession();
   if (!session || session.role !== "admin") redirect("/login");
 
-  const [productCount, collectionCount, customerCount, orderCount, revenueRow, revenueDays, statusRows] =
+  const [productCount, customerCount, orderCount, revenueRow, revenueDays, statusRows] =
     await Promise.all([
       sql`SELECT COUNT(*)::int AS c FROM products`,
-      sql`SELECT COUNT(*)::int AS c FROM collections`,
       sql`SELECT COUNT(*)::int AS c FROM users WHERE role = 'customer'`,
       sql`SELECT COUNT(*)::int AS c FROM orders`,
       sql`
@@ -74,12 +73,6 @@ export default async function AdminDashboardPage() {
       value: (productCount[0] as { c: number }).c,
       href: "/admin/products",
       iconKey: "products" as const,
-    },
-    {
-      label: "المجموعات",
-      value: (collectionCount[0] as { c: number }).c,
-      href: "/admin/collections",
-      iconKey: "collections" as const,
     },
     {
       label: "العملاء",

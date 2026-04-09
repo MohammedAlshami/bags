@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FormEvent } from "react";
-import { Facebook, Instagram, Youtube } from "lucide-react";
+import { Instagram } from "lucide-react";
 
 const font = { fontFamily: "var(--font-playpen-arabic), sans-serif" };
 
@@ -17,8 +17,6 @@ const FOOTER_NAV = [
 
 const SOCIAL_LINKS = [
   { label: "Instagram", href: "https://www.instagram.com/queen__007696", Icon: Instagram },
-  { label: "Facebook", href: "https://www.facebook.com/", Icon: Facebook },
-  { label: "YouTube", href: "https://www.youtube.com/", Icon: Youtube },
 ];
 
 export function Footer() {

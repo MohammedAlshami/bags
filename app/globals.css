@@ -3,6 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #000000;
+  --font-playpen-arabic: "Playpen Sans Arabic", ui-sans-serif, system-ui, sans-serif;
 }
 
 @theme inline {

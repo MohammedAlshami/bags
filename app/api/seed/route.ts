@@ -107,7 +107,7 @@ export async function POST() {
       WHERE id = ${seedCustomerId}::uuid
     `;
 
-    const shippingAddress = SEED_SHIPPING_ADDRESS;
+    const shippingAddress = { ...SEED_SHIPPING_ADDRESS, branchKey: "jeddah-sanabel" };
 
     const firstProduct = products[0];
     const priceNum = parsePrice(firstProduct.price);
@@ -156,7 +156,7 @@ export async function POST() {
           ])}::jsonb,
           ${secondPriceNum},
           ${"shipped"},
-          ${JSON.stringify(shippingAddress)}::jsonb,
+          ${JSON.stringify({ ...SEED_SHIPPING_ADDRESS, branchKey: "makkah-awali" })}::jsonb,
           ${"TRK-SA-9876543210"},
           ${"أرامكس"},
           ${new Date().toISOString()}

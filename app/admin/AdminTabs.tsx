@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, FolderKanban, Users, ShoppingBag } from "lucide-react";
+import { LayoutDashboard, Package, Users, ShoppingBag } from "lucide-react";
 
-import { sans } from "@/lib/page-theme";
+import { adminIconClassName, sans } from "@/lib/page-theme";
 
 const TABS = [
   { href: "/admin", label: "نظرة عامة", icon: LayoutDashboard },
   { href: "/admin/products", label: "المنتجات", icon: Package },
-  { href: "/admin/collections", label: "المجموعات", icon: FolderKanban },
   { href: "/admin/customers", label: "العملاء", icon: Users },
   { href: "/admin/orders", label: "الطلبات", icon: ShoppingBag },
 ];
@@ -33,8 +32,8 @@ export function AdminTabs() {
               }`}
               style={isActive ? sans : undefined}
             >
+              <Icon className={`w-4 h-4 shrink-0 ${adminIconClassName}`} strokeWidth={1.5} />
               {label}
-              <Icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
             </Link>
           );
         })}

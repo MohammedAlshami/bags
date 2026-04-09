@@ -8,6 +8,8 @@ const WA_HREF = "https://wa.me/967782183149";
 export function WhatsAppFloat() {
   const pathname = usePathname();
   if (pathname?.startsWith("/admin")) return null;
+  /** Account area — keep checkout/support flows on public shop pages only */
+  if (pathname?.startsWith("/profile")) return null;
 
   return (
     <Link

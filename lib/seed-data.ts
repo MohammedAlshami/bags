@@ -35,37 +35,37 @@ export const SEED_COLLECTIONS = [
   {
     name: "تعديل شتوي",
     slug: "winter-edit",
-    image: "/Item pictures/2nd_Green_Bag-removebg-preview.png",
+    image: "",
     description: "طبقات لونية هادئة وخطوط بسيطة.",
   },
   {
     name: "ميزون",
     slug: "maison",
-    image: "/Item pictures/basket_bag-removebg-preview.png",
+    image: "",
     description: "منتجات مختارة لروتين عصري.",
   },
   {
     name: "سهرة",
     slug: "soiree",
-    image: "/Item pictures/Black_bag-removebg-preview.png",
+    image: "",
     description: "للمظهر المميز في المناسبات.",
   },
   {
     name: "أوبجكت",
     slug: "object",
-    image: "/Item pictures/Blue_bag-removebg-preview.png",
+    image: "",
     description: "تفاصيل دقيقة ترتقي بيومك.",
   },
   {
     name: "أرشيف",
     slug: "archive",
-    image: "/Item pictures/orange_bag-removebg-preview.png",
+    image: "",
     description: "لمحات من أسلوب العلامة عبر الزمن.",
   },
   {
     name: "نورديك",
     slug: "nordic",
-    image: "/Item pictures/snake_skin_bag-removebg-preview.png",
+    image: "",
     description: "إلهام من الطبيعة الهادئة.",
   },
 ];

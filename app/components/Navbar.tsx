@@ -7,7 +7,12 @@ import { useCart } from "@/app/context/CartContext";
 
 const SCROLL_THRESHOLD = 24;
 
-export default function Navbar() {
+type NavbarProps = {
+  /** When true, navbar sits below the home announcement banner. */
+  showLandingBanner?: boolean;
+};
+
+export default function Navbar({ showLandingBanner = false }: NavbarProps) {
   const brandStyle = { fontFamily: "var(--font-playpen-arabic), sans-serif" };
   const [user, setUser] = useState<{ username: string; role: string } | null>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -32,7 +37,7 @@ export default function Navbar() {
 
   return (
     <header
-      className="fixed left-0 right-0 top-0 z-50 transition-all duration-300"
+      className={`fixed left-0 right-0 z-50 transition-all duration-300 ${showLandingBanner ? "top-10 sm:top-11" : "top-0"}`}
       style={{ backgroundColor: isTransparent ? "transparent" : "#ffffff" }}
     >
       {/* RTL: flex main-start is on the right — nav links sit on the right, login/cart on the left; brand stays physically centered */}

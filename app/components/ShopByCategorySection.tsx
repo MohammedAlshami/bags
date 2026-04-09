@@ -10,7 +10,7 @@ const CATEGORIES = [
     label: "JUST ADDED",
     title: "New",
     subtitle: "Shop the latest",
-    href: "/collections/new",
+    href: "/shop",
   },
   {
     image:
@@ -18,7 +18,7 @@ const CATEGORIES = [
     label: "LAYERS TO LOVE",
     title: "Fall/Winter",
     subtitle: "Bundle up in style",
-    href: "/collections/fall-winter",
+    href: "/shop",
   },
   {
     image:
@@ -26,7 +26,7 @@ const CATEGORIES = [
     label: "SLEEK STYLES",
     title: "Dresses",
     subtitle: "For every occasion",
-    href: "/collections/dresses",
+    href: "/shop",
   },
   {
     image:
@@ -34,7 +34,7 @@ const CATEGORIES = [
     label: "MOST-WANTED",
     title: "Bestselling",
     subtitle: "Selling fast!",
-    href: "/collections/bestsellers",
+    href: "/shop",
   },
 ];
 

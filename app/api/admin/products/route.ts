@@ -7,13 +7,53 @@ import { isUuid } from "@/lib/id";
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE_DEFAULT = 8;
+const PAGE_SIZE_MAX = 100;
+
 export async function GET(request: Request) {
   try {
     await requireAdmin();
     const { searchParams } = new URL(request.url);
     const collectionId = searchParams.get("collectionId")?.trim();
+    const all =
+      searchParams.get("all") === "1" ||
+      searchParams.get("all") === "true" ||
+      searchParams.get("all") === "yes";
 
     const hasCol = collectionId && isUuid(collectionId);
+
+    if (all) {
+      const rows = hasCol
+        ? await sql`
+            SELECT p.id, p.name, p.price, p.category, p.image, p.slug, p.collection_id,
+                   p.created_at, p.updated_at,
+                   c.id AS col_id, c.name AS col_name, c.slug AS col_slug
+            FROM products p
+            LEFT JOIN collections c ON c.id = p.collection_id
+            WHERE p.collection_id = ${collectionId}::uuid
+            ORDER BY p.name ASC
+          `
+        : await sql`
+            SELECT p.id, p.name, p.price, p.category, p.image, p.slug, p.collection_id,
+                   p.created_at, p.updated_at,
+                   c.id AS col_id, c.name AS col_name, c.slug AS col_slug
+            FROM products p
+            LEFT JOIN collections c ON c.id = p.collection_id
+            ORDER BY p.name ASC
+          `;
+      const list = (rows as ProductRow[]).map((r) => mapProduct(r, true));
+      return NextResponse.json(list);
+    }
+
+    const rawLimit = parseInt(searchParams.get("limit") ?? String(PAGE_SIZE_DEFAULT), 10);
+    const rawOffset = parseInt(searchParams.get("offset") ?? "0", 10);
+    const limit = Math.min(
+      Math.max(Number.isFinite(rawLimit) ? rawLimit : PAGE_SIZE_DEFAULT, 1),
+      PAGE_SIZE_MAX
+    );
+    const offset = Math.max(Number.isFinite(rawOffset) ? rawOffset : 0, 0);
+    const fetchLimit = limit + 1;
+
     const rows = hasCol
       ? await sql`
           SELECT p.id, p.name, p.price, p.category, p.image, p.slug, p.collection_id,
@@ -23,6 +63,7 @@ export async function GET(request: Request) {
           LEFT JOIN collections c ON c.id = p.collection_id
           WHERE p.collection_id = ${collectionId}::uuid
           ORDER BY p.name ASC
+          LIMIT ${fetchLimit} OFFSET ${offset}
         `
       : await sql`
           SELECT p.id, p.name, p.price, p.category, p.image, p.slug, p.collection_id,
@@ -31,9 +72,14 @@ export async function GET(request: Request) {
           FROM products p
           LEFT JOIN collections c ON c.id = p.collection_id
           ORDER BY p.name ASC
+          LIMIT ${fetchLimit} OFFSET ${offset}
         `;
-    const list = (rows as ProductRow[]).map((r) => mapProduct(r, true));
-    return NextResponse.json(list);
+
+    const hasMore = rows.length > limit;
+    const slice = (hasMore ? rows.slice(0, limit) : rows) as ProductRow[];
+    const items = slice.map((r) => mapProduct(r, true));
+    const nextOffset = hasMore ? offset + limit : null;
+    return NextResponse.json({ items, nextOffset });
   } catch (err) {
     const e = err as { status?: number };
     if (e.status === 403) return NextResponse.json({ error: "Forbidden" }, { status: 403 });

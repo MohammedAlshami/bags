@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Pencil, Check, X } from "lucide-react";
-import { sans } from "@/lib/page-theme";
+import { adminIconClassName, sans } from "@/lib/page-theme";
 import { adminApiErrorAr, orderStatusAr } from "@/lib/admin-ar";
+import { AdminSkeletonShippingPage } from "@/lib/admin-skeleton";
 
 type OrderRow = {
   _id: string;
@@ -83,11 +84,7 @@ export default function AdminShippingPage() {
   };
 
   if (loading) {
-    return (
-      <p className="text-neutral-500" style={sans} dir="rtl">
-        جاري التحميل…
-      </p>
-    );
+    return <AdminSkeletonShippingPage />;
   }
   if (error) {
     return (
@@ -104,11 +101,12 @@ export default function AdminShippingPage() {
       <p className="text-sm text-neutral-600 mb-6">
         حدّث شركة الشحن ورقم التتبع لأي طلب. يمكنك أيضاً تعيين الطلب كـ«تم الشحن».
       </p>
-      <div className="bg-white border border-black/10 rounded-sm overflow-hidden">
+      <div className="rounded-sm border border-black/10 bg-white">
         {list.length === 0 ? (
           <p className="p-8 text-neutral-500 text-center">لا توجد طلبات بعد.</p>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto overscroll-x-contain">
+          <table className="w-full min-w-[56rem] text-sm">
             <thead>
               <tr className="border-b border-black/10 text-right">
                 <th className="p-4 font-medium">الطلب</th>
@@ -148,7 +146,7 @@ export default function AdminShippingPage() {
                           disabled={saving}
                           className="inline-flex items-center gap-1 text-black border border-black px-2 py-1 text-xs disabled:opacity-50"
                         >
-                          <Check className="w-3.5 h-3.5" />
+                          <Check className={`w-3.5 h-3.5 ${adminIconClassName}`} />
                           حفظ
                         </button>
                         <button
@@ -157,7 +155,7 @@ export default function AdminShippingPage() {
                           disabled={saving}
                           className="inline-flex items-center gap-1 text-neutral-600 border border-black/20 px-2 py-1 text-xs"
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <X className={`w-3.5 h-3.5 ${adminIconClassName}`} />
                           إلغاء
                         </button>
                       </div>
@@ -167,7 +165,7 @@ export default function AdminShippingPage() {
                         onClick={() => startEdit(o)}
                         className="inline-flex items-center gap-1 text-black underline hover:no-underline"
                       >
-                        <Pencil className="w-3.5 h-3.5" />
+                        <Pencil className={`w-3.5 h-3.5 ${adminIconClassName}`} />
                         تحديث
                       </button>
                     )}
@@ -225,6 +223,7 @@ export default function AdminShippingPage() {
               ])}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

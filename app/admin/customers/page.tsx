@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { X } from "lucide-react";
-import { sans } from "@/lib/page-theme";
+import { Download, Loader2, Search, UserPlus, X } from "lucide-react";
+import { adminIconClassName, sans } from "@/lib/page-theme";
 import { adminApiErrorAr } from "@/lib/admin-ar";
+import { AdminSkeletonCustomersPage } from "@/lib/admin-skeleton";
 
 type Customer = {
   _id: string;
@@ -191,11 +192,7 @@ export default function AdminCustomersPage() {
   };
 
   if (loading) {
-    return (
-      <p className="text-neutral-500" style={sans} dir="rtl">
-        جاري التحميل…
-      </p>
-    );
+    return <AdminSkeletonCustomersPage />;
   }
   if (loadError) {
     return (
@@ -285,7 +282,7 @@ export default function AdminCustomersPage() {
           type="button"
           onClick={savePanel}
           disabled={saving}
-          className="px-4 py-2 bg-black text-white text-sm disabled:opacity-50"
+          className="px-4 py-2 bg-[#B63A6B] text-white text-sm rounded-sm hover:brightness-110 transition-[filter] disabled:opacity-50 disabled:hover:brightness-100"
         >
           {saving ? "جاري الحفظ…" : "حفظ"}
         </button>
@@ -304,8 +301,9 @@ export default function AdminCustomersPage() {
           <button
             type="button"
             onClick={openCreate}
-            className="px-4 py-2 bg-black text-white text-sm hover:bg-neutral-800 rounded-sm"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#B63A6B] text-white text-sm rounded-sm hover:brightness-110 transition-[filter]"
           >
+            <UserPlus className="w-4 h-4 shrink-0" strokeWidth={1.75} aria-hidden />
             إضافة عميل
           </button>
           <input
@@ -316,15 +314,25 @@ export default function AdminCustomersPage() {
             placeholder="بحث: اسم المستخدم، البريد، الاسم…"
             className="border border-neutral-200 px-3 py-2 text-sm w-56 max-w-full"
           />
-          <button type="button" onClick={() => setSearch(searchInput)} className="px-4 py-2 border border-black text-sm">
+          <button
+            type="button"
+            onClick={() => setSearch(searchInput)}
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-black text-sm rounded-sm"
+          >
+            <Search className={`w-4 h-4 shrink-0 ${adminIconClassName}`} strokeWidth={1.75} aria-hidden />
             بحث
           </button>
           <button
             type="button"
             onClick={doExport}
             disabled={exporting}
-            className="px-4 py-2 bg-black text-white text-sm disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#B63A6B] text-white text-sm rounded-sm hover:brightness-110 transition-[filter] disabled:opacity-50 disabled:hover:brightness-100"
           >
+            {exporting ? (
+              <Loader2 className="w-4 h-4 shrink-0 animate-spin" strokeWidth={1.75} aria-hidden />
+            ) : (
+              <Download className="w-4 h-4 shrink-0" strokeWidth={1.75} aria-hidden />
+            )}
             {exporting ? "جاري التصدير…" : "تصدير CSV"}
           </button>
         </div>
@@ -340,7 +348,7 @@ export default function AdminCustomersPage() {
         <>
           <button
             type="button"
-            className="fixed inset-0 z-[60] bg-black/40"
+            className="fixed inset-0 z-[60] cursor-pointer bg-black/40 transition-colors hover:bg-black/50"
             aria-label="إغلاق"
             onClick={closePanel}
           />
@@ -348,10 +356,10 @@ export default function AdminCustomersPage() {
             className="
               fixed z-[70] flex flex-col bg-white shadow-2xl
               inset-x-0 bottom-0 max-h-[92vh] rounded-t-2xl border-t border-black/10
-              md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:left-auto md:h-full md:max-h-none md:w-full md:max-w-md md:rounded-none md:border-t-0 md:border-r md:border-black/10
+              md:inset-x-auto md:left-0 md:top-0 md:bottom-0 md:right-auto md:h-full md:max-h-none md:w-full md:max-w-md md:rounded-none md:border-t-0 md:border-l md:border-black/10
             "
           >
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b border-black/10 px-4 py-3">
+            <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3">
               <h3 className="text-lg font-medium">{panel?.mode === "create" ? "عميل جديد" : "تعديل عميل"}</h3>
               <button
                 type="button"
@@ -359,7 +367,7 @@ export default function AdminCustomersPage() {
                 className="p-2 rounded-sm hover:opacity-70 text-neutral-600"
                 aria-label="إغلاق"
               >
-                <X className="w-5 h-5" strokeWidth={1.5} />
+                <X className={`w-5 h-5 ${adminIconClassName}`} strokeWidth={1.5} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">{formFields}</div>
@@ -368,8 +376,9 @@ export default function AdminCustomersPage() {
         </>
       )}
 
-      <div className="bg-white border border-black/10 rounded-sm overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="rounded-sm border border-black/10 bg-white">
+        <div className="overflow-x-auto overscroll-x-contain">
+          <table className="w-full min-w-[56rem] text-sm">
           <thead>
             <tr className="border-b border-black/10 text-right">
               <th className="p-4 font-medium">اسم المستخدم</th>
@@ -412,6 +421,7 @@ export default function AdminCustomersPage() {
             ))}
           </tbody>
         </table>
+        </div>
         {list.length === 0 && <p className="p-8 text-neutral-500 text-center">لا يوجد عملاء.</p>}
       </div>
     </div>

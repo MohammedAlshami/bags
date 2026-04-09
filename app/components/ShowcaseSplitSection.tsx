@@ -84,7 +84,7 @@ export function ShowcaseSplitSection() {
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
                 priority={i === 0}
-                unoptimized={item.image.startsWith("http") && !/unsplash|ebayimg|cloudinary/.test(item.image)}
+                unoptimized={item.image.startsWith("http") && !/unsplash|ebayimg/.test(item.image)}
               />
             </div>
           ))}
@@ -156,7 +156,7 @@ export function ShowcaseSplitSection() {
             className="h-full w-full object-cover"
             unoptimized={
               cursorPreview.image.startsWith("http") &&
-              !/unsplash|ebayimg|cloudinary/.test(cursorPreview.image)
+              !/unsplash|ebayimg/.test(cursorPreview.image)
             }
           />
         </div>
