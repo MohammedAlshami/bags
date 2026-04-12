@@ -2,17 +2,10 @@
 
 import { usePathname } from "next/navigation";
 import Navbar from "./Navbar";
-import { LandingAnnouncementBanner } from "./LandingAnnouncementBanner";
 
 /** Renders the main site Navbar only when not on an admin route. */
 export default function ConditionalNavbar() {
   const pathname = usePathname();
   if (pathname?.startsWith("/admin")) return null;
-  const isHome = pathname === "/";
-  return (
-    <>
-      {isHome && <LandingAnnouncementBanner />}
-      <Navbar showLandingBanner={isHome} />
-    </>
-  );
+  return <Navbar />;
 }

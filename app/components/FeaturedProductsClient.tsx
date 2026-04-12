@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { useMemo, useState } from "react";
+import { SafeImage } from "@/app/components/SafeImage";
 
 export type FeaturedProductItem = {
   slug: string;
@@ -15,8 +15,8 @@ export type FeaturedProductItem = {
 type TabId = "hot" | "bestsellers" | "sale";
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: "hot", label: "الأكثر رواجاً" },
-  { id: "bestsellers", label: "الأكثر مبيعاً" },
+  { id: "hot", label: "الأكثر رواجًا" },
+  { id: "bestsellers", label: "الأكثر مبيعًا" },
   { id: "sale", label: "تخفيضات" },
 ];
 
@@ -24,7 +24,7 @@ function ProductCard({ item }: { item: FeaturedProductItem }) {
   return (
     <Link href={`/product/${item.slug}`} className="group flex flex-col">
       <div className="relative aspect-[3/5] w-full overflow-hidden rounded-xl bg-white">
-        <Image
+        <SafeImage
           src={item.image}
           alt={item.name}
           fill
@@ -44,6 +44,13 @@ function ProductCard({ item }: { item: FeaturedProductItem }) {
 export function FeaturedProductsClient({ products }: { products: FeaturedProductItem[] }) {
   const [active, setActive] = useState<TabId>("bestsellers");
 
+  const filteredProducts = useMemo(() => {
+    if (products.length === 0) return [];
+    if (active === "hot") return products.slice(0, 8);
+    if (active === "bestsellers") return products.slice(4, 12).length > 0 ? products.slice(4, 12) : products.slice(0, 8);
+    return [...products].slice(-8).reverse();
+  }, [active, products]);
+
   return (
     <section className="w-full bg-white py-12 md:py-16" aria-label="منتجات مميزة" dir="rtl">
       <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12">
@@ -62,9 +69,7 @@ export function FeaturedProductsClient({ products }: { products: FeaturedProduct
                   type="button"
                   onClick={() => setActive(tab.id)}
                   className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${
-                    isActive
-                      ? "bg-black text-white"
-                      : "bg-[#F5F5F5] text-neutral-600 hover:bg-neutral-200"
+                    isActive ? "bg-black text-white" : "bg-[#F5F5F5] text-neutral-600 hover:bg-neutral-200"
                   }`}
                 >
                   {tab.label}
@@ -74,11 +79,11 @@ export function FeaturedProductsClient({ products }: { products: FeaturedProduct
           </div>
         </div>
 
-        {products.length === 0 ? (
+        {filteredProducts.length === 0 ? (
           <p className="text-center text-sm text-neutral-500">لا توجد منتجات لعرضها.</p>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-5 lg:gap-6">
-            {products.map((item) => (
+            {filteredProducts.map((item) => (
               <ProductCard key={item.slug} item={item} />
             ))}
           </div>

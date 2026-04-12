@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/app/components/SafeImage";
 import Link from "next/link";
 import { useCart } from "@/app/context/CartContext";
 import { RecommendedProductsSection } from "@/app/components/RecommendedProductsSection";
@@ -36,7 +36,7 @@ function ProductMainSection({
       <div className="grid gap-12 lg:grid-cols-12">
         <div className="lg:col-span-7">
           <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl">
-            <Image
+            <SafeImage
               src={product.image}
               alt={product.name}
               fill

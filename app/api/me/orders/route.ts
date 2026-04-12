@@ -44,7 +44,7 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const orders = await sql`
-      SELECT id, items, total, status, shipping_address, tracking_number, carrier, shipped_at, created_at
+      SELECT id, items, total, status, shipping_address, payment_proof_url, tracking_number, carrier, shipped_at, created_at
       FROM orders
       WHERE customer_id = ${session.sub}::uuid
       ORDER BY created_at DESC
@@ -57,10 +57,15 @@ export async function GET() {
             : {};
         const branchKey =
           typeof sa.branchKey === "string" && sa.branchKey.trim() ? sa.branchKey.trim() : null;
+        const proofCol =
+          o.payment_proof_url != null && String(o.payment_proof_url).trim() !== ""
+            ? String(o.payment_proof_url).trim()
+            : "";
         const paymentProofUrl =
-          typeof sa.paymentProofUrl === "string" && sa.paymentProofUrl.trim()
+          proofCol ||
+          (typeof sa.paymentProofUrl === "string" && sa.paymentProofUrl.trim()
             ? sa.paymentProofUrl.trim()
-            : null;
+            : null);
         return {
           _id: o.id,
           status: o.status,
@@ -136,6 +141,7 @@ export async function POST(request: Request) {
 
     const rows = await sql`
       SELECT o.id, o.customer_id, o.items, o.total, o.status, o.shipping_address,
+             o.payment_proof_url, o.branch_key,
              o.tracking_number, o.carrier, o.shipped_at, o.created_at, o.updated_at,
              u.username AS customer_username, u.email AS customer_email, u.full_name AS customer_full_name,
              u.address AS customer_address, u.phone AS customer_phone

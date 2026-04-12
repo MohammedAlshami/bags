@@ -16,25 +16,25 @@ type ShowcaseItem = {
 const SHOWCASE_ITEMS: ShowcaseItem[] = [
   {
     id: "1",
-    title: "أتيليه أحمر الخدود",
+    title: "سيروم الإشراقة",
     image:
       "https://images.unsplash.com/photo-1744371386847-ded3b4a66017?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.1.0",
   },
   {
     id: "2",
-    title: "الإكسير الذهبي",
+    title: "مرطب يومي",
     image:
       "https://images.unsplash.com/photo-1697840507245-e6ce44da4e4c?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.1.0",
   },
   {
     id: "3",
-    title: "كمال عُري",
+    title: "واقي شمس خفيف",
     image:
       "https://images.unsplash.com/photo-1551061031-9e473ec479e2?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.1.0",
   },
   {
     id: "4",
-    title: "جوهر الحرير",
+    title: "قناع ترطيب",
     image:
       "https://images.unsplash.com/photo-1612817288484-6f916006741a?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.1.0",
   },
@@ -95,7 +95,7 @@ export function ShowcaseSplitSection() {
           className="flex flex-col justify-center bg-white px-6 py-12 sm:px-10 md:px-14 md:py-16 lg:px-20"
           style={sans}
         >
-          <p className="mb-10 text-start text-xs uppercase tracking-[0.35em] text-neutral-500">تجميل مختار</p>
+          <p className="mb-10 text-start text-xs uppercase tracking-[0.35em] text-neutral-500">روتين مختار</p>
           <ul className="flex flex-col" onMouseLeave={() => setCursorPreview(null)}>
             {SHOWCASE_ITEMS.map((item, i) => {
               const isActive = i === active;

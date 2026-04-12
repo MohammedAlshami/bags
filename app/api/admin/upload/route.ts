@@ -1,22 +1,10 @@
-import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
+import { fileToImageDataUrl } from "@/lib/file-to-image-data-url";
 
 export const dynamic = "force-dynamic";
 
-/** Same idea as `/product_Images/...`: store files under `public/` and save the URL string in Neon. */
-const UPLOAD_SUBDIR = "uploads";
-
-const MIME_TO_EXT: Record<string, string> = {
-  "image/jpeg": ".jpg",
-  "image/jpg": ".jpg",
-  "image/png": ".png",
-  "image/webp": ".webp",
-  "image/gif": ".gif",
-};
-
+/** Returns `{ url }` as a data URL string saved in Neon on product/order rows. */
 export async function POST(request: Request) {
   try {
     await requireAdmin();
@@ -25,29 +13,20 @@ export async function POST(request: Request) {
     if (!file || !(file instanceof File)) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "File must be an image" }, { status: 400 });
-    }
-    const ext = MIME_TO_EXT[file.type];
-    if (!ext) {
-      return NextResponse.json(
-        { error: "Unsupported image type (use JPEG, PNG, WebP, or GIF)" },
-        { status: 400 }
-      );
-    }
 
-    const buf = Buffer.from(await file.arrayBuffer());
-    const dir = path.join(process.cwd(), "public", UPLOAD_SUBDIR);
-    await mkdir(dir, { recursive: true });
-    const filename = `${randomUUID()}${ext}`;
-    const filepath = path.join(dir, filename);
-    await writeFile(filepath, buf);
-
-    const url = `/${UPLOAD_SUBDIR}/${filename}`;
+    const url = await fileToImageDataUrl(file);
     return NextResponse.json({ url });
   } catch (err) {
-    const e = err as { status?: number };
+    const e = err as { status?: number; message?: string };
     if (e.status === 403) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const msg = typeof e.message === "string" ? e.message : "";
+    if (
+      msg.includes("must be an image") ||
+      msg.includes("Unsupported image") ||
+      msg.includes("too large")
+    ) {
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

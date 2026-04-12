@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/app/components/SafeImage";
 import Link from "next/link";
 import { ImagePlus, MoreVertical, PackagePlus, X } from "lucide-react";
 import { ConfirmModal } from "@/app/components/ConfirmModal";
@@ -410,13 +410,12 @@ export default function AdminProductsPage() {
           ) : image ? (
             <div className="relative w-full max-w-[240px] mx-auto">
               <div className="relative aspect-square w-full rounded-lg overflow-hidden border border-black/10 bg-neutral-100">
-                <Image
+                <SafeImage
                   src={image}
                   alt=""
                   fill
                   className="object-contain"
                   sizes="240px"
-                  unoptimized={image.startsWith("http") && !/unsplash|ebayimg/.test(image)}
                 />
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
@@ -573,16 +572,12 @@ export default function AdminProductsPage() {
             <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
               <div className="relative mx-auto aspect-square w-full max-w-[280px] overflow-hidden rounded-2xl border border-black/10">
                 {detailProduct.image ? (
-                  <Image
+                  <SafeImage
                     src={detailProduct.image}
                     alt={detailProduct.name}
                     fill
                     className="object-cover object-center"
                     sizes="280px"
-                    unoptimized={
-                      detailProduct.image.startsWith("http") &&
-                      !/unsplash|ebayimg/.test(detailProduct.image)
-                    }
                   />
                 ) : null}
               </div>
@@ -666,13 +661,12 @@ export default function AdminProductsPage() {
                 >
                   <div className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl">
                     {p.image && (
-                      <Image
+                      <SafeImage
                         src={p.image}
                         alt={p.name}
                         fill
                         className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.03]"
                         sizes="(max-width: 768px) 50vw, 25vw"
-                        unoptimized={p.image.startsWith("http") && !/unsplash|ebayimg/.test(p.image)}
                       />
                     )}
                     <div className="absolute top-2 end-2 z-[1] sm:top-3 sm:end-3" ref={menuOpenId === p._id ? menuRef : undefined}>

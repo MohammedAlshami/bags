@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { SafeImage } from "@/app/components/SafeImage";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
@@ -356,7 +356,7 @@ function CartCheckoutInner() {
               {items.map((item) => (
                 <div key={item.slug} className="flex gap-6 border-b border-neutral-100 pb-8">
                   <div className="relative h-32 w-28 shrink-0 overflow-hidden rounded-xl bg-[#FCF0F2] md:h-40 md:w-32">
-                    <Image src={item.image} alt={item.name} fill className="object-contain p-2" sizes="128px" />
+                    <SafeImage src={item.image} alt={item.name} fill className="object-contain p-2" sizes="128px" />
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col justify-between">
                     <div className="flex justify-between gap-4">

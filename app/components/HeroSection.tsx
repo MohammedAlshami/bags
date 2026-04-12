@@ -128,7 +128,7 @@ export function HeroSection() {
           </h1>
           <div className="flex flex-col gap-4 max-w-xs">
             <p className="text-white/90 text-sm leading-relaxed text-start">
-              صُنعت يدوياً في جنوب أفريقيا باستخدام أجود أنواع الجلود من مصادر أخلاقية. تحية للتراث والأناقة.
+              صُنعت بعناية من مكوّنات مختارة لدعم بشرتك يومياً. تركيبات لطيفة، نتائج واضحة، وعناية تليق بروتينك.
             </p>
             <Link
               href="#shop"

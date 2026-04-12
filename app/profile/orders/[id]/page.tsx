@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { SafeImage } from "@/app/components/SafeImage";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Package, Banknote, MapPin } from "lucide-react";
@@ -278,7 +278,7 @@ export default function ProfileOrderDetailPage() {
                     <li key={i} className="flex gap-4">
                       <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-[#FCF0F2]">
                         {it.image ? (
-                          <Image src={it.image} alt="" fill className="object-contain p-1" sizes="80px" />
+                          <SafeImage src={it.image} alt="" fill className="object-contain p-1" sizes="80px" />
                         ) : null}
                       </div>
                       <div className="min-w-0 flex-1">

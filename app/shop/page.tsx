@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { SafeImage } from "@/app/components/SafeImage";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import { PRODUCTS, type Product } from "@/lib/products";
 import { sans, pagePaddingX } from "@/lib/page-theme";
@@ -10,7 +10,7 @@ function ProductCard({ product }: { product: Product }) {
   return (
     <Link href={`/product/${slug}`} className="group flex flex-col" dir="rtl">
       <div className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl bg-white">
-        <Image
+        <SafeImage
           src={image}
           alt={name}
           fill

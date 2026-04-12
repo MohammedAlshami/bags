@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 async function fetchCustomerOrder(orderId: string, customerId: string) {
   const rows = await sql`
     SELECT o.id, o.customer_id, o.items, o.total, o.status, o.shipping_address,
+           o.payment_proof_url, o.branch_key,
            o.tracking_number, o.carrier, o.shipped_at, o.created_at, o.updated_at,
            u.username AS customer_username, u.email AS customer_email, u.full_name AS customer_full_name,
            u.address AS customer_address, u.phone AS customer_phone
@@ -72,10 +73,11 @@ export async function PATCH(
       orderBefore.shipping_address && typeof orderBefore.shipping_address === "object"
         ? ({ ...(orderBefore.shipping_address as Record<string, unknown>) } as Record<string, unknown>)
         : {};
-    prevSa.paymentProofUrl = paymentProofUrl || null;
+    delete prevSa.paymentProofUrl;
 
     await sql`
       UPDATE orders SET
+        payment_proof_url = ${paymentProofUrl || null},
         shipping_address = ${JSON.stringify(prevSa)}::jsonb,
         updated_at = now()
       WHERE id = ${id}::uuid AND customer_id = ${session.sub}::uuid

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import { SafeImage } from "@/app/components/SafeImage";
 import Link from "next/link";
 import { sans } from "@/lib/page-theme";
 
@@ -33,7 +33,7 @@ function ProductCard({ product }: { product: RecProduct }) {
   return (
     <Link href={`/product/${product.slug}`} className="group flex flex-col">
       <div className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl bg-white">
-        <Image
+        <SafeImage
           src={product.image}
           alt={product.name}
           fill
