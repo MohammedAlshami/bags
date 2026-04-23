@@ -20,13 +20,15 @@ export function StoreLocationsSection({ titleAs = "h2" }: StoreLocationsSectionP
 
   return (
     <section className="w-full bg-white py-12 md:py-16" dir="rtl" aria-labelledby="stores-section-heading">
-      <div className="mx-auto mb-8 max-w-3xl px-4 text-center sm:px-8 md:mb-10 md:px-14 lg:px-24">
-        <TitleTag id="stores-section-heading" className="text-2xl font-semibold tracking-tight text-neutral-900 md:text-3xl" style={serif}>
-          فروعنا في السعودية واليمن
-        </TitleTag>
-        <p className="mt-3 text-sm leading-relaxed text-neutral-600 md:text-base" style={sans}>
-          مواقعنا تمتد من المملكة إلى اليمن — اختاري الفرع أدناه لعرضه على الخريطة.
-        </p>
+      <div className="mb-8 w-full px-2 sm:px-4 md:mb-10 md:px-6 lg:px-8" dir="ltr">
+        <div className="ml-auto w-fit max-w-3xl text-right" dir="rtl">
+          <TitleTag id="stores-section-heading" className="text-2xl font-semibold tracking-tight text-neutral-900 md:text-3xl" style={serif}>
+            نقاط البيع في السعودية واليمن
+          </TitleTag>
+          <p className="mt-3 text-sm leading-relaxed text-neutral-600 md:text-base" style={sans}>
+            مواقعنا تمتد من المملكة إلى اليمن — اختاري نقطة البيع أدناه لعرضها على الخريطة.
+          </p>
+        </div>
       </div>
 
       <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8">
@@ -44,17 +46,17 @@ export function StoreLocationsSection({ titleAs = "h2" }: StoreLocationsSectionP
 
           <div className="absolute inset-y-0 right-0 z-10 flex w-full max-w-[min(100%,20rem)] flex-col justify-center p-3 sm:max-w-[22rem] sm:p-4 md:max-w-sm md:p-6">
             <div
-              className="pointer-events-auto flex max-h-[min(85vh,520px)] flex-col overflow-hidden rounded-2xl border border-white/50 bg-white/75 p-5 shadow-xl backdrop-blur-md sm:p-6"
+              className="pointer-events-auto flex max-h-[min(85vh,520px)] flex-col overflow-hidden rounded-2xl border border-[#F3B6CB]/40 bg-[#B63A6B]/92 p-5 text-white shadow-[0_24px_70px_rgba(182,58,107,0.28)] backdrop-blur-md sm:p-6"
               style={sans}
             >
-              <h3 className="text-2xl font-medium tracking-tight text-neutral-900 md:text-3xl" style={serif}>
-                فروعنا
+              <h3 className="text-2xl font-medium tracking-tight text-white md:text-3xl" style={serif}>
+                نقاط البيع
               </h3>
-              <p className="mt-2 text-xs leading-relaxed text-neutral-600 md:text-sm">
+              <p className="mt-2 text-xs leading-relaxed text-white/80 md:text-sm">
                 اختاري الفرع لعرض موقعه على الخريطة.
               </p>
 
-              <nav aria-label="قائمة الفروع" className="mt-5 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+              <nav aria-label="قائمة نقاط البيع" className="cute-scrollbar mt-5 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-1">
                 {STORE_LOCATIONS.map((store) => {
                   const isActive = store.name === activeStore.name;
                   return (
@@ -64,8 +66,8 @@ export function StoreLocationsSection({ titleAs = "h2" }: StoreLocationsSectionP
                       onClick={() => setActiveName(store.name)}
                       className={`rounded-xl px-3 py-2.5 text-right text-sm transition-colors md:text-[0.9375rem] ${
                         isActive
-                          ? "bg-[#B63A6B]/15 font-semibold text-[#B63A6B] ring-1 ring-[#B63A6B]/40"
-                          : "text-neutral-700 hover:bg-white/80"
+                          ? "bg-white/15 font-semibold text-white ring-1 ring-white/25"
+                          : "text-white/85 hover:bg-white/10"
                       }`}
                       aria-current={isActive ? "true" : undefined}
                     >

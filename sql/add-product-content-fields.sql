@@ -1,0 +1,5 @@
+ALTER TABLE products
+ADD COLUMN IF NOT EXISTS warning_ar TEXT;
+
+ALTER TABLE products
+ADD COLUMN IF NOT EXISTS contents_ar TEXT;

@@ -6,14 +6,16 @@ export default function LocationsPage() {
   return (
     <main className="min-h-screen bg-white pb-20 pt-20 md:pb-28 md:pt-24" dir="rtl">
       <div className={pagePaddingX}>
-        <Breadcrumbs items={[{ label: "الرئيسية", href: "/" }, { label: "فروعنا" }]} />
-        <header className="mx-auto max-w-3xl pb-10 pt-4 text-center md:pb-14 md:pt-6">
+        <Breadcrumbs items={[{ label: "الرئيسية", href: "/" }, { label: "نقاط البيع" }]} />
+        <header className="flex w-full justify-end pb-10 pt-4 md:pb-14 md:pt-6">
+          <div className="w-full max-w-3xl text-right">
           <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 md:text-4xl" style={serif}>
-            فروعنا في السعودية واليمن
+            نقاط البيع في السعودية واليمن
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-neutral-600 md:text-base" style={sans}>
             مواقعنا تمتد من المملكة إلى اليمن — اختاري الفرع واطّلعي على موقعه على الخريطة.
           </p>
+          </div>
         </header>
       </div>
 

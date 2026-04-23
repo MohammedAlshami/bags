@@ -1,7 +1,9 @@
+import { randomUUID } from "crypto";
 import { sql } from "@/lib/db";
 import {
   SEED_PRODUCTS,
   SEED_COLLECTIONS,
+  SEED_BLOG_POSTS,
   SEED_LANDING,
   SEED_CUSTOMER_PROFILE,
   SEED_SHIPPING_ADDRESS,
@@ -20,6 +22,7 @@ export async function POST() {
     await sql`DELETE FROM orders`;
     await sql`DELETE FROM products`;
     await sql`DELETE FROM landing`;
+    await sql`DELETE FROM blog_posts`;
     await sql`DELETE FROM collections`;
 
     const collectionBySlug = new Map<string, string>();
@@ -59,6 +62,29 @@ export async function POST() {
       VALUES (1, ${JSON.stringify(SEED_LANDING)}::jsonb)
       ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = now()
     `;
+
+    for (const post of SEED_BLOG_POSTS) {
+      await sql`
+        INSERT INTO blog_posts (
+          id, title, slug, excerpt, cover_image, author_name, status, content,
+          seo_title, seo_description, tags, published_at
+        )
+        VALUES (
+          ${randomUUID()}::uuid,
+          ${post.title},
+          ${post.slug},
+          ${post.excerpt},
+          ${post.coverImage},
+          ${post.authorName},
+          ${post.status},
+          ${JSON.stringify(post.content)}::jsonb,
+          ${post.seoTitle},
+          ${post.seoDescription},
+          ${JSON.stringify(post.tags)}::jsonb,
+          ${post.status === "published" ? new Date().toISOString() : null}
+        )
+      `;
+    }
 
     let adminCreated = 0;
     const existingAdmin = await sql`

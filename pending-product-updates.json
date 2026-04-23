@@ -1,0 +1,142 @@
+{
+  "products": [
+    {
+      "product_id": "product-001",
+      "product_name": "عسل التسمين (عسل الملكة)",
+      "price_sar": 60,
+      "old_riyal": 8000
+    },
+    {
+      "product_id": "product-002",
+      "product_name": "زيت بديل الليزر",
+      "price_sar": 18,
+      "old_riyal": 2500
+    },
+    {
+      "product_id": "product-003",
+      "product_name": "غسول الوجه (Gentle Face Cleanser)",
+      "price_sar": 21,
+      "old_riyal": 3000
+    },
+    {
+      "product_id": "product-004",
+      "product_name": "كريم التبييض وصفة (كريم الملكة)",
+      "price_sar": 45,
+      "old_riyal": 6000
+    },
+    {
+      "product_id": "product-005",
+      "product_name": "كريم الأنف",
+      "price_sar": 21,
+      "old_riyal": 3000
+    },
+    {
+      "product_id": "product-006",
+      "product_name": "بودر تسمين الخدود",
+      "price_sar": 18,
+      "old_riyal": 2500
+    },
+    {
+      "product_id": "product-007",
+      "product_name": "كحل الأثمد الأصفهاني الأصلي",
+      "price_sar": 11,
+      "old_riyal": 1500
+    },
+    {
+      "product_id": "product-008",
+      "product_name": "مرطب الشفاه ومعالج التصبغات",
+      "price_sar": 8,
+      "old_riyal": 1000
+    },
+    {
+      "product_id": "product-009",
+      "product_name": "مورد ومرطب القدمين والمناطق الحساسة",
+      "price_sar": 15,
+      "old_riyal": 2000
+    },
+    {
+      "product_id": "product-010",
+      "product_name": "سيروم الملكة للرموش",
+      "price_sar": 11,
+      "old_riyal": 1500
+    },
+    {
+      "product_id": "product-011",
+      "product_name": "سيروم الملكة لتقوية وتطويل الأظافر",
+      "price_sar": 18,
+      "old_riyal": 2500
+    },
+    {
+      "product_id": "product-012",
+      "product_name": "بلسم الملكة للشعر",
+      "price_sar": 18,
+      "old_riyal": 2500
+    },
+    {
+      "product_id": "product-013",
+      "product_name": "مسحوق الملكة لتبييض الأسنان",
+      "price_sar": 18,
+      "old_riyal": 2500
+    },
+    {
+      "product_id": "product-014",
+      "product_name": "سيروم الهالات",
+      "price_sar": 21,
+      "old_riyal": 3000
+    },
+    {
+      "product_id": "product-015",
+      "product_name": "اللوشن (لوشن الملكة)",
+      "price_sar": 15,
+      "old_riyal": 2000
+    },
+    {
+      "product_id": "product-016",
+      "product_name": "زيت الشعر (زيت الملكة لتطويل وتكثيف الشعر)",
+      "price_sar": 18,
+      "old_riyal": 2500
+    },
+    {
+      "product_id": "product-017",
+      "product_name": "شامبو الملكة العضوي",
+      "price_sar": 18,
+      "old_riyal": 2500
+    },
+    {
+      "product_id": "product-018",
+      "product_name": "ماسك البشرة (ماسك الملكة البديل)",
+      "price_sar": 15,
+      "old_riyal": 2000
+    },
+    {
+      "product_id": "product-019",
+      "product_name": "باكج العناية بالشعر (بوكس الشعر)",
+      "price_sar": 49,
+      "old_riyal": 6900
+    },
+    {
+      "product_id": "product-020",
+      "product_name": "أعشاب التخسيس",
+      "price_sar": 38,
+      "old_riyal": 5000
+    },
+    {
+      "product_id": "product-021",
+      "product_name": "بذور الأكبي",
+      "price_sar": 50,
+      "old_riyal": 7000
+    },
+    {
+      "product_id": "product-024",
+      "product_name": "المقشر البارد (مقشر الأحماض)",
+      "price_sar": 18,
+      "old_riyal": 2500
+    },
+    {
+      "product_id": "product-025",
+      "product_name": "مزيل عرق الملكة الطبيعي",
+      "price_sar": 15,
+      "old_riyal": 2000
+    }
+  ]
+}

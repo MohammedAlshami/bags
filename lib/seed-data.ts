@@ -4,6 +4,7 @@
  */
 
 import { PRODUCTS } from "./products";
+import type { BlogBlock } from "./blog";
 
 /** بيانات العميل التجريبي (اسم الدخول يبقى customer). */
 export const SEED_CUSTOMER_PROFILE = {
@@ -93,6 +94,138 @@ export const SEED_PRODUCTS = PRODUCTS.map((p) => ({
   slug: p.slug,
   collectionSlug: CATEGORY_TO_COLLECTION_SLUG[p.category] ?? DEFAULT_COLLECTION_SLUG,
 }));
+
+export const SEED_BLOG_POSTS: {
+  title: string;
+  slug: string;
+  excerpt: string;
+  coverImage: string;
+  authorName: string;
+  status: "draft" | "published";
+  content: BlogBlock[];
+  seoTitle: string;
+  seoDescription: string;
+  tags: string[];
+}[] = [
+  {
+    title: "كيف تختارين روتين عناية يناسب بشرتك في 5 خطوات",
+    slug: "how-to-build-skin-care-routine",
+    excerpt:
+      "دليل بسيط يساعدك على ترتيب المنتجات الأساسية واختيار ما تحتاجه بشرتك فعلًا دون تعقيد.",
+    coverImage: "/social/queen-deep-mask-thumb.jpg",
+    authorName: "فريق الملكة جولد",
+    status: "published",
+    seoTitle: "روتين عناية يناسب بشرتك",
+    seoDescription:
+      "تعرفي على طريقة عملية لبناء روتين عناية يومي باستخدام الخطوات الأساسية فقط.",
+    tags: ["بشرة", "روتين", "نصائح"],
+    content: [
+      { id: "blog-seed-1-1", type: "heading", level: 2, text: "ابدئي من النوع وليس من العدد" },
+      {
+        id: "blog-seed-1-2",
+        type: "paragraph",
+        text:
+          "الخطوة الأولى هي فهم احتياج البشرة: هل هي دهنية، جافة، مختلطة، أم حساسة؟ بعد ذلك يصبح اختيار المنتجات أبسط بكثير.",
+      },
+      {
+        id: "blog-seed-1-3",
+        type: "callout",
+        tone: "accent",
+        text: "أضيفي منتجًا واحدًا جديدًا كل مرة، ثم راقبي الاستجابة لمدة أسبوعين على الأقل.",
+      },
+      {
+        id: "blog-seed-1-4",
+        type: "list",
+        ordered: true,
+        items: [
+          "غسول لطيف",
+          "سيروم أو علاج مناسب",
+          "مرطب",
+          "واقي شمس صباحًا",
+          "مقشر خفيف مرة أو مرتين أسبوعيًا",
+        ],
+      },
+    ],
+  },
+  {
+    title: "أفضل 3 أخطاء تجعل العناية بالشعر أقل فاعلية",
+    slug: "hair-care-mistakes",
+    excerpt:
+      "بعض التفاصيل الصغيرة في الاستخدام قد تمنعك من ملاحظة نتائج واضحة حتى مع المنتجات الجيدة.",
+    coverImage: "/social/queen-cream-whitening-thumb.jpg",
+    authorName: "فريق الملكة جولد",
+    status: "published",
+    seoTitle: "أخطاء شائعة في العناية بالشعر",
+    seoDescription:
+      "تعرفي على أكثر الأخطاء الشائعة في روتين الشعر وكيف تتجنبينها لتحصلي على نتائج أفضل.",
+    tags: ["شعر", "نصائح", "روتين"],
+    content: [
+      {
+        id: "blog-seed-2-1",
+        type: "paragraph",
+        text:
+          "كثير من الناس يغيّرون المنتجات بسرعة بدل إعطاء كل منتج وقتًا كافيًا ليظهر أثره، وهذا يجعل التقييم صعبًا.",
+      },
+      { id: "blog-seed-2-2", type: "divider" },
+      {
+        id: "blog-seed-2-3",
+        type: "heading",
+        level: 2,
+        text: "ركّزي على الفروة ثم الأطراف",
+      },
+      {
+        id: "blog-seed-2-4",
+        type: "quote",
+        text: "الشعر الصحي يبدأ من فروة صحية، ثم من عناية متوازنة بالأطراف.",
+        citation: "ملاحظة تحريرية",
+      },
+      {
+        id: "blog-seed-2-5",
+        type: "image",
+        src: "/social/queen-bridal-box-thumb.jpg",
+        alt: "روتين عناية",
+        caption: "صورة توضيحية لروتين عناية متكامل.",
+      },
+    ],
+  },
+  {
+    title: "متى تستخدمين المقشر ومتى تتوقفين عنه",
+    slug: "when-to-use-exfoliator",
+    excerpt:
+      "المقشر مفيد عندما يستخدم بالطريقة الصحيحة، لكنه قد يسبب مشاكل إذا كان جزءًا مكررًا من الروتين اليومي.",
+    coverImage: "/social/queen-deep-mask-thumb.jpg",
+    authorName: "فريق الملكة جولد",
+    status: "published",
+    seoTitle: "متى تستخدمين المقشر",
+    seoDescription:
+      "مقال يوضح الاستخدام الصحيح للمقشر ومتى يكون من الأفضل التوقف أو تقليل التكرار.",
+    tags: ["تقشير", "بشرة", "دليل"],
+    content: [
+      {
+        id: "blog-seed-3-1",
+        type: "paragraph",
+        text:
+          "المقشر ليس منتجًا يوميًا بالضرورة. الاستخدام الزائد قد يضعف الحاجز الطبيعي للبشرة ويزيد الحساسية.",
+      },
+      {
+        id: "blog-seed-3-2",
+        type: "callout",
+        tone: "warning",
+        text: "إذا لاحظتِ احمرارًا مستمرًا أو شدًا بعد التقشير، خففي عدد المرات أو أوقفيه مؤقتًا.",
+      },
+      {
+        id: "blog-seed-3-3",
+        type: "list",
+        ordered: false,
+        items: [
+          "لبشرة حساسة: مرة أسبوعيًا",
+          "لبشرة مختلطة: مرة إلى مرتين أسبوعيًا",
+          "لبشرة دهنية: بحسب التحمل والاستجابة",
+        ],
+      },
+    ],
+  },
+];
 
 export const SEED_LANDING = {
   type: "landing",

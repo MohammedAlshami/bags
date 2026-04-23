@@ -3,6 +3,7 @@
  * Usage: npm run seed   (from project root)
  */
 import { readFileSync, existsSync } from "fs";
+import { randomUUID } from "crypto";
 import { resolve } from "path";
 
 const envPath = resolve(process.cwd(), ".env.local");
@@ -29,6 +30,7 @@ async function main() {
   const {
     SEED_PRODUCTS,
     SEED_COLLECTIONS,
+    SEED_BLOG_POSTS,
     SEED_LANDING,
     SEED_CUSTOMER_PROFILE,
     SEED_SHIPPING_ADDRESS,
@@ -46,6 +48,7 @@ async function main() {
   await sql`DELETE FROM orders`;
   await sql`DELETE FROM products`;
   await sql`DELETE FROM landing`;
+  await sql`DELETE FROM blog_posts`;
   await sql`DELETE FROM collections`;
 
   const collectionBySlug = new Map<string, string>();
@@ -84,6 +87,29 @@ async function main() {
     INSERT INTO landing (id, data)
     VALUES (1, ${JSON.stringify(SEED_LANDING)}::jsonb)
   `;
+
+  for (const post of SEED_BLOG_POSTS) {
+    await sql`
+      INSERT INTO blog_posts (
+        id, title, slug, excerpt, cover_image, author_name, status, content,
+        seo_title, seo_description, tags, published_at
+      )
+      VALUES (
+        ${randomUUID()}::uuid,
+        ${post.title},
+        ${post.slug},
+        ${post.excerpt},
+        ${post.coverImage},
+        ${post.authorName},
+        ${post.status},
+        ${JSON.stringify(post.content)}::jsonb,
+        ${post.seoTitle},
+        ${post.seoDescription},
+        ${JSON.stringify(post.tags)}::jsonb,
+        ${post.status === "published" ? new Date().toISOString() : null}
+      )
+    `;
+  }
 
   console.log("Collections inserted:", SEED_COLLECTIONS.length, "Products inserted:", products.length);
 

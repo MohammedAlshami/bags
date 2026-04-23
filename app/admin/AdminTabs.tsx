@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, Users, ShoppingBag } from "lucide-react";
+import { BookOpen, LayoutDashboard, Package, Users, ShoppingBag } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { adminIconClassName, sans } from "@/lib/page-theme";
 
 const TABS: { href: string; label: string; icon: LucideIcon }[] = [
-  { href: "/admin", label: "نظرة عامة", icon: LayoutDashboard },
-  { href: "/admin/products", label: "المنتجات", icon: Package },
-  { href: "/admin/customers", label: "العملاء", icon: Users },
-  { href: "/admin/orders", label: "الطلبات", icon: ShoppingBag },
+  { href: "/admin", label: "Ù†Ø¸Ø±Ø© Ø¹Ø§Ù…Ø©", icon: LayoutDashboard },
+  { href: "/admin/products", label: "Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª", icon: Package },
+  { href: "/admin/blogs", label: "Ø§Ù„Ù…Ø¯ÙˆÙ†Ø©", icon: BookOpen },
+  { href: "/admin/customers", label: "Ø§Ù„Ø¹Ù…Ù„Ø§Ø¡", icon: Users },
+  { href: "/admin/orders", label: "Ø§Ù„Ø·Ù„Ø¨Ø§Øª", icon: ShoppingBag },
 ];
 
 export function AdminTabs() {
@@ -19,7 +20,7 @@ export function AdminTabs() {
 
   return (
     <>
-      <nav className="mb-8 hidden lg:block" aria-label="أقسام لوحة الإدارة">
+      <nav className="mb-8 hidden lg:block" aria-label="Ø£Ù‚Ø³Ø§Ù… Ù„ÙˆØ­Ø© Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©">
         <div className="flex gap-6 overflow-x-auto">
           {TABS.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href));
@@ -40,7 +41,7 @@ export function AdminTabs() {
         </div>
       </nav>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden" aria-label="أقسام لوحة الإدارة">
+      <nav className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden" aria-label="Ø£Ù‚Ø³Ø§Ù… Ù„ÙˆØ­Ø© Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©">
         <div className="mx-auto grid max-w-md grid-cols-4 rounded-full border border-black/5 bg-white/95 px-2 py-2 shadow-[0_14px_40px_rgba(0,0,0,0.16)] backdrop-blur-xl">
           {TABS.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href));

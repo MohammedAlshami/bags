@@ -3,6 +3,7 @@ import { StoreLocationsSection } from "@/app/components/StoreLocationsSection";
 import { AboutBrandStory } from "@/app/components/about/AboutBrandStory";
 import { AboutFaq } from "@/app/components/about/AboutFaq";
 import { AboutSplitShowcase } from "@/app/components/about/AboutSplitShowcase";
+import { AboutPaymentDetails } from "@/app/components/about/AboutPaymentDetails";
 import { sans, pagePaddingX } from "@/lib/page-theme";
 
 export default function AboutPage() {
@@ -39,6 +40,8 @@ export default function AboutPage() {
       </div>
 
       <AboutBrandStory />
+
+      <AboutPaymentDetails />
 
       <AboutFaq />
 

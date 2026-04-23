@@ -1,15 +1,27 @@
-"use client";
-
 import Link from "next/link";
-import { useMemo } from "react";
 import { Sparkles } from "lucide-react";
-import { SafeImage } from "@/app/components/SafeImage";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
-import { CATEGORIES, PRODUCTS, type Product } from "@/lib/products";
+import { SafeImage } from "@/app/components/SafeImage";
+import { sql } from "@/lib/db";
+import { mapProduct, type ProductRow } from "@/lib/db-mappers";
+import { CATEGORIES } from "@/lib/products";
 import { sans, pagePaddingX } from "@/lib/page-theme";
+import { formatDualPrice } from "@/lib/price-format";
 
-function ProductCard({ product }: { product: Product }) {
-  const { name, price, category, image, slug } = product;
+type ShopProduct = {
+  name: string;
+  price: string;
+  oldRiyal?: number | null;
+  sizes?: { label: string; sarPrice: number; oldRiyal: number }[] | null;
+  category: string;
+  image: string;
+  slug: string;
+};
+
+function ProductCard({ product }: { product: ShopProduct }) {
+  const { name, price, oldRiyal, category, image, slug } = product;
+  const size = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes[0] : null;
+  const priceLine = size ? `${size.oldRiyal.toLocaleString("en-US")} ر ق / ${size.sarPrice} ر س` : formatDualPrice(price, oldRiyal);
   return (
     <Link href={`/product/${slug}`} className="group flex flex-col" dir="rtl">
       <div className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl bg-white">
@@ -21,7 +33,7 @@ function ProductCard({ product }: { product: Product }) {
           sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
         />
       </div>
-      <div className="mt-4 flex flex-col gap-1 text-center">
+      <div className="mt-4 flex flex-col gap-1 text-right">
         <span className="text-xs text-neutral-500" style={sans}>
           {category}
         </span>
@@ -29,7 +41,7 @@ function ProductCard({ product }: { product: Product }) {
           {name}
         </span>
         <span className="text-sm text-neutral-900" style={sans}>
-          {price}
+          {priceLine}
         </span>
       </div>
     </Link>
@@ -51,7 +63,7 @@ function CategoryHeader({ category }: { category: string }) {
   );
 }
 
-function CategorySection({ category, products }: { category: string; products: Product[] }) {
+function CategorySection({ category, products }: { category: string; products: ShopProduct[] }) {
   return (
     <section className="mb-10">
       <CategoryHeader category={category} />
@@ -64,14 +76,32 @@ function CategorySection({ category, products }: { category: string; products: P
   );
 }
 
-export default function ShopPage() {
-  const productsByCategory = useMemo(
-    () =>
-      Object.fromEntries(
-        CATEGORIES.map((category) => [category, PRODUCTS.filter((product) => product.category === category)])
-      ) as Record<(typeof CATEGORIES)[number], Product[]>,
-    []
-  );
+export default async function ShopPage() {
+  const rows = await sql`
+    SELECT p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.image, p.slug,
+           p.created_at, p.updated_at,
+           c.id AS col_id, c.name AS col_name, c.slug AS col_slug
+    FROM products p
+    LEFT JOIN collections c ON c.id = p.collection_id
+    ORDER BY p.name ASC
+  `;
+
+  const products = (rows as ProductRow[]).map((row) => {
+    const mapped = mapProduct(row, true);
+    return {
+      name: mapped.name,
+      price: mapped.price,
+      oldRiyal: mapped.oldRiyal,
+      sizes: mapped.sizes as ShopProduct["sizes"],
+      category: mapped.category,
+      image: mapped.image,
+      slug: mapped.slug,
+    };
+  });
+
+  const productsByCategory = Object.fromEntries(
+    CATEGORIES.map((category) => [category, products.filter((product) => product.category === category)])
+  ) as Record<(typeof CATEGORIES)[number], ShopProduct[]>;
 
   return (
     <main className="min-h-screen bg-white pb-24 pt-24 transition-colors md:pb-32 md:pt-32" dir="rtl">
@@ -84,3 +114,4 @@ export default function ShopPage() {
     </main>
   );
 }
+

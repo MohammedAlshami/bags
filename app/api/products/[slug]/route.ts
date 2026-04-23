@@ -11,7 +11,9 @@ export async function GET(
   try {
     const { slug } = await params;
     const rows = await sql`
-      SELECT p.id, p.name, p.price, p.category, p.image, p.slug, p.collection_id,
+      SELECT p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.image, p.slug,
+             p.description_ar, p.ingredients_ar, p.usage_ar, p.free_from_ar, p.warning_ar, p.contents_ar,
+             p.collection_id,
              p.created_at, p.updated_at,
              c.id AS col_id, c.name AS col_name, c.slug AS col_slug
       FROM products p

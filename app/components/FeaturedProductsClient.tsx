@@ -39,8 +39,8 @@ export function FeaturedProductsClient({ products }: { products: FeaturedProduct
   return (
     <section className="w-full bg-white py-12 md:py-16" aria-label="منتجات مميزة" dir="rtl">
       <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12">
-        <div className="mb-10 flex flex-col items-center gap-8 text-center">
-          <h2 className="max-w-2xl text-xl font-normal leading-snug italic text-neutral-800 md:text-2xl">
+        <div className="mb-10 flex w-full justify-start">
+          <h2 className="max-w-2xl text-left text-xl font-normal leading-snug italic text-neutral-800 md:text-2xl">
             <span>مختاراتنا </span>
             <span>لموسم العطلات</span>
           </h2>

@@ -8,18 +8,26 @@ import type { LucideIcon } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
 import { adminIconClassName, pagePaddingX } from "@/lib/page-theme";
 
-type MobileNavItem = {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-};
+type MobileNavItem = { href: string; label: string; icon: LucideIcon };
 
 const MOBILE_NAV_ITEMS: MobileNavItem[] = [
-  { href: "/", label: "الرئيسية", icon: Home },
-  { href: "/shop", label: "تسوق", icon: ShoppingBag },
-  { href: "/cart", label: "السلة", icon: ShoppingCart },
-  { href: "/profile", label: "حسابي", icon: UserCircle2 },
+  { href: "/", label: "\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629", icon: Home },
+  { href: "/shop", label: "\u062a\u0633\u0648\u0642", icon: ShoppingBag },
+  { href: "/cart", label: "\u0627\u0644\u0633\u0644\u0629", icon: ShoppingCart },
+  { href: "/profile", label: "\u062d\u0633\u0627\u0628\u064a", icon: UserCircle2 },
 ];
+
+const TXT = {
+  shop: "\u062a\u0633\u0648\u0642",
+  blog: "\u0627\u0644\u0645\u062f\u0648\u0646\u0629",
+  about: "\u0645\u0646 \u0646\u062d\u0646",
+  locations: "\u0646\u0642\u0627\u0637 \u0627\u0644\u0628\u064a\u0639",
+  account: "\u062d\u0633\u0627\u0628\u064a",
+  login: "\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062f\u062e\u0648\u0644",
+  cart: "\u0627\u0644\u0633\u0644\u0629",
+  brand: "\u0627\u0644\u0645\u0644\u0643\u0629 \u062c\u0648\u0644\u062f",
+  quickNav: "\u0627\u0644\u062a\u0646\u0642\u0644 \u0627\u0644\u0633\u0631\u064a\u0639",
+};
 
 export default function Navbar() {
   const [user, setUser] = useState<{ username: string; role: string } | null>(null);
@@ -38,7 +46,6 @@ export default function Navbar() {
       const next = (document.body.dataset.shopBg as "white" | "pink" | undefined) ?? "white";
       setShopBg(next);
     };
-
     syncShopBg();
     window.addEventListener("shop-bg-change", syncShopBg as EventListener);
     return () => window.removeEventListener("shop-bg-change", syncShopBg as EventListener);
@@ -48,54 +55,40 @@ export default function Navbar() {
 
   return (
     <>
-      <header
-        className="relative z-50"
-        style={{ backgroundColor: isShopPink ? "#FAEFF6" : "#ffffff" }}
-      >
+      <header className="relative z-50" style={{ backgroundColor: isShopPink ? "#FAEFF6" : "#ffffff" }}>
         <div className={`mx-auto w-full max-w-[1920px] ${pagePaddingX}`}>
           <nav className="hidden h-16 items-center justify-between lg:flex" dir="ltr">
-            <div className="flex items-center gap-6 text-sm font-medium text-gray-600">
-              <Link href="/locations" className="whitespace-nowrap transition-colors hover:underline hover:text-black">
-                الفروع
-              </Link>
-              <Link href="/shop" className="whitespace-nowrap transition-colors hover:underline hover:text-black">
-                تسوق
-              </Link>
-              <Link href="/about" className="whitespace-nowrap transition-colors hover:underline hover:text-black">
-                من نحن
-              </Link>
+            <div className="flex items-center gap-12 text-sm font-medium text-gray-600" dir="rtl">
+              <div className="flex items-center gap-6">
+                <Link href="/shop" className="whitespace-nowrap transition-colors hover:underline hover:text-black">{TXT.shop}</Link>
+                <Link href="/blog" className="whitespace-nowrap transition-colors hover:underline hover:text-black">{TXT.blog}</Link>
+                <Link href="/about" className="whitespace-nowrap transition-colors hover:underline hover:text-black">{TXT.about}</Link>
+                <Link href="/locations" className="whitespace-nowrap transition-colors hover:underline hover:text-black">{TXT.locations}</Link>
+              </div>
+
               {user ? (
-                <Link href={user.role === "admin" ? "/admin" : "/profile"} className="whitespace-nowrap transition-colors hover:text-black">
-                  حسابي
-                </Link>
+                <Link href={user.role === "admin" ? "/admin" : "/profile"} className="whitespace-nowrap transition-colors hover:text-black">{TXT.account}</Link>
               ) : (
-                <Link href="/login" className="whitespace-nowrap transition-colors hover:text-black">
-                  تسجيل الدخول
-                </Link>
+                <Link href="/login" className="whitespace-nowrap transition-colors hover:text-black">{TXT.login}</Link>
               )}
-              <Link href="/cart" className="whitespace-nowrap transition-colors hover:text-black">
-                السلة ({count})
-              </Link>
+              <Link href="/cart" className="whitespace-nowrap transition-colors hover:text-black">{TXT.cart} ({count})</Link>
             </div>
 
             <Link href="/" className="flex shrink-0 items-center gap-3">
-              <span className="text-lg font-semibold leading-none text-[#d44c7d]">الملكة جولد</span>
-              {/* eslint-disable-next-line @next/next/no-img-element -- local static logo loads faster as a plain image */}
-              <img src="/logo_img.png" alt="الملكة جولد" className="h-12 w-auto object-contain" width={160} height={60} />
+              <span className="text-lg font-semibold leading-none text-[#d44c7d]">{TXT.brand}</span>
+              <img src="/logo_img.png" alt={TXT.brand} className="h-12 w-auto object-contain" width={160} height={60} />
             </Link>
           </nav>
 
           <nav className="flex h-14 items-center justify-between lg:hidden" dir="rtl">
-            <div className="flex items-center gap-2 shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element -- local static logo loads faster as a plain image */}
-              <img src="/logo_img.png" alt="الملكة جولد" className="h-12 w-auto object-contain" width={160} height={60} />
-              <span className="self-center text-sm font-medium leading-none text-[#d44c7d]">الملكة جولد</span>
+            <div className="flex shrink-0 items-center gap-2">
+              <img src="/logo_img.png" alt={TXT.brand} className="h-12 w-auto object-contain" width={160} height={60} />
+              <span className="self-center text-sm font-medium leading-none text-[#d44c7d]">{TXT.brand}</span>
             </div>
-
-            <div className="flex items-center shrink-0">
+            <div className="flex shrink-0 items-center">
               <Link href="/locations" className="flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-gray-600 transition-colors hover:text-black">
                 <MapPin className={`h-4 w-4 ${adminIconClassName}`} aria-hidden />
-                الفروع
+                {TXT.locations}
               </Link>
             </div>
           </nav>
@@ -104,8 +97,8 @@ export default function Navbar() {
 
       <div className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden">
         <nav
-          aria-label="التنقل السريع"
-          className="mx-auto grid max-w-sm grid-cols-4 place-items-center rounded-full border border-black/5 bg-white/95 px-1.5 py-2 shadow-[0_14px_40px_rgba(0,0,0,0.16)] backdrop-blur-xl"
+          aria-label={TXT.quickNav}
+          className="mx-auto grid max-w-sm grid-cols-4 place-items-center rounded-full border border-black/5 bg-white/95 px-1.5 py-2 backdrop-blur-xl"
         >
           {MOBILE_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const targetHref = href === "/profile" ? (user ? (user.role === "admin" ? "/admin" : "/profile") : "/login") : href;
@@ -121,11 +114,6 @@ export default function Navbar() {
               >
                 <Icon className={`h-5 w-5 ${adminIconClassName}`} aria-hidden />
                 <span className="truncate">{label}</span>
-                {href === "/cart" && count > 0 ? (
-                  <span className="absolute right-2 top-1 h-5 min-w-5 rounded-full bg-black px-1 text-[10px] leading-5 text-white">
-                    {count}
-                  </span>
-                ) : null}
               </Link>
             );
           })}

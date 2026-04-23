@@ -5,7 +5,7 @@ import { HeroSection } from "./HeroSection";
 import { FeaturedProductsClient } from "./FeaturedProductsClient";
 import { SocialMediaSection } from "./SocialMediaSection";
 import { StoreLocationsSection } from "./StoreLocationsSection";
-import { PRODUCTS } from "@/lib/products";
+import type { FeaturedProductItem } from "./FeaturedProductsClient";
 
 type HomeBg = "white" | "pink";
 type HomeVisibility = {
@@ -36,7 +36,7 @@ function parseVisibility(value: unknown): HomeVisibility {
   };
 }
 
-export function HomePageClient() {
+export function HomePageClient({ featuredProducts }: { featuredProducts: FeaturedProductItem[] }) {
   const [bg, setBg] = useState<HomeBg>("white");
   const [visibility, setVisibility] = useState<HomeVisibility>(DEFAULT_VISIBILITY);
 
@@ -92,13 +92,7 @@ export function HomePageClient() {
         </>
       ) : null}
       {visibility.hero ? <HeroSection /> : null}
-      {visibility.featured ? <FeaturedProductsClient products={PRODUCTS.slice(0, 8).map((product) => ({
-        slug: product.slug,
-        image: product.image,
-        category: product.category,
-        name: product.name,
-        price: product.price,
-      }))} /> : null}
+      {visibility.featured ? <FeaturedProductsClient products={featuredProducts} /> : null}
       {visibility.locations ? <StoreLocationsSection /> : null}
       {visibility.social ? <SocialMediaSection /> : null}
     </main>

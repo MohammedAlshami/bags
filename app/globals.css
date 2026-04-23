@@ -19,11 +19,23 @@ body {
   font-family: var(--font-playpen-arabic), var(--font-geist-sans), system-ui, sans-serif;
 }
 
-/* Carousel: hide horizontal scrollbar */
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
+/* Cute custom scrollbar for scrollable panels */
+.cute-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(182, 58, 107, 0.8) rgba(255, 255, 255, 0.18);
 }
-.hide-scrollbar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+.cute-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+.cute-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+.cute-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f08ab1 0%, #b63a6b 100%);
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+}
+.cute-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #f39cbc 0%, #9f2f5b 100%);
 }

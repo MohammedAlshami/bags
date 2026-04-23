@@ -62,6 +62,14 @@ export type ProductRow = {
   category: string;
   image: string;
   slug: string;
+  old_riyal?: number | null;
+  sizes?: unknown;
+  description_ar?: string | null;
+  ingredients_ar?: string | null;
+  usage_ar?: string | null;
+  free_from_ar?: string | null;
+  warning_ar?: string | null;
+  contents_ar?: string | null;
   collection_id: string | null;
   created_at: string;
   updated_at: string;
@@ -71,6 +79,19 @@ export type ProductRow = {
 };
 
 export function mapProduct(row: ProductRow, populated = false) {
+  const sizes = Array.isArray(row.sizes)
+    ? row.sizes
+        .map((size) => {
+          if (!size || typeof size !== "object") return null;
+          const raw = size as Record<string, unknown>;
+          const label = typeof raw.label === "string" ? raw.label.trim() : "";
+          const sarPrice = Number(raw.sarPrice);
+          const oldRiyal = Number(raw.oldRiyal);
+          if (!label || Number.isNaN(sarPrice) || Number.isNaN(oldRiyal)) return null;
+          return { label, sarPrice, oldRiyal };
+        })
+        .filter(Boolean)
+    : null;
   const base = {
     _id: row.id,
     name: row.name,
@@ -78,6 +99,14 @@ export function mapProduct(row: ProductRow, populated = false) {
     category: row.category,
     image: row.image,
     slug: row.slug,
+    oldRiyal: row.old_riyal == null ? null : Number(row.old_riyal),
+    sizes,
+    descriptionAr: row.description_ar ?? null,
+    ingredientsAr: row.ingredients_ar ?? null,
+    usageAr: row.usage_ar ?? null,
+    freeFromAr: row.free_from_ar ?? null,
+    warningAr: row.warning_ar ?? null,
+    contentsAr: row.contents_ar ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
