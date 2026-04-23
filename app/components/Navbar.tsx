@@ -81,10 +81,10 @@ export default function Navbar() {
           </nav>
 
           <nav className="flex h-14 items-center justify-between lg:hidden" dir="rtl">
-            <div className="flex shrink-0 items-center gap-2">
+            <Link href="/" className="flex shrink-0 items-center gap-2">
               <img src="/logo_img.png" alt={TXT.brand} className="h-12 w-auto object-contain" width={160} height={60} />
               <span className="self-center text-sm font-medium leading-none text-[#d44c7d]">{TXT.brand}</span>
-            </div>
+            </Link>
             <div className="flex shrink-0 items-center">
               <Link href="/locations" className="flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-gray-600 transition-colors hover:text-black">
                 <MapPin className={`h-4 w-4 ${adminIconClassName}`} aria-hidden />

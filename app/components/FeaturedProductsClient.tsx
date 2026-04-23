@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
+import { formatDualPrice, formatSizePrice, type ProductSizePrice } from "@/lib/price-format";
 
 export type FeaturedProductItem = {
   slug: string;
@@ -10,12 +11,16 @@ export type FeaturedProductItem = {
   category: string;
   name: string;
   price: string;
+  oldRiyal?: number | null;
+  sizes?: ProductSizePrice[] | null;
 };
 
 function ProductCard({ item }: { item: FeaturedProductItem }) {
+  const size = Array.isArray(item.sizes) && item.sizes.length > 0 ? item.sizes[0] : null;
+  const priceLine = size ? formatSizePrice(size) : formatDualPrice(item.price, item.oldRiyal);
   return (
-    <Link href={`/product/${item.slug}`} className="group flex flex-col">
-      <div className="relative aspect-[3/5] w-full overflow-hidden rounded-xl bg-white">
+    <Link href={`/product/${item.slug}`} className="group flex flex-col" dir="rtl">
+      <div className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl bg-white">
         <SafeImage
           src={item.image}
           alt={item.name}
@@ -24,10 +29,10 @@ function ProductCard({ item }: { item: FeaturedProductItem }) {
           sizes="(max-width: 768px) 50vw, 25vw"
         />
       </div>
-      <div className="mt-4 flex flex-col gap-1 text-center">
+      <div className="mt-4 flex flex-col gap-1 text-right">
         <span className="text-xs text-neutral-500">{item.category}</span>
         <span className="text-sm font-semibold text-neutral-900">{item.name}</span>
-        <span className="text-sm text-neutral-900">{item.price}</span>
+        <span className="text-sm text-neutral-900">{priceLine}</span>
       </div>
     </Link>
   );
@@ -49,7 +54,7 @@ export function FeaturedProductsClient({ products }: { products: FeaturedProduct
         {filteredProducts.length === 0 ? (
           <p className="text-center text-sm text-neutral-500">لا توجد منتجات لعرضها.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-5 lg:gap-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:gap-6">
             {filteredProducts.map((item) => (
               <ProductCard key={item.slug} item={item} />
             ))}

@@ -4,7 +4,7 @@ import { mapProduct, type ProductRow } from "@/lib/db-mappers";
 
 export default async function Home() {
   const rows = await sql`
-    SELECT p.id, p.name, p.price, p.category, p.image, p.slug,
+    SELECT p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.image, p.slug,
            p.created_at, p.updated_at,
            c.id AS col_id, c.name AS col_name, c.slug AS col_slug
     FROM products p
@@ -21,6 +21,8 @@ export default async function Home() {
       category: mapped.category,
       name: mapped.name,
       price: mapped.price,
+      oldRiyal: mapped.oldRiyal,
+      sizes: mapped.sizes,
     };
   });
 
