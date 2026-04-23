@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
 
 export type FeaturedProductItem = {
@@ -11,14 +11,6 @@ export type FeaturedProductItem = {
   name: string;
   price: string;
 };
-
-type TabId = "hot" | "bestsellers" | "sale";
-
-const TABS: { id: TabId; label: string }[] = [
-  { id: "hot", label: "الأكثر رواجًا" },
-  { id: "bestsellers", label: "الأكثر مبيعًا" },
-  { id: "sale", label: "تخفيضات" },
-];
 
 function ProductCard({ item }: { item: FeaturedProductItem }) {
   return (
@@ -42,14 +34,7 @@ function ProductCard({ item }: { item: FeaturedProductItem }) {
 }
 
 export function FeaturedProductsClient({ products }: { products: FeaturedProductItem[] }) {
-  const [active, setActive] = useState<TabId>("bestsellers");
-
-  const filteredProducts = useMemo(() => {
-    if (products.length === 0) return [];
-    if (active === "hot") return products.slice(0, 8);
-    if (active === "bestsellers") return products.slice(4, 12).length > 0 ? products.slice(4, 12) : products.slice(0, 8);
-    return [...products].slice(-8).reverse();
-  }, [active, products]);
+  const filteredProducts = useMemo(() => (products.length === 0 ? [] : products.slice(0, 8)), [products]);
 
   return (
     <section className="w-full bg-white py-12 md:py-16" aria-label="منتجات مميزة" dir="rtl">
@@ -59,24 +44,6 @@ export function FeaturedProductsClient({ products }: { products: FeaturedProduct
             <span>مختاراتنا </span>
             <span>لموسم العطلات</span>
           </h2>
-
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {TABS.map((tab) => {
-              const isActive = active === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActive(tab.id)}
-                  className={`rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${
-                    isActive ? "bg-black text-white" : "bg-[#F5F5F5] text-neutral-600 hover:bg-neutral-200"
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
         </div>
 
         {filteredProducts.length === 0 ? (

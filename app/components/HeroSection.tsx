@@ -41,24 +41,20 @@ export function HeroSection() {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    setProgress(0);
-    let start: number | null = null;
-    let raf = 0;
-
-    const tick = (now: number) => {
-      if (start === null) start = now;
-      const elapsed = now - start;
+    const start = Date.now();
+    const interval = window.setInterval(() => {
+      const elapsed = Date.now() - start;
       const p = Math.min(1, elapsed / SLIDE_MS);
       setProgress(p);
-      if (p >= 1) {
-        setIndex((i) => (i + 1) % HERO_SLIDES.length);
-        return;
-      }
-      raf = requestAnimationFrame(tick);
-    };
+    }, 32);
+    const slideTimer = window.setTimeout(() => {
+      setIndex((i) => (i + 1) % HERO_SLIDES.length);
+    }, SLIDE_MS);
 
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      window.clearInterval(interval);
+      window.clearTimeout(slideTimer);
+    };
   }, [index]);
 
   const goTo = (i: number) => {
@@ -108,7 +104,7 @@ export function HeroSection() {
               <button
                 type="button"
                 onClick={() => goTo(i)}
-                className={`flex size-11 shrink-0 items-center justify-center rounded-full p-0 leading-none touch-manipulation text-sm font-light tabular-nums transition-colors ${
+                className={`flex h-11 aspect-square w-11 flex-none items-center justify-center rounded-full p-0 leading-none touch-manipulation text-sm font-light tabular-nums transition-colors ${
                   active ? "text-white" : "text-white/55 hover:text-white/90"
                 }`}
                 aria-label={`الشريحة ${i + 1}`}

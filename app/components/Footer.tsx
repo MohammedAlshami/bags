@@ -1,145 +1,143 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { FormEvent } from "react";
-import { Instagram } from "lucide-react";
+import { ArrowLeft, Globe, Instagram } from "lucide-react";
+import { pagePaddingX } from "@/lib/page-theme";
 
 const font = { fontFamily: "var(--font-playpen-arabic), sans-serif" };
 
-const FOOTER_NAV = [
+const QUICK_LINKS = [
+  { label: "المتجر الرئيسي", href: "/shop" },
+  { label: "جديد المجموعة", href: "/shop" },
+  { label: "العروض الخاصة", href: "/shop" },
+  { label: "آراء العملاء", href: "/shop" },
+];
+
+const ABOUT_LINKS = [
   { label: "من نحن", href: "/about" },
   { label: "فروعنا", href: "/locations" },
-  { label: "المجموعة", href: "/shop" },
-  { label: "المعرض", href: "/shop" },
-  { label: "المتجر", href: "/shop" },
+  { label: "الأسئلة الشائعة", href: "/about" },
+  { label: "تواصل معنا", href: "/about" },
 ];
 
 const SOCIAL_LINKS = [
   { label: "Instagram", href: "https://www.instagram.com/queen__007696", Icon: Instagram },
+  { label: "Snapchat", href: "#", Icon: Instagram },
+  { label: "TikTok", href: "#", Icon: Instagram },
 ];
 
 export function Footer() {
-  function handleNewsletterSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-  }
-
   return (
-    <footer
-      className="text-white"
-      style={{ ...font, backgroundColor: "#151515" }}
-      role="contentinfo"
-      dir="rtl"
-    >
-      <div className="w-full px-4 sm:px-8 md:px-14 lg:px-24">
-        <div className="py-12 text-center md:py-14">
-          <h2 id="newsletter-heading" className="text-xl font-semibold tracking-tight text-white sm:text-2xl md:text-3xl">
-            خصم 20٪ على طلبك الأول
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm text-white/75 sm:text-base">
-            انضم إلى قائمتنا البريدية للحصول على عروض حصرية وآخر الأخبار.
-          </p>
-          <form
-            className="mx-auto mt-8 flex w-full max-w-xl items-stretch overflow-hidden rounded-full border border-white/20 bg-white/5 sm:mt-10"
-            onSubmit={handleNewsletterSubmit}
-            noValidate
-            aria-labelledby="newsletter-heading"
-          >
-            <input
-              type="email"
-              name="email"
-              autoComplete="email"
-              placeholder="البريد الإلكتروني"
-              className="min-h-[48px] min-w-0 flex-1 rounded-s-full border-0 bg-transparent px-4 py-3 text-sm text-white placeholder:text-white/45 focus:outline-none focus:ring-0"
-              dir="rtl"
-              required
-            />
-            <button
-              type="submit"
-              className="shrink-0 rounded-e-full px-6 py-3 text-xs font-semibold text-white transition-colors hover:brightness-110 sm:px-8 sm:text-sm"
-              style={{ backgroundColor: "#B63A6B" }}
+    <footer className="border-t border-pink-500/10 text-white" style={{ ...font, background: "linear-gradient(180deg, #121212 0%, #0a0a0a 100%)" }} role="contentinfo" dir="rtl">
+      <style>{`
+        .brand-gradient-text {
+          background: linear-gradient(to right, #d44c7d, #f06292);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        .cta-banner {
+          background: linear-gradient(135deg, rgba(212, 76, 125, 0.15) 0%, rgba(212, 76, 125, 0.05) 100%);
+          border: 1px solid rgba(212, 76, 125, 0.2);
+          backdrop-filter: blur(10px);
+        }
+        .whatsapp-btn {
+          background: #d44c7d;
+          transition: all 0.3s ease;
+        }
+        .whatsapp-btn:hover {
+          background: #ffffff;
+          color: #d44c7d;
+        }
+        .nav-link {
+          transition: color 0.3s ease;
+          color: #9ca3af;
+        }
+        .nav-link:hover {
+          color: #d44c7d;
+        }
+      `}</style>
+
+      <div className={`mx-auto max-w-[1920px] ${pagePaddingX} pt-16 pb-8`}>
+        <div className="cta-banner relative mb-16 flex flex-col items-center overflow-hidden rounded-3xl p-8 text-center md:p-12">
+          <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-pink-500/10 blur-3xl" aria-hidden />
+          <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-pink-500/10 blur-3xl" aria-hidden />
+
+          <div className="relative z-10">
+            <span className="mb-3 block text-sm font-bold uppercase tracking-[0.2em] text-pink-400">قناة الواتساب</span>
+            <h3 className="mb-8 text-2xl font-bold text-white md:text-4xl">تابعينا على القناة للحصول على آخر العروض</h3>
+            <a
+              href="https://whatsapp.com/channel/0029Vb6EdFc3GJP6WMzfXn2N"
+              className="whatsapp-btn mx-auto inline-flex w-fit items-center gap-3 rounded-full px-10 py-4 font-bold text-white"
+              target="_blank"
+              rel="noreferrer"
             >
-              اشترك
-            </button>
-          </form>
+              <span>انضمي إلينا الآن</span>
+              <ArrowLeft className="text-xs opacity-70" size={14} aria-hidden />
+            </a>
+          </div>
         </div>
 
-        <div className="pb-14 pt-6 text-center md:pb-16 md:pt-8">
-          <p
-            className="text-5xl font-semibold tracking-wide sm:text-6xl md:text-7xl"
-            style={{ ...font, color: "#B63A6B" }}
-          >
-            الملكة جولد
-          </p>
-          <p className="mx-auto mt-8 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base" style={font}>
-            عناية متكاملة بالجسم والبشرة والشعر بمنتجات طبيعية وآمنة، تمنحك نتائج تدريجية تليق بك.
-          </p>
+        <div className="mb-8 grid grid-cols-1 items-start gap-12 border-b border-gray-800 pb-12 text-center md:grid-cols-3 md:text-right">
+          <div className="flex flex-col items-center md:items-start">
+            <h2 className="mb-4 text-4xl font-bold brand-gradient-text">الملكة جولد</h2>
+            <p className="max-w-xs text-sm leading-relaxed text-gray-400">
+              عناية متكاملة بالجسم والبشرة والشعر بمنتجات طبيعية وآمنة، تمنحك نتائج تدريجية تليق بك.
+            </p>
+            <div className="mt-6 flex gap-4">
+              {SOCIAL_LINKS.map(({ label, href, Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  aria-label={label}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex h-10 w-10 items-center justify-center rounded-full bg-[#d44c7d] transition-colors hover:bg-white"
+                >
+                  <Icon className="h-4 w-4 text-white transition-colors group-hover:text-[#d44c7d]" aria-hidden />
+                </a>
+              ))}
+            </div>
+          </div>
 
-          <nav aria-label="روابط سريعة" className="mt-9">
-            <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
-              {FOOTER_NAV.map((item) => (
+          <div>
+            <h4 className="mb-6 font-bold text-white">روابط سريعة</h4>
+            <ul className="space-y-4">
+              {QUICK_LINKS.map((item) => (
                 <li key={item.label}>
-                  <Link href={item.href} className="text-sm font-semibold uppercase tracking-wide text-white/85 transition-colors hover:text-white">
+                  <Link href={item.href} className="nav-link">
                     {item.label}
                   </Link>
                 </li>
               ))}
             </ul>
-          </nav>
+          </div>
 
-          <div className="mt-8 flex items-center justify-center gap-3">
-            {SOCIAL_LINKS.map(({ label, href, Icon }) => (
-              <Link
-                key={label}
-                href={href}
-                aria-label={label}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-10 w-10 items-center justify-center rounded-full text-white transition-colors hover:brightness-110"
-                style={{ backgroundColor: "#B63A6B" }}
-              >
-                <Icon className="h-5 w-5 text-white" strokeWidth={1.8} />
-              </Link>
-            ))}
+          <div>
+            <h4 className="mb-6 font-bold text-white">عن الملكة جولد</h4>
+            <ul className="space-y-4">
+              {ABOUT_LINKS.map((item) => (
+                <li key={item.label}>
+                  <Link href={item.href} className="nav-link">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        <div className="py-5">
-          <div className="flex flex-col items-center justify-between gap-3 text-center md:flex-row md:text-start">
-            <p className="text-xs text-white/70 sm:text-sm" style={font}>
-              العربية / اليمن - الريال
-            </p>
-            <p className="text-xs text-white/70 sm:text-sm" style={font}>
-              © 2026 الملكة جولد - <Link href="#" className="underline underline-offset-4">سياسة الخصوصية</Link>
-            </p>
-            <div className="flex items-center gap-2" style={font}>
-              <span className="flex h-7 items-center rounded bg-white px-2">
-                <Image
-                  src="https://commons.wikimedia.org/wiki/Special:FilePath/Visa_2021.svg"
-                  alt="Visa"
-                  width={48}
-                  height={14}
-                  className="h-3.5 w-auto"
-                />
-              </span>
-              <span className="flex h-7 items-center rounded bg-white px-2">
-                <Image
-                  src="https://commons.wikimedia.org/wiki/Special:FilePath/Mastercard_2019_logo.svg"
-                  alt="Mastercard"
-                  width={48}
-                  height={16}
-                  className="h-4 w-auto"
-                />
-              </span>
-              <span className="flex h-7 items-center rounded bg-white px-2">
-                <Image
-                  src="https://commons.wikimedia.org/wiki/Special:FilePath/PayPal.svg"
-                  alt="PayPal"
-                  width={52}
-                  height={14}
-                  className="h-3.5 w-auto"
-                />
-              </span>
+        <div className="flex flex-col items-center justify-between gap-4 text-xs text-gray-500 md:flex-row">
+          <div className="order-2 flex gap-4 md:order-1">
+            <span>© 2024 الملكة جولد - جميع الحقوق محفوظة</span>
+            <Link href="#" className="underline hover:text-white">
+              سياسة الخصوصية
+            </Link>
+          </div>
+
+          <div className="order-1 flex items-center gap-6 md:order-2">
+            <div className="flex items-center gap-2 cursor-pointer hover:text-white">
+              <Globe className="h-4 w-4" aria-hidden />
+              <span>العربية / اليمن - الريال</span>
             </div>
           </div>
         </div>

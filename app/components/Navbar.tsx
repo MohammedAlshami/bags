@@ -3,38 +3,29 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Home, ShoppingBag, ShoppingCart, UserCircle2 } from "lucide-react";
+import { Home, MapPin, ShoppingBag, ShoppingCart, UserCircle2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
-import { adminIconClassName } from "@/lib/page-theme";
-
-const SCROLL_THRESHOLD = 24;
-
-type NavbarProps = Record<string, never>;
+import { adminIconClassName, pagePaddingX } from "@/lib/page-theme";
 
 type MobileNavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
-  authOnly?: boolean;
 };
 
 const MOBILE_NAV_ITEMS: MobileNavItem[] = [
   { href: "/", label: "الرئيسية", icon: Home },
   { href: "/shop", label: "تسوق", icon: ShoppingBag },
   { href: "/cart", label: "السلة", icon: ShoppingCart },
-  { href: "/login", label: "حسابي", icon: UserCircle2, authOnly: true },
+  { href: "/profile", label: "حسابي", icon: UserCircle2 },
 ];
 
-export default function Navbar(_: NavbarProps) {
+export default function Navbar() {
   const [user, setUser] = useState<{ username: string; role: string } | null>(null);
-  const [scrolled, setScrolled] = useState(false);
+  const [shopBg, setShopBg] = useState<"white" | "pink">("white");
   const pathname = usePathname();
   const { count } = useCart();
-
-  const isHome = pathname === "/";
-  const showHeader = !scrolled;
-  const isTransparent = isHome && !scrolled;
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -43,62 +34,70 @@ export default function Navbar(_: NavbarProps) {
   }, [pathname]);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(typeof window !== "undefined" ? window.scrollY > SCROLL_THRESHOLD : false);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const syncShopBg = () => {
+      const next = (document.body.dataset.shopBg as "white" | "pink" | undefined) ?? "white";
+      setShopBg(next);
+    };
+
+    syncShopBg();
+    window.addEventListener("shop-bg-change", syncShopBg as EventListener);
+    return () => window.removeEventListener("shop-bg-change", syncShopBg as EventListener);
   }, []);
+
+  const isShopPink = pathname === "/shop" && shopBg === "pink";
 
   return (
     <>
       <header
-        className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${showHeader ? "block" : "hidden"}`}
-        style={{ backgroundColor: isTransparent ? "transparent" : "#ffffff" }}
+        className="relative z-50"
+        style={{ backgroundColor: isShopPink ? "#FAEFF6" : "#ffffff" }}
       >
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-8 md:px-14 lg:px-24">
-          <nav className="hidden h-20 items-center justify-between lg:grid lg:grid-cols-[1fr_auto_1fr]">
-            <div className={`flex items-center justify-start gap-6 text-sm font-medium ${isTransparent ? "text-white/90" : "text-gray-600"}`}>
-              <Link href="/locations" className={`whitespace-nowrap transition-colors hover:underline ${isTransparent ? "hover:text-white" : "hover:text-black"}`}>
+        <div className={`mx-auto w-full max-w-[1920px] ${pagePaddingX}`}>
+          <nav className="hidden h-16 items-center justify-between lg:flex" dir="ltr">
+            <div className="flex items-center gap-6 text-sm font-medium text-gray-600">
+              <Link href="/locations" className="whitespace-nowrap transition-colors hover:underline hover:text-black">
                 الفروع
               </Link>
-              <Link href="/shop" className={`whitespace-nowrap transition-colors hover:underline ${isTransparent ? "hover:text-white" : "hover:text-black"}`}>
+              <Link href="/shop" className="whitespace-nowrap transition-colors hover:underline hover:text-black">
                 تسوق
               </Link>
-              <Link href="/about" className={`whitespace-nowrap transition-colors hover:underline ${isTransparent ? "hover:text-white" : "hover:text-black"}`}>
+              <Link href="/about" className="whitespace-nowrap transition-colors hover:underline hover:text-black">
                 من نحن
               </Link>
-            </div>
-
-            <Link href="/" className="shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element -- local static logo loads faster as a plain image */}
-              <img src="/logo_img.png" alt="الملكة جولد" className="h-20 w-auto object-contain" width={240} height={90} />
-            </Link>
-
-            <div className={`flex items-center justify-end gap-6 text-sm font-medium ${isTransparent ? "text-white/90" : "text-gray-600"}`}>
               {user ? (
-                <Link href={user.role === "admin" ? "/admin" : "/profile"} className={`whitespace-nowrap transition-colors ${isTransparent ? "hover:text-white" : "hover:text-black"}`}>
+                <Link href={user.role === "admin" ? "/admin" : "/profile"} className="whitespace-nowrap transition-colors hover:text-black">
                   حسابي
                 </Link>
               ) : (
-                <Link href="/login" className={`whitespace-nowrap transition-colors ${isTransparent ? "hover:text-white" : "hover:text-black"}`}>
+                <Link href="/login" className="whitespace-nowrap transition-colors hover:text-black">
                   تسجيل الدخول
                 </Link>
               )}
-              <Link href="/cart" className={`whitespace-nowrap transition-colors ${isTransparent ? "hover:text-white" : "hover:text-black"}`}>
+              <Link href="/cart" className="whitespace-nowrap transition-colors hover:text-black">
                 السلة ({count})
               </Link>
             </div>
+
+            <Link href="/" className="flex shrink-0 items-center gap-3">
+              <span className="text-lg font-semibold leading-none text-[#d44c7d]">الملكة جولد</span>
+              {/* eslint-disable-next-line @next/next/no-img-element -- local static logo loads faster as a plain image */}
+              <img src="/logo_img.png" alt="الملكة جولد" className="h-12 w-auto object-contain" width={160} height={60} />
+            </Link>
           </nav>
 
-          <nav className="relative flex h-16 items-center justify-start lg:hidden">
-            <Link href="/locations" className={`whitespace-nowrap text-sm font-medium transition-colors ${isTransparent ? "text-white/90 hover:text-white" : "text-gray-600 hover:text-black"}`}>
-              الفروع
-            </Link>
-
-            <Link href="/" className="absolute left-1/2 -translate-x-1/2 shrink-0">
+          <nav className="flex h-14 items-center justify-between lg:hidden" dir="rtl">
+            <div className="flex items-center gap-2 shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element -- local static logo loads faster as a plain image */}
-              <img src="/logo_img.png" alt="الملكة جولد" className="h-14 w-auto object-contain" width={180} height={68} />
-            </Link>
+              <img src="/logo_img.png" alt="الملكة جولد" className="h-12 w-auto object-contain" width={160} height={60} />
+              <span className="self-center text-sm font-medium leading-none text-[#d44c7d]">الملكة جولد</span>
+            </div>
+
+            <div className="flex items-center shrink-0">
+              <Link href="/locations" className="flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-gray-600 transition-colors hover:text-black">
+                <MapPin className={`h-4 w-4 ${adminIconClassName}`} aria-hidden />
+                الفروع
+              </Link>
+            </div>
           </nav>
         </div>
       </header>
@@ -106,14 +105,11 @@ export default function Navbar(_: NavbarProps) {
       <div className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden">
         <nav
           aria-label="التنقل السريع"
-          className="mx-auto grid max-w-sm grid-cols-4 rounded-full border border-black/5 bg-white/95 px-2 py-2 shadow-[0_14px_40px_rgba(0,0,0,0.16)] backdrop-blur-xl"
+          className="mx-auto grid max-w-sm grid-cols-4 place-items-center rounded-full border border-black/5 bg-white/95 px-1.5 py-2 shadow-[0_14px_40px_rgba(0,0,0,0.16)] backdrop-blur-xl"
         >
-          {MOBILE_NAV_ITEMS.map(({ href, label, icon: Icon, authOnly }) => {
-            const targetHref = href === "/login" ? (user ? (user.role === "admin" ? "/admin" : "/profile") : "/login") : href;
+          {MOBILE_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+            const targetHref = href === "/profile" ? (user ? (user.role === "admin" ? "/admin" : "/profile") : "/login") : href;
             const isActive = targetHref === "/" ? pathname === "/" : pathname === targetHref || pathname.startsWith(`${targetHref}/`);
-            const shouldHide = authOnly && !user;
-
-            if (shouldHide) return null;
 
             return (
               <Link

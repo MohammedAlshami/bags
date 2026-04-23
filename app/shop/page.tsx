@@ -1,10 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo } from "react";
+import { Sparkles } from "lucide-react";
 import { SafeImage } from "@/app/components/SafeImage";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
-import { PRODUCTS, type Product } from "@/lib/products";
+import { CATEGORIES, PRODUCTS, type Product } from "@/lib/products";
 import { sans, pagePaddingX } from "@/lib/page-theme";
 
-/** Same card treatment as `FeaturedProductsSection` — data from `lib/products`. */
 function ProductCard({ product }: { product: Product }) {
   const { name, price, category, image, slug } = product;
   return (
@@ -33,16 +36,50 @@ function ProductCard({ product }: { product: Product }) {
   );
 }
 
-export default function ShopPage() {
+function CategoryHeader({ category }: { category: string }) {
   return (
-    <main className="min-h-screen bg-white pb-24 pt-24 md:pb-32 md:pt-32" dir="rtl">
+    <div className="mb-5 w-full overflow-hidden rounded-3xl bg-[#d44c7d] px-5 py-4 md:px-6 md:py-5">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-4 w-4 shrink-0 text-white" aria-hidden />
+          <h2 className="text-xl font-black tracking-wide text-white md:text-2xl" style={sans}>
+            {category}
+          </h2>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategorySection({ category, products }: { category: string; products: Product[] }) {
+  return (
+    <section className="mb-10">
+      <CategoryHeader category={category} />
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5">
+        {products.map((product) => (
+          <ProductCard key={product.slug} product={product} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default function ShopPage() {
+  const productsByCategory = useMemo(
+    () =>
+      Object.fromEntries(
+        CATEGORIES.map((category) => [category, PRODUCTS.filter((product) => product.category === category)])
+      ) as Record<(typeof CATEGORIES)[number], Product[]>,
+    []
+  );
+
+  return (
+    <main className="min-h-screen bg-white pb-24 pt-24 transition-colors md:pb-32 md:pt-32" dir="rtl">
       <div className={`mx-auto max-w-[1920px] ${pagePaddingX}`}>
         <Breadcrumbs items={[{ label: "الرئيسية", href: "/" }, { label: "المتجر" }]} />
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5">
-          {PRODUCTS.map((p) => (
-            <ProductCard key={p.slug} product={p} />
-          ))}
-        </div>
+        {CATEGORIES.map((category) => (
+          <CategorySection key={category} category={category} products={productsByCategory[category]} />
+        ))}
       </div>
     </main>
   );
