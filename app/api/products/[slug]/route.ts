@@ -11,14 +11,16 @@ export async function GET(
   try {
     const { slug } = await params;
     const rows = await sql`
-      SELECT p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.image, p.slug,
+      SELECT p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.category_id, p.image,
              p.description_ar, p.ingredients_ar, p.usage_ar, p.free_from_ar, p.warning_ar, p.contents_ar,
              p.collection_id,
              p.created_at, p.updated_at,
+             cat.id AS cat_id, cat.name AS cat_name,
              c.id AS col_id, c.name AS col_name, c.slug AS col_slug
       FROM products p
+      LEFT JOIN categories cat ON cat.id = p.category_id
       LEFT JOIN collections c ON c.id = p.collection_id
-      WHERE p.slug = ${slug}
+      WHERE p.id = ${slug}::uuid
       LIMIT 1
     `;
     const row = rows[0] as ProductRow | undefined;

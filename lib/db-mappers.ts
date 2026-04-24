@@ -59,9 +59,10 @@ export type ProductRow = {
   id: string;
   name: string;
   price: string;
-  category: string;
+  category?: string | null;
+  category_id?: string | null;
   image: string;
-  slug: string;
+  slug?: string | null;
   old_riyal?: number | null;
   sizes?: unknown;
   description_ar?: string | null;
@@ -76,6 +77,8 @@ export type ProductRow = {
   col_id?: string | null;
   col_name?: string | null;
   col_slug?: string | null;
+  cat_id?: string | null;
+  cat_name?: string | null;
 };
 
 export function mapProduct(row: ProductRow, populated = false) {
@@ -96,9 +99,10 @@ export function mapProduct(row: ProductRow, populated = false) {
     _id: row.id,
     name: row.name,
     price: row.price,
-    category: row.category,
+    category: row.cat_name ?? row.category ?? "",
+    categoryId: row.cat_id ?? row.category_id ?? null,
     image: row.image,
-    slug: row.slug,
+    slug: row.slug ?? row.id,
     oldRiyal: row.old_riyal == null ? null : Number(row.old_riyal),
     sizes,
     descriptionAr: row.description_ar ?? null,

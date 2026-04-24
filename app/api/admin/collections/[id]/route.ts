@@ -6,6 +6,14 @@ import { isUuid } from "@/lib/id";
 
 export const dynamic = "force-dynamic";
 
+function slugifyName(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -52,7 +60,7 @@ export async function PUT(
     if (!cur) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const name = body.name != null ? String(body.name).trim() : cur.name;
-    const slug = body.slug != null ? String(body.slug).trim() : cur.slug;
+    const slug = body.slug != null && String(body.slug).trim() ? String(body.slug).trim() : cur.slug || slugifyName(name);
     const image = body.image != null ? String(body.image).trim() : cur.image;
     const description = body.description != null ? String(body.description).trim() : cur.description;
     const story = body.story != null ? String(body.story).trim() : cur.story;

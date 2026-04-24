@@ -40,7 +40,13 @@ export async function POST(request: Request) {
       sub: String(user.id),
     });
 
-    const res = NextResponse.json({ ok: true });
+    const res = NextResponse.json({
+      ok: true,
+      user: {
+        username: user.username,
+        role: user.role,
+      },
+    });
     res.cookies.set(getCookieName(), token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

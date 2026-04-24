@@ -37,8 +37,9 @@ function LoginForm() {
       setError(mapLoginError(typeof data.error === "string" ? data.error : ""));
       return;
     }
+    const role = typeof data?.user?.role === "string" ? data.user.role : "";
     const next = safeNextPath(searchParams.get("next"));
-    router.push(next ?? "/");
+    router.push(role === "admin" ? "/admin" : next ?? "/");
     router.refresh();
   };
 

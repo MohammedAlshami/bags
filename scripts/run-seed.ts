@@ -35,6 +35,7 @@ async function main() {
     SEED_CUSTOMER_PROFILE,
     SEED_SHIPPING_ADDRESS,
   } = await import("../lib/seed-data");
+  const { DEFAULT_CATEGORY_NAMES } = await import("../lib/categories");
   const { parsePrice } = await import("../lib/cart");
   const { hash } = await import("bcryptjs");
 
@@ -47,9 +48,24 @@ async function main() {
 
   await sql`DELETE FROM orders`;
   await sql`DELETE FROM products`;
+  await sql`DELETE FROM categories`;
   await sql`DELETE FROM landing`;
   await sql`DELETE FROM blog_posts`;
   await sql`DELETE FROM collections`;
+
+  const categoryNames = Array.from(
+    new Set([...DEFAULT_CATEGORY_NAMES, ...SEED_PRODUCTS.map((product) => product.category)])
+  );
+  const categoryByName = new Map<string, string>();
+  for (const [index, name] of categoryNames.entries()) {
+    const inserted = await sql`
+      INSERT INTO categories (name, sort_order)
+      VALUES (${name}, ${index + 1})
+      RETURNING id, name
+    `;
+    const row = inserted[0];
+    categoryByName.set(row.name as string, row.id as string);
+  }
 
   const collectionBySlug = new Map<string, string>();
   for (const c of SEED_COLLECTIONS) {
@@ -70,17 +86,19 @@ async function main() {
     collectionBySlug.set(row.slug as string, row.id as string);
   }
 
-  const products: { id: string; slug: string; name: string; price: string }[] = [];
+  const products: { id: string; name: string; price: string }[] = [];
   for (const p of SEED_PRODUCTS) {
     const collectionId =
       collectionBySlug.get(p.collectionSlug) ?? collectionBySlug.get("essentials");
     if (!collectionId) throw new Error("Missing collection for product");
+    const categoryId = categoryByName.get(p.category);
+    if (!categoryId) throw new Error("Missing category for product");
     const ins = await sql`
-      INSERT INTO products (name, price, category, image, slug, collection_id)
-      VALUES (${p.name}, ${p.price}, ${p.category}, ${p.image}, ${p.slug}, ${collectionId}::uuid)
-      RETURNING id, slug, name, price
+      INSERT INTO products (name, price, category, category_id, image, collection_id)
+      VALUES (${p.name}, ${p.price}, ${p.category}, ${categoryId}::uuid, ${p.image}, ${collectionId}::uuid)
+      RETURNING id, name, price
     `;
-    products.push(ins[0] as { id: string; slug: string; name: string; price: string });
+    products.push(ins[0] as { id: string; name: string; price: string });
   }
 
   await sql`
@@ -170,7 +188,7 @@ async function main() {
         ${seedCustomerId}::uuid,
         ${JSON.stringify([
           {
-            slug: firstProduct.slug,
+            slug: firstProduct.id,
             name: firstProduct.name,
             price: firstProduct.price,
             quantity: 1,
@@ -196,7 +214,7 @@ async function main() {
         ${seedCustomerId}::uuid,
         ${JSON.stringify([
           {
-            slug: secondProduct?.slug ?? "leather-crossbody",
+            slug: secondProduct?.id ?? "leather-crossbody",
             name: secondProduct?.name ?? "تونر أساسي",
             price: secondProduct?.price ?? "189.00 ر.س",
             quantity: 1,

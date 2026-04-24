@@ -4,9 +4,14 @@ import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import { SafeImage } from "@/app/components/SafeImage";
 import { sql } from "@/lib/db";
 import { mapProduct, type ProductRow } from "@/lib/db-mappers";
-import { CATEGORIES } from "@/lib/products";
 import { sans, pagePaddingX } from "@/lib/page-theme";
 import { formatDualPrice } from "@/lib/price-format";
+
+type ShopCategory = {
+  _id: string;
+  name: string;
+  sortOrder: number;
+};
 
 type ShopProduct = {
   name: string;
@@ -14,6 +19,7 @@ type ShopProduct = {
   oldRiyal?: number | null;
   sizes?: { label: string; sarPrice: number; oldRiyal: number }[] | null;
   category: string;
+  categoryId?: string | null;
   image: string;
   slug: string;
 };
@@ -77,11 +83,18 @@ function CategorySection({ category, products }: { category: string; products: S
 }
 
 export default async function ShopPage() {
+  const categoryRows = await sql`
+    SELECT id, name, sort_order, created_at, updated_at
+    FROM categories
+    ORDER BY sort_order ASC, name ASC
+  `;
   const rows = await sql`
-    SELECT p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.image, p.slug,
+    SELECT p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.category_id, p.image,
            p.created_at, p.updated_at,
+           cat.id AS cat_id, cat.name AS cat_name,
            c.id AS col_id, c.name AS col_name, c.slug AS col_slug
     FROM products p
+    LEFT JOIN categories cat ON cat.id = p.category_id
     LEFT JOIN collections c ON c.id = p.collection_id
     ORDER BY p.name ASC
   `;
@@ -94,21 +107,32 @@ export default async function ShopPage() {
       oldRiyal: mapped.oldRiyal,
       sizes: mapped.sizes as ShopProduct["sizes"],
       category: mapped.category,
+      categoryId: mapped.categoryId,
       image: mapped.image,
-      slug: mapped.slug,
+      slug: mapped._id,
     };
   });
 
+  const categories: ShopCategory[] =
+    (categoryRows as { id: string; name: string; sort_order: number }[]).map((row) => ({
+      _id: row.id,
+      name: row.name,
+      sortOrder: row.sort_order,
+    }));
+
   const productsByCategory = Object.fromEntries(
-    CATEGORIES.map((category) => [category, products.filter((product) => product.category === category)])
-  ) as Record<(typeof CATEGORIES)[number], ShopProduct[]>;
+    categories.map((category) => [
+      category._id,
+      products.filter((product) => product.categoryId === category._id || product.category === category.name),
+    ])
+  ) as Record<string, ShopProduct[]>;
 
   return (
     <main className="min-h-screen bg-white pb-24 pt-24 transition-colors md:pb-32 md:pt-32" dir="rtl">
       <div className={`mx-auto max-w-[1920px] ${pagePaddingX}`}>
         <Breadcrumbs items={[{ label: "الرئيسية", href: "/" }, { label: "المتجر" }]} />
-        {CATEGORIES.map((category) => (
-          <CategorySection key={category} category={category} products={productsByCategory[category]} />
+        {categories.map((category) => (
+          <CategorySection key={category._id} category={category.name} products={productsByCategory[category._id] ?? []} />
         ))}
       </div>
     </main>

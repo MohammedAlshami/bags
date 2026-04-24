@@ -3,17 +3,32 @@ import { sql } from "@/lib/db";
 import { mapProduct, type ProductRow } from "@/lib/db-mappers";
 import { requireAdmin } from "@/lib/auth";
 import { isUuid } from "@/lib/id";
+import { resolveCategorySelection } from "@/lib/category-db";
 
 export const dynamic = "force-dynamic";
 
+function normalizeNullableText(value: unknown): string | null {
+  if (value == null) return null;
+  const text = String(value).trim();
+  return text.length > 0 ? text : null;
+}
+
+function normalizeNullableNumber(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
 async function fetchProductJoined(id: string) {
   const rows = await sql`
-    SELECT p.id, p.name, p.price, p.category, p.image, p.slug,
+    SELECT p.id, p.name, p.price, p.category, p.category_id, p.image,
            p.old_riyal, p.sizes, p.description_ar, p.ingredients_ar, p.usage_ar, p.free_from_ar, p.warning_ar, p.contents_ar,
            p.collection_id,
            p.created_at, p.updated_at,
+           cat.id AS cat_id, cat.name AS cat_name,
            c.id AS col_id, c.name AS col_name, c.slug AS col_slug
     FROM products p
+    LEFT JOIN categories cat ON cat.id = p.category_id
     LEFT JOIN collections c ON c.id = p.collection_id
     WHERE p.id = ${id}::uuid
     LIMIT 1
@@ -53,55 +68,53 @@ export async function PUT(
     }
     const body = await request.json();
 
-    let collectionId: string | null | undefined;
-    if (body.collection != null) {
-      if (body.collection && body.collection !== "general" && isUuid(String(body.collection))) {
-        const colRows = await sql`
-          SELECT id FROM collections WHERE id = ${String(body.collection)}::uuid LIMIT 1
-        `;
-        if (colRows[0]) collectionId = colRows[0].id as string;
-        else {
-          const defRows = await sql`
-            SELECT id FROM collections WHERE slug = ${"essentials"} LIMIT 1
-          `;
-          if (defRows[0]) collectionId = defRows[0].id as string;
-        }
-      } else {
-        const defRows = await sql`
-          SELECT id FROM collections WHERE slug = ${"essentials"} LIMIT 1
-        `;
-        if (defRows[0]) collectionId = defRows[0].id as string;
-      }
-    }
-
     const cur = await fetchProductJoined(id);
     if (!cur) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    const name = body.name != null ? String(body.name).trim() : cur.name;
-    const price = body.price != null ? String(body.price).trim() : cur.price;
-    const category = body.category != null ? String(body.category).trim() : cur.category;
-    const image = body.image != null ? String(body.image).trim() : cur.image;
-    const slug = body.slug != null ? String(body.slug).trim() : cur.slug;
-    const sizes = body.sizes != null ? JSON.stringify(body.sizes) : JSON.stringify(cur.sizes ?? null);
-    const col =
-      collectionId !== undefined ? collectionId : (cur.collection_id as string | null);
-
-    if (slug !== cur.slug) {
-      const clash = await sql`
-        SELECT id FROM products WHERE slug = ${slug} AND id <> ${id}::uuid LIMIT 1
-      `;
-      if (clash.length > 0) return NextResponse.json({ error: "Slug already taken" }, { status: 400 });
+    const name = body.name !== undefined ? String(body.name).trim() : cur.name;
+    const price = body.price !== undefined ? String(body.price).trim() : cur.price;
+    const categoryWasProvided = body.categoryId !== undefined || body.category !== undefined;
+    const category = categoryWasProvided
+      ? await resolveCategorySelection(
+          { categoryId: body.categoryId, category: body.category },
+          cur.cat_id && cur.cat_name ? { id: cur.cat_id, name: cur.cat_name } : null
+        )
+      : cur.cat_id && cur.cat_name
+        ? { id: cur.cat_id, name: cur.cat_name }
+        : null;
+    if (categoryWasProvided && !category) {
+      return NextResponse.json({ error: "Category not found" }, { status: 400 });
     }
+    const image = body.image !== undefined ? String(body.image).trim() : cur.image;
+    const oldRiyal = body.oldRiyal !== undefined ? normalizeNullableNumber(body.oldRiyal) : cur.old_riyal ?? null;
+    const descriptionAr =
+      body.descriptionAr !== undefined ? normalizeNullableText(body.descriptionAr) : cur.description_ar ?? null;
+    const ingredientsAr =
+      body.ingredientsAr !== undefined ? normalizeNullableText(body.ingredientsAr) : cur.ingredients_ar ?? null;
+    const usageAr = body.usageAr !== undefined ? normalizeNullableText(body.usageAr) : cur.usage_ar ?? null;
+    const freeFromAr =
+      body.freeFromAr !== undefined ? normalizeNullableText(body.freeFromAr) : cur.free_from_ar ?? null;
+    const warningAr = body.warningAr !== undefined ? normalizeNullableText(body.warningAr) : cur.warning_ar ?? null;
+    const contentsAr =
+      body.contentsAr !== undefined ? normalizeNullableText(body.contentsAr) : cur.contents_ar ?? null;
+    const sizes = body.sizes !== undefined ? JSON.stringify(body.sizes) : JSON.stringify(cur.sizes ?? null);
 
     await sql`
       UPDATE products SET
         name = ${name},
         price = ${price},
-        category = ${category},
+        category = ${category?.name ?? cur.category},
+        category_id = ${category?.id ?? cur.category_id}::uuid,
         image = ${image},
-        slug = ${slug},
+        old_riyal = ${oldRiyal},
         sizes = ${sizes}::jsonb,
-        collection_id = ${col},
+        description_ar = ${descriptionAr},
+        ingredients_ar = ${ingredientsAr},
+        usage_ar = ${usageAr},
+        free_from_ar = ${freeFromAr},
+        warning_ar = ${warningAr},
+        contents_ar = ${contentsAr},
+        collection_id = NULL,
         updated_at = now()
       WHERE id = ${id}::uuid
     `;

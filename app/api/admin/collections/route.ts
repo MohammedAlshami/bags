@@ -5,6 +5,14 @@ import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
+function slugifyName(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+}
+
 export async function GET() {
   try {
     await requireAdmin();
@@ -34,9 +42,7 @@ export async function POST(request: Request) {
     await requireAdmin();
     const body = await request.json();
     const name = String(body.name ?? "").trim();
-    const slug =
-      String(body.slug ?? "").trim() ||
-      name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const slug = String(body.slug ?? "").trim() || slugifyName(name);
     const image = String(body.image ?? "").trim();
     const description = String(body.description ?? "").trim();
     const story = String(body.story ?? "").trim();

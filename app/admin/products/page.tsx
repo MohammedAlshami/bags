@@ -6,8 +6,8 @@ import Link from "next/link";
 import { ImagePlus, MoreVertical, PackagePlus, X } from "lucide-react";
 import { ConfirmModal } from "@/app/components/ConfirmModal";
 import { adminIconClassName, sans } from "@/lib/page-theme";
-import { CATEGORIES } from "@/lib/products";
 import { formatSar, parseStoredPriceToInputValue } from "@/lib/format-sar";
+import { formatDualPrice } from "@/lib/price-format";
 import {
   AdminSkeletonPageHeader,
   AdminSkeletonProductsGrid,
@@ -21,9 +21,6 @@ const API_ERROR_AR: Record<string, string> = {
   "Failed to update product": "تعذر تحديث المنتج",
   "Failed to delete product": "تعذر حذف المنتج",
   "Name, price, category, and image required": "الاسم والسعر والتصنيف والصورة مطلوبة",
-  "Slug already taken": "المسار (slug) مستخدم مسبقاً",
-  "Collection is required. Create a collection first (e.g. slug: essentials).":
-    "يجب اختيار مجموعة. أنشئ مجموعة أولاً (مثلاً slug: essentials).",
   "Upload failed": "فشل رفع الملف",
   "Invalid id": "معرّف غير صالح",
   "Not found": "غير موجود",
@@ -33,15 +30,29 @@ function arApiError(msg: string) {
   return API_ERROR_AR[msg] ?? msg;
 }
 
-type Collection = { _id: string; name: string; slug: string };
+function emptyFallback(value?: string | null) {
+  return value?.trim() ? value : "—";
+}
+
+type ProductSizeRow = { label: string; sarPrice: number; oldRiyal: number };
+type SizeDraftRow = { label: string; sarPrice: string; oldRiyal: string };
+type SizeMode = "single" | "multiple";
+type CategoryRow = { _id: string; name: string; sortOrder: number; productCount?: number };
 type ProductRow = {
   _id: string;
   name: string;
   price: string;
   category: string;
+  categoryId?: string | null;
   image: string;
-  slug: string;
-  collection?: Collection | null;
+  oldRiyal?: number | null;
+  sizes?: ProductSizeRow[] | null;
+  descriptionAr?: string | null;
+  ingredientsAr?: string | null;
+  usageAr?: string | null;
+  freeFromAr?: string | null;
+  warningAr?: string | null;
+  contentsAr?: string | null;
 };
 
 async function parseProductPage(res: Response): Promise<{
@@ -63,9 +74,116 @@ async function parseProductPage(res: Response): Promise<{
   };
 }
 
+function CategoryPicker({
+  categories,
+  value,
+  onChange,
+  onAdd,
+  onEdit,
+  onDelete,
+}: {
+  categories: CategoryRow[];
+  value: string;
+  onChange: (id: string) => void;
+  onAdd: () => void;
+  onEdit: (category: CategoryRow) => void;
+  onDelete: (category: CategoryRow) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (event: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, [open]);
+
+  const selected = categories.find((category) => category._id === value) ?? null;
+
+  return (
+    <div ref={pickerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex w-full items-center justify-between gap-3 rounded-sm border border-neutral-200 bg-white px-3 py-2 text-right text-sm"
+      >
+        <span className={selected ? "text-neutral-900" : "text-neutral-400"}>{selected?.name ?? "اختر التصنيف"}</span>
+        <span className="text-neutral-400" aria-hidden>▾</span>
+      </button>
+      {open ? (
+        <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-black/10 bg-white shadow-2xl">
+          <div className="flex items-center justify-between border-b border-black/5 px-3 py-2">
+            <span className="text-xs font-medium text-neutral-500">التصنيفات</span>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                onAdd();
+              }}
+              className="rounded-full bg-[#B63A6B] px-3 py-1 text-xs text-white"
+            >
+              إضافة
+            </button>
+          </div>
+          <div className="max-h-72 overflow-y-auto">
+            {categories.map((category) => (
+              <div
+                key={category._id}
+                className={[
+                  "flex items-center justify-between gap-2 border-b border-black/5 px-3 py-2 last:border-b-0",
+                  category._id === value ? "bg-neutral-50" : "bg-white",
+                ].join(" ")}
+              >
+                <button
+                  type="button"
+                  className="flex-1 text-right text-sm text-neutral-900"
+                  onClick={() => {
+                    onChange(category._id);
+                    setOpen(false);
+                  }}
+                >
+                  {category.name}
+                  {category.productCount != null ? <span className="ms-2 text-xs text-neutral-400">({category.productCount})</span> : null}
+                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="rounded-md px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                    onClick={() => {
+                      setOpen(false);
+                      onEdit(category);
+                    }}
+                  >
+                    تعديل
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+                    onClick={() => {
+                      setOpen(false);
+                      onDelete(category);
+                    }}
+                  >
+                    حذف
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<ProductRow[]>([]);
-  const [collections, setCollections] = useState<Collection[]>([]);
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextOffset, setNextOffset] = useState<number | null>(null);
@@ -74,9 +192,23 @@ export default function AdminProductsPage() {
   const [editing, setEditing] = useState<ProductRow | null>(null);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("");
+  const [oldRiyal, setOldRiyal] = useState("");
+  const [sizeMode, setSizeMode] = useState<SizeMode>("single");
+  const [sizeRows, setSizeRows] = useState<SizeDraftRow[]>([]);
+  const [categoryId, setCategoryId] = useState("");
+  const [descriptionAr, setDescriptionAr] = useState("");
+  const [ingredientsAr, setIngredientsAr] = useState("");
+  const [usageAr, setUsageAr] = useState("");
+  const [freeFromAr, setFreeFromAr] = useState("");
+  const [warningAr, setWarningAr] = useState("");
+  const [contentsAr, setContentsAr] = useState("");
   const [image, setImage] = useState("");
-  const [collectionId, setCollectionId] = useState<string>("general");
+  const [categoryEditorOpen, setCategoryEditorOpen] = useState(false);
+  const [categoryEditorId, setCategoryEditorId] = useState<string | null>(null);
+  const [categoryEditorName, setCategoryEditorName] = useState("");
+  const [categoryEditorBusy, setCategoryEditorBusy] = useState(false);
+  const [categoryDeleteConfirm, setCategoryDeleteConfirm] = useState<CategoryRow | null>(null);
+  const [categoryDeleteBusy, setCategoryDeleteBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
@@ -89,8 +221,8 @@ export default function AdminProductsPage() {
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const loadMoreInFlightRef = useRef(false);
 
-  const fetchCollections = async () => {
-    const res = await fetch("/api/admin/collections");
+  const fetchCategories = async () => {
+    const res = await fetch("/api/admin/categories");
     if (!res.ok) return [];
     return res.json();
   };
@@ -103,12 +235,12 @@ export default function AdminProductsPage() {
   useEffect(() => {
     let cancelled = false;
     setInitialLoading(true);
-    Promise.all([loadFirstProductPage(), fetchCollections()])
-      .then(([page, cols]) => {
+    Promise.all([loadFirstProductPage(), fetchCategories()])
+      .then(([page, cats]) => {
         if (cancelled) return;
         setProducts(page.items);
         setNextOffset(page.nextOffset);
-        setCollections(cols);
+        setCategories(cats);
         setError(null);
       })
       .catch((e) => {
@@ -187,9 +319,17 @@ export default function AdminProductsPage() {
     setEditing(null);
     setName("");
     setPrice("");
-    setCategory(CATEGORIES[0] ?? "");
+    setOldRiyal("");
+    setSizeMode("single");
+    setSizeRows([]);
+    setCategoryId(categories[0]?._id ?? "");
+    setDescriptionAr("");
+    setIngredientsAr("");
+    setUsageAr("");
+    setFreeFromAr("");
+    setWarningAr("");
+    setContentsAr("");
     setImage("");
-    setCollectionId(collections[0]?._id ?? "general");
     setShowForm(true);
   };
 
@@ -197,36 +337,208 @@ export default function AdminProductsPage() {
     setDetailProduct(null);
     setEditing(p);
     setName(p.name);
-    setPrice(parseStoredPriceToInputValue(p.price));
-    setCategory(p.category);
+    const existingSizes = Array.isArray(p.sizes) ? p.sizes : [];
+    if (existingSizes.length > 1) {
+      setSizeMode("multiple");
+      setSizeRows(
+        existingSizes.map((size) => ({
+          label: size.label,
+          sarPrice: String(size.sarPrice),
+          oldRiyal: String(size.oldRiyal),
+        }))
+      );
+      setPrice("");
+      setOldRiyal("");
+    } else {
+      setSizeMode("single");
+      setSizeRows([]);
+      const firstSize = existingSizes[0] ?? null;
+      setPrice(firstSize ? String(firstSize.sarPrice) : parseStoredPriceToInputValue(p.price));
+      setOldRiyal(firstSize ? String(firstSize.oldRiyal) : p.oldRiyal == null ? "" : String(p.oldRiyal));
+    }
+    setCategoryId(p.categoryId ?? categories[0]?._id ?? "");
+    setDescriptionAr(p.descriptionAr ?? "");
+    setIngredientsAr(p.ingredientsAr ?? "");
+    setUsageAr(p.usageAr ?? "");
+    setFreeFromAr(p.freeFromAr ?? "");
+    setWarningAr(p.warningAr ?? "");
+    setContentsAr(p.contentsAr ?? "");
     setImage(p.image);
-    setCollectionId(p.collection?._id ?? collections[0]?._id ?? "general");
     setShowForm(true);
     setMenuOpenId(null);
+  };
+
+  const updateSizeRow = (index: number, patch: Partial<SizeDraftRow>) => {
+    setSizeRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  };
+
+  const addSizeRow = () => {
+    setSizeRows((prev) => [...prev, { label: "", sarPrice: "", oldRiyal: "" }]);
+  };
+
+  const removeSizeRow = (index: number) => {
+    setSizeRows((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const setSizeModeAndAdapt = (mode: SizeMode) => {
+    if (mode === sizeMode) return;
+    if (mode === "multiple") {
+      setSizeRows((prev) => {
+        if (prev.length > 0) return prev;
+        if (price.trim() || oldRiyal.trim()) {
+          return [{ label: "", sarPrice: price.trim(), oldRiyal: oldRiyal.trim() }];
+        }
+        return [{ label: "", sarPrice: "", oldRiyal: "" }];
+      });
+    } else {
+      const first = sizeRows[0];
+      if (first) {
+        setPrice(first.sarPrice);
+        setOldRiyal(first.oldRiyal);
+      }
+      setSizeRows([]);
+    }
+    setSizeMode(mode);
+  };
+
+
+  const refreshCategories = async () => {
+    const cats = await fetchCategories();
+    setCategories(cats);
+    return cats as CategoryRow[];
+  };
+
+  const openCategoryCreate = () => {
+    setCategoryEditorId(null);
+    setCategoryEditorName("");
+    setCategoryEditorOpen(true);
+  };
+
+  const openCategoryEdit = (category: CategoryRow) => {
+    setCategoryEditorId(category._id);
+    setCategoryEditorName(category.name);
+    setCategoryEditorOpen(true);
+  };
+
+  const saveCategory = async () => {
+    setCategoryEditorBusy(true);
+    try {
+      const name = categoryEditorName.trim();
+      if (!name) {
+        setError("اسم التصنيف مطلوب.");
+        return;
+      }
+      const url = categoryEditorId ? '/api/admin/categories/' + categoryEditorId : '/api/admin/categories';
+      const method = categoryEditorId ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        const raw = typeof d.error === 'string' ? d.error : '';
+        throw new Error(raw || 'Failed to create category');
+      }
+      const cats = await refreshCategories();
+      if (categoryEditorId === null) {
+        setCategoryId((current) => current || cats[0]?._id || '');
+      }
+      setCategoryEditorOpen(false);
+      setError(null);
+    } catch (e) {
+      setError(arApiError(e instanceof Error ? e.message : "خطأ"));
+    } finally {
+      setCategoryEditorBusy(false);
+    }
+  };
+
+  const deleteCategory = async () => {
+    if (!categoryDeleteConfirm) return;
+    setCategoryDeleteBusy(true);
+    try {
+      const res = await fetch('/api/admin/categories/' + categoryDeleteConfirm._id, { method: 'DELETE' });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        const raw = typeof d.error === 'string' ? d.error : '';
+        throw new Error(raw || 'Failed to delete category');
+      }
+      const cats = await refreshCategories();
+      if (categoryId === categoryDeleteConfirm._id) setCategoryId(cats[0]?._id ?? '');
+      setCategoryDeleteConfirm(null);
+      setError(null);
+    } catch (e) {
+      setError(arApiError(e instanceof Error ? e.message : "خطأ"));
+    } finally {
+      setCategoryDeleteBusy(false);
+    }
   };
 
   const save = async () => {
     setSaving(true);
     try {
-      const priceTrim = price.trim();
-      if (!priceTrim) {
-        setError("السعر مطلوب.");
-        return;
+      let priceNum: number;
+      let oldRiyalNum: number | null;
+      let sizes: ProductSizeRow[] | null = null;
+
+      if (sizeMode === "single") {
+        const priceTrim = price.trim();
+        if (!priceTrim) {
+          setError("السعر مطلوب.");
+          return;
+        }
+        priceNum = Number(priceTrim);
+        if (!Number.isFinite(priceNum) || priceNum < 0) {
+          setError("أدخل سعراً صالحاً بالريال السعودي.");
+          return;
+        }
+        const oldRiyalTrim = oldRiyal.trim();
+        oldRiyalNum = oldRiyalTrim ? Number(oldRiyalTrim) : null;
+        if (oldRiyalTrim && (!Number.isFinite(oldRiyalNum) || oldRiyalNum < 0)) {
+          setError("أدخل سعراً صالحاً بالريال اليمني القديم.");
+          return;
+        }
+      } else {
+        const normalized: ProductSizeRow[] = [];
+        for (const row of sizeRows) {
+          const label = row.label.trim();
+          const sarPrice = Number(row.sarPrice.trim());
+          const oldPrice = Number(row.oldRiyal.trim());
+          if (!label || !row.sarPrice.trim() || !row.oldRiyal.trim()) {
+            setError("أكمل اسم المقاس والسعرين لكل مقاس.");
+            return;
+          }
+          if (!Number.isFinite(sarPrice) || sarPrice < 0 || !Number.isFinite(oldPrice) || oldPrice < 0) {
+            setError("أدخل أسعاراً صالحة لكل مقاس.");
+            return;
+          }
+          normalized.push({ label, sarPrice, oldRiyal: oldPrice });
+        }
+        if (normalized.length === 0) {
+          setError("أضف مقاساً واحداً على الأقل.");
+          return;
+        }
+        sizes = normalized;
+        priceNum = normalized[0].sarPrice;
+        oldRiyalNum = normalized[0].oldRiyal;
       }
-      const priceNum = Number(priceTrim);
-      if (!Number.isFinite(priceNum) || priceNum < 0) {
-        setError("أدخل سعراً صالحاً (رقم موجب).");
-        return;
-      }
+
       const priceFormatted = formatSar(priceNum);
       const url = editing ? `/api/admin/products/${editing._id}` : "/api/admin/products";
       const method = editing ? "PUT" : "POST";
       const payload = {
         name,
         price: priceFormatted,
-        category,
+        oldRiyal: oldRiyalNum,
+        categoryId,
+        descriptionAr: descriptionAr.trim() || null,
+        ingredientsAr: ingredientsAr.trim() || null,
+        usageAr: usageAr.trim() || null,
+        freeFromAr: freeFromAr.trim() || null,
+        warningAr: warningAr.trim() || null,
+        contentsAr: contentsAr.trim() || null,
         image,
-        collection: collectionId && collectionId !== "general" ? collectionId : (collections[0]?._id ?? "general"),
+        sizes,
       };
       const res = await fetch(url, {
         method,
@@ -308,7 +620,7 @@ export default function AdminProductsPage() {
   };
 
   const formFields = (
-    <div className="grid gap-4">
+    <div className="grid gap-6">
       <div>
         <label className="block text-xs text-neutral-500 mb-1">الاسم</label>
         <input
@@ -318,52 +630,203 @@ export default function AdminProductsPage() {
         />
       </div>
       <div>
-        <label className="block text-xs text-neutral-500 mb-1">السعر</label>
-        <input
-          type="number"
-          inputMode="decimal"
-          min={0}
-          step="0.01"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          className="w-full border border-neutral-200 px-3 py-2 text-sm rounded-sm"
-          placeholder="242.00"
-          dir="ltr"
+        <label className="block text-xs text-neutral-500 mb-1">التصنيف</label>
+        <CategoryPicker
+          categories={categories}
+          value={categoryId}
+          onChange={setCategoryId}
+          onAdd={openCategoryCreate}
+          onEdit={openCategoryEdit}
+          onDelete={(category) => setCategoryDeleteConfirm(category)}
         />
       </div>
-      <div>
-        <label className="block text-xs text-neutral-500 mb-1">التصنيف</label>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full border border-neutral-200 px-3 py-2 text-sm rounded-sm"
-        >
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="block text-xs text-neutral-500 mb-1">المجموعة (مطلوبة)</label>
-        <select
-          value={collectionId}
-          onChange={(e) => setCollectionId(e.target.value)}
-          className="w-full border border-neutral-200 px-3 py-2 text-sm rounded-sm"
-          required
-        >
-          {collections.length === 0 ? (
-            <option value="">أنشئ مجموعة أولاً</option>
-          ) : (
-            collections.map((c) => (
-              <option key={c._id} value={c._id}>
-                {c.name}
-              </option>
-            ))
-          )}
-        </select>
-      </div>
+
+      <section className="grid gap-4 rounded-xl border border-black/5 bg-white p-4">
+        <div>
+          <h4 className="text-sm font-semibold text-neutral-900">محتوى المنتج</h4>
+          <p className="mt-1 text-xs text-neutral-500">الوصف والمكونات وطريقة الاستخدام والتنبيهات التي تظهر في صفحة المنتج.</p>
+        </div>
+        <div>
+          <label className="block text-xs text-neutral-500 mb-1">الوصف</label>
+          <textarea
+            value={descriptionAr}
+            onChange={(e) => setDescriptionAr(e.target.value)}
+            className="min-h-24 w-full rounded-sm border border-neutral-200 px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-neutral-500 mb-1">المكونات</label>
+          <textarea
+            value={ingredientsAr}
+            onChange={(e) => setIngredientsAr(e.target.value)}
+            className="min-h-20 w-full rounded-sm border border-neutral-200 px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-neutral-500 mb-1">طريقة الاستخدام</label>
+          <textarea
+            value={usageAr}
+            onChange={(e) => setUsageAr(e.target.value)}
+            className="min-h-20 w-full rounded-sm border border-neutral-200 px-3 py-2 text-sm"
+          />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="block text-xs text-neutral-500 mb-1">خالي من</label>
+            <textarea
+              value={freeFromAr}
+              onChange={(e) => setFreeFromAr(e.target.value)}
+              className="min-h-20 w-full rounded-sm border border-neutral-200 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-neutral-500 mb-1">تحذيرات</label>
+            <textarea
+              value={warningAr}
+              onChange={(e) => setWarningAr(e.target.value)}
+              className="min-h-20 w-full rounded-sm border border-neutral-200 px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs text-neutral-500 mb-1">المحتويات</label>
+          <textarea
+            value={contentsAr}
+            onChange={(e) => setContentsAr(e.target.value)}
+            className="min-h-20 w-full rounded-sm border border-neutral-200 px-3 py-2 text-sm"
+          />
+        </div>
+      </section>
+
+      <section className="grid gap-4 rounded-xl border border-black/5 bg-neutral-50/60 p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h4 className="text-sm font-semibold text-neutral-900">المقاسات والأسعار</h4>
+            <p className="mt-1 text-xs text-neutral-500">التسعير يكون هنا فقط، إما لمقاس واحد أو لعدة مقاسات.</p>
+          </div>
+          <div className="inline-flex overflow-hidden rounded-full border border-neutral-200 bg-white p-1 text-xs">
+            <button
+              type="button"
+              onClick={() => setSizeModeAndAdapt("single")}
+              className={[
+                "rounded-full px-3 py-1.5 transition-colors",
+                sizeMode === "single" ? "bg-[#B63A6B] text-white" : "text-neutral-600 hover:bg-neutral-100",
+              ].join(" ")}
+            >
+              مقاس واحد
+            </button>
+            <button
+              type="button"
+              onClick={() => setSizeModeAndAdapt("multiple")}
+              className={[
+                "rounded-full px-3 py-1.5 transition-colors",
+                sizeMode === "multiple" ? "bg-[#B63A6B] text-white" : "text-neutral-600 hover:bg-neutral-100",
+              ].join(" ")}
+            >
+              مقاسات متعددة
+            </button>
+          </div>
+        </div>
+
+        {sizeMode === "single" ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="block text-xs text-neutral-500 mb-1">السعر بالريال السعودي</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="w-full border border-neutral-200 px-3 py-2 text-sm rounded-sm"
+                placeholder="242.00"
+                dir="ltr"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-neutral-500 mb-1">السعر بالريال اليمني القديم</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step="1"
+                value={oldRiyal}
+                onChange={(e) => setOldRiyal(e.target.value)}
+                className="w-full border border-neutral-200 px-3 py-2 text-sm rounded-sm"
+                placeholder="3000"
+                dir="ltr"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-3">
+            {sizeRows.map((row, index) => (
+              <div key={index} className="rounded-xl border border-neutral-200 bg-white p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-neutral-900">مقاس {index + 1}</p>
+                  <button
+                    type="button"
+                    onClick={() => removeSizeRow(index)}
+                    className="text-xs text-red-600 hover:text-red-700 disabled:opacity-40"
+                    disabled={sizeRows.length === 1}
+                  >
+                    حذف
+                  </button>
+                </div>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div>
+                    <label className="block text-xs text-neutral-500 mb-1">الاسم</label>
+                    <input
+                      value={row.label}
+                      onChange={(e) => updateSizeRow(index, { label: e.target.value })}
+                      className="w-full border border-neutral-200 px-3 py-2 text-sm rounded-sm"
+                      placeholder="200ml"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-neutral-500 mb-1">السعر بالريال السعودي</label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="0.01"
+                      value={row.sarPrice}
+                      onChange={(e) => updateSizeRow(index, { sarPrice: e.target.value })}
+                      className="w-full border border-neutral-200 px-3 py-2 text-sm rounded-sm"
+                      placeholder="15.00"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-neutral-500 mb-1">السعر بالريال اليمني القديم</label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="1"
+                      value={row.oldRiyal}
+                      onChange={(e) => updateSizeRow(index, { oldRiyal: e.target.value })}
+                      className="w-full border border-neutral-200 px-3 py-2 text-sm rounded-sm"
+                      placeholder="2000"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addSizeRow}
+              className="w-fit rounded-full border border-[#B63A6B] px-4 py-2 text-sm text-[#B63A6B] hover:bg-[#B63A6B] hover:text-white"
+            >
+              + إضافة مقاس
+            </button>
+          </div>
+        )}
+      </section>
+
       <div>
         <label className="block text-xs text-neutral-500 mb-1">الصورة</label>
         <input
@@ -410,13 +873,7 @@ export default function AdminProductsPage() {
           ) : image ? (
             <div className="relative w-full max-w-[240px] mx-auto">
               <div className="relative aspect-square w-full rounded-lg overflow-hidden border border-black/10 bg-neutral-100">
-                <SafeImage
-                  src={image}
-                  alt=""
-                  fill
-                  className="object-contain"
-                  sizes="240px"
-                />
+                <SafeImage src={image} alt="" fill className="object-contain" sizes="240px" />
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                 <button
@@ -429,9 +886,7 @@ export default function AdminProductsPage() {
                 >
                   تغيير الصورة
                 </button>
-                <span className="text-neutral-300" aria-hidden>
-                  |
-                </span>
+                <span className="text-neutral-300" aria-hidden>|</span>
                 <button
                   type="button"
                   className="text-xs text-red-600 underline hover:text-red-700"
@@ -594,17 +1049,30 @@ export default function AdminProductsPage() {
                   <dt className="text-xs text-neutral-500 mb-1">التصنيف</dt>
                   <dd className="text-neutral-900">{detailProduct.category}</dd>
                 </div>
+                
                 <div>
-                  <dt className="text-xs text-neutral-500 mb-1">المجموعة</dt>
-                  <dd className="text-neutral-900">
-                    {(detailProduct.collection as Collection)?.name ?? "—"}
-                  </dd>
+                  <dt className="text-xs text-neutral-500 mb-1">الوصف</dt>
+                  <dd className="whitespace-pre-wrap text-neutral-900">{emptyFallback(detailProduct.descriptionAr)}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-neutral-500 mb-1">المسار (slug)</dt>
-                  <dd className="font-mono text-xs text-neutral-800 break-all" dir="ltr">
-                    {detailProduct.slug}
-                  </dd>
+                  <dt className="text-xs text-neutral-500 mb-1">المكونات</dt>
+                  <dd className="whitespace-pre-wrap text-neutral-900">{emptyFallback(detailProduct.ingredientsAr)}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-neutral-500 mb-1">طريقة الاستخدام</dt>
+                  <dd className="whitespace-pre-wrap text-neutral-900">{emptyFallback(detailProduct.usageAr)}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-neutral-500 mb-1">خالي من</dt>
+                  <dd className="whitespace-pre-wrap text-neutral-900">{emptyFallback(detailProduct.freeFromAr)}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-neutral-500 mb-1">تحذيرات</dt>
+                  <dd className="whitespace-pre-wrap text-neutral-900">{emptyFallback(detailProduct.warningAr)}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-neutral-500 mb-1">المحتويات</dt>
+                  <dd className="whitespace-pre-wrap text-neutral-900">{emptyFallback(detailProduct.contentsAr)}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-neutral-500 mb-1">المعرّف</dt>
@@ -615,7 +1083,7 @@ export default function AdminProductsPage() {
               </dl>
               <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <Link
-                  href={`/product/${detailProduct.slug}`}
+                  href={`/product/${detailProduct._id}`}
                   className="inline-flex items-center justify-center px-4 py-2 border border-black text-sm rounded-sm hover:bg-neutral-50"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -715,10 +1183,8 @@ export default function AdminProductsPage() {
                   <div className="mt-4 flex flex-col gap-1 text-center">
                     <span className="text-xs text-neutral-500">{p.category}</span>
                     <span className="text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">{p.name}</span>
-                    <span className="text-sm text-neutral-900">{p.price}</span>
-                    {(p.collection as Collection)?.name ? (
-                      <span className="text-xs text-neutral-400">{(p.collection as Collection).name}</span>
-                    ) : null}
+                    <span className="text-sm text-neutral-900">{formatDualPrice(p.price, p.oldRiyal)}</span>
+                    
                   </div>
                 </article>
               </li>
@@ -728,6 +1194,73 @@ export default function AdminProductsPage() {
           <div ref={loadMoreSentinelRef} className="h-3 w-full shrink-0" aria-hidden />
         </>
       )}
+
+
+      {categoryEditorOpen ? (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-[80] cursor-pointer bg-black/40 transition-colors hover:bg-black/50"
+            aria-label="إغلاق"
+            onClick={() => setCategoryEditorOpen(false)}
+          />
+          <aside
+            className="fixed z-[90] flex flex-col bg-white shadow-2xl inset-x-0 bottom-0 max-h-[50vh] rounded-t-2xl border-t border-black/10 md:inset-x-auto md:left-0 md:top-0 md:bottom-0 md:right-auto md:h-full md:max-h-none md:w-full md:max-w-lg md:rounded-none md:border-t-0 md:border-l md:border-black/10"
+          >
+            <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3">
+              <h3 className="text-lg font-medium">{categoryEditorId ? "تعديل تصنيف" : "تصنيف جديد"}</h3>
+              <button
+                type="button"
+                onClick={() => setCategoryEditorOpen(false)}
+                className="p-2 rounded-sm hover:opacity-70 text-neutral-600"
+                aria-label="إغلاق"
+              >
+                <X className={`w-5 h-5 ${adminIconClassName}`} strokeWidth={1.5} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+              <label className="mb-1 block text-xs text-neutral-500">الاسم</label>
+              <input
+                value={categoryEditorName}
+                onChange={(e) => setCategoryEditorName(e.target.value)}
+                className="w-full rounded-sm border border-neutral-200 px-3 py-2 text-sm"
+              />
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={saveCategory}
+                  disabled={categoryEditorBusy}
+                  className="rounded-sm bg-[#B63A6B] px-4 py-2 text-sm text-white transition-[filter] hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100"
+                >
+                  {categoryEditorBusy ? "جارٍ الحفظ..." : "حفظ"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCategoryEditorOpen(false)}
+                  className="rounded-sm border border-black px-4 py-2 text-sm"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </div>
+          </aside>
+        </>
+      ) : null}
+
+      <ConfirmModal
+        open={categoryDeleteConfirm !== null}
+        title="حذف التصنيف"
+        message="سيتم نقل المنتجات المرتبطة بهذا التصنيف إلى تصنيف آخر تلقائياً قبل الحذف."
+        confirmLabel="حذف"
+        cancelLabel="إلغاء"
+        onConfirm={() => {
+          void deleteCategory();
+        }}
+        onCancel={() => {
+          if (!categoryDeleteBusy) setCategoryDeleteConfirm(null);
+        }}
+        busy={categoryDeleteBusy}
+      />
 
       <ConfirmModal
         open={deleteConfirmId !== null}
