@@ -1,22 +1,73 @@
 @import "tailwindcss";
 
+/* Queen Gold Beauty — brand tokens (sync with lib/brand-kit.ts) */
 :root {
   --background: #ffffff;
-  --foreground: #000000;
-  --font-playpen-arabic: "Playpen Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --foreground: #444444;
+  /* legacy alias; prefer --font-sans in body */
+  --font-arabic-brand: var(--font-tajawal), "Tajawal", system-ui, sans-serif;
+  --qgb-primary: #b63a6b;
+  --qgb-accent: #e67fa6;
+  --qgb-light: #f2c6d6;
+  --qgb-dark: #99284f;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-playpen-arabic), var(--font-geist-sans);
+  --color-background: #ffffff;
+  --color-foreground: #444444;
+  --color-brand-primary: #b63a6b;
+  --color-brand-accent: #e67fa6;
+  --color-brand-light: #f2c6d6;
+  --color-brand-dark: #99284f;
+  --color-brand-white: #ffffff;
+  --color-body: #444444;
+  --color-caption: #aaaaaa;
+  --color-title: #222222;
+  --color-old: #cccccc;
+  --font-sans: var(--font-tajawal), var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
+}
+
+@layer components {
+  .qgb-h1 {
+    @apply text-2xl font-bold text-brand-primary md:text-[26px];
+  }
+  .qgb-h2-section {
+    @apply text-lg font-semibold text-brand-primary md:text-[18px];
+  }
+  .qgb-btn-primary {
+    @apply inline-flex h-10 min-h-10 items-center justify-center rounded-full bg-brand-primary px-5 text-[13px] font-semibold text-white transition-colors hover:bg-brand-dark;
+  }
+  .qgb-btn-outline {
+    @apply inline-flex h-10 min-h-10 items-center justify-center rounded-full border-[1.5px] border-brand-primary bg-white px-5 text-[13px] font-semibold text-brand-primary transition-colors hover:bg-brand-light;
+  }
+  .qgb-body {
+    @apply text-[13px] font-normal leading-relaxed text-body;
+  }
+}
+
+/* Endless offers ticker: two half-width copies, -50% = one full loop */
+.qgb-ticker-row {
+  min-height: 40px;
+  align-items: center;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  animation: qgb-ticker-scroll 36s linear infinite;
+}
+
+@keyframes qgb-ticker-scroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
 }
 
 body {
   background: #ffffff;
-  color: #000000;
-  font-family: var(--font-playpen-arabic), var(--font-geist-sans), system-ui, sans-serif;
+  color: var(--foreground);
+  font-family: var(--font-sans);
 }
 
 /* Cute custom scrollbar for scrollable panels */
@@ -38,4 +89,10 @@ body {
 }
 .cute-scrollbar::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(180deg, #f39cbc 0%, #9f2f5b 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qgb-ticker-row {
+    animation: none;
+  }
 }

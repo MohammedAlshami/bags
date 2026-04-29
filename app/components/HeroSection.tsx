@@ -4,8 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { HERO_SLIDE_URLS } from "@/lib/hero-images";
+import { sans } from "@/lib/page-theme";
 
-const brandName = { fontFamily: "var(--font-playpen-arabic), sans-serif" };
+const brandName = { ...sans };
 
 const HERO_SLIDES = HERO_SLIDE_URLS;
 
@@ -91,7 +92,7 @@ export function HeroSection() {
       />
 
       <nav
-        className="absolute right-6 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-5 md:right-10 md:gap-6"
+        className="absolute end-6 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-5 md:end-10 md:gap-6"
         aria-label="شرائح العرض"
       >
         {HERO_SLIDES.map((_, i) => {
@@ -104,7 +105,7 @@ export function HeroSection() {
               <button
                 type="button"
                 onClick={() => goTo(i)}
-                className={`flex h-11 aspect-square w-11 flex-none items-center justify-center rounded-full p-0 leading-none touch-manipulation text-sm font-light tabular-nums transition-colors ${
+                className={`flex aspect-square w-11 flex-none touch-manipulation items-center justify-center rounded-full p-0 text-sm font-light leading-none tabular-nums transition-colors ${
                   active ? "text-white" : "text-white/55 hover:text-white/90"
                 }`}
                 aria-label={`الشريحة ${i + 1}`}
@@ -117,21 +118,31 @@ export function HeroSection() {
         })}
       </nav>
 
-      <div className="absolute inset-0 z-10 flex flex-col justify-end pb-16 md:pb-24 px-10 md:px-20">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-          <h1 className="text-5xl md:text-8xl text-white font-light leading-none" style={brandName}>
+      <div className="absolute inset-0 z-10 flex flex-col justify-end px-6 pb-14 md:px-16 md:pb-20 lg:px-20">
+        <div className="flex flex-col justify-end gap-8 md:flex-row md:items-end">
+          <h1
+            className="text-3xl font-bold leading-tight text-white drop-shadow-sm md:text-4xl"
+            style={brandName}
+          >
             الملكة جولد
           </h1>
-          <div className="flex flex-col gap-4 max-w-xs">
-            <p className="text-white/90 text-sm leading-relaxed text-start">
-              صُنعت بعناية من مكوّنات مختارة لدعم بشرتك يومياً. تركيبات لطيفة، نتائج واضحة، وعناية تليق بروتينك.
-            </p>
-            <Link
-              href="#shop"
-              className="text-white text-xs uppercase tracking-widest hover:underline text-start"
+          <div className="max-w-sm flex flex-col gap-4">
+            <p
+              className="text-right text-[13px] font-normal leading-relaxed text-white/90"
+              style={sans}
             >
-              اكتشف المجموعة
-            </Link>
+              صُنعت بعناية من مكوّنات مختارة لدعم بشرتك يومياً. تركيبات لطيفة، نتائج واضحة، وعناية تليق
+              بروتينك.
+            </p>
+            <div className="text-start">
+              <Link
+                href="#shop"
+                className="qgb-btn-primary inline-flex min-w-[8rem] shadow-sm shadow-black/20"
+                style={sans}
+              >
+                اكتشف المجموعة
+              </Link>
+            </div>
           </div>
         </div>
       </div>

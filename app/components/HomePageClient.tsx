@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { OffersBanner } from "./OffersBanner";
 import { HeroSection } from "./HeroSection";
+import { QGB } from "@/lib/brand-kit";
 import { FeaturedProductsClient } from "./FeaturedProductsClient";
 import { SocialMediaSection } from "./SocialMediaSection";
 import { StoreLocationsSection } from "./StoreLocationsSection";
@@ -52,7 +54,11 @@ export function HomePageClient({ featuredProducts }: { featuredProducts: Feature
   }, []);
 
   return (
-    <main className="min-h-screen overflow-x-hidden" style={{ backgroundColor: bg === "pink" ? "#FAEFF6" : "#ffffff" }}>
+    <main
+      className="min-h-screen overflow-x-hidden"
+      style={{ backgroundColor: bg === "pink" ? QGB.color.light : QGB.color.white }}
+    >
+      <OffersBanner />
       {visibility.hero ? <HeroSection /> : null}
       {visibility.featured ? <FeaturedProductsClient products={featuredProducts} /> : null}
       {visibility.locations ? <StoreLocationsSection /> : null}
