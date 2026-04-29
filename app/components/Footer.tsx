@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeft, Globe, Instagram } from "lucide-react";
-import { pagePaddingX } from "@/lib/page-theme";
-
-const font = { fontFamily: "var(--font-playpen-arabic), sans-serif" };
+import { pagePaddingX, sans } from "@/lib/page-theme";
 
 const QUICK_LINKS = [
   { label: "المتجر الرئيسي", href: "/shop" },
@@ -22,6 +20,13 @@ const ABOUT_LINKS = [
 ];
 
 const WA_HREF = "https://wa.me/967782183149";
+/** Match `Navbar` home branding */
+const LOGO_SRC = "/logo_img.png";
+const BRAND_NAME = "الملكة جولد";
+const WA_CHANNEL_HREF = "https://whatsapp.com/channel/0029Vb6EdFc3GJP6WMzfXn2N";
+
+const linkClass =
+  "text-[15px] sm:text-base text-body transition-colors hover:text-brand-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary";
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -33,89 +38,66 @@ function WhatsAppIcon({ className }: { className?: string }) {
 
 export function Footer() {
   return (
-    <footer className="border-t border-pink-500/10 text-white" style={{ ...font, background: "linear-gradient(180deg, #121212 0%, #0a0a0a 100%)" }} role="contentinfo" dir="rtl">
-      <style>{`
-        .brand-gradient-text {
-          background: linear-gradient(to right, #d44c7d, #f06292);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        .cta-banner {
-          background: linear-gradient(135deg, rgba(212, 76, 125, 0.15) 0%, rgba(212, 76, 125, 0.05) 100%);
-          border: 1px solid rgba(212, 76, 125, 0.2);
-          backdrop-filter: blur(10px);
-        }
-        .whatsapp-btn {
-          background: #d44c7d;
-          transition: all 0.3s ease;
-        }
-        .whatsapp-btn:hover {
-          background: #ffffff;
-          color: #d44c7d;
-        }
-        .nav-link {
-          transition: color 0.3s ease;
-          color: #9ca3af;
-        }
-        .nav-link:hover {
-          color: #d44c7d;
-        }
-      `}</style>
-
-      <div className={`mx-auto max-w-[1920px] ${pagePaddingX} pt-16 pb-8`}>
-        <div className="cta-banner relative mb-16 flex flex-col items-center overflow-hidden rounded-3xl p-8 text-center md:p-12">
-          <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-pink-500/10 blur-3xl" aria-hidden />
-          <div className="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-pink-500/10 blur-3xl" aria-hidden />
-
-          <div className="relative z-10">
-            <span className="mb-3 block text-sm font-bold uppercase tracking-[0.2em] text-pink-400">قناة الواتساب</span>
-            <h3 className="mb-8 text-2xl font-bold text-white md:text-4xl">تابعينا على القناة للحصول على آخر العروض</h3>
-            <a
-              href="https://whatsapp.com/channel/0029Vb6EdFc3GJP6WMzfXn2N"
-              className="whatsapp-btn mx-auto inline-flex w-fit items-center gap-3 rounded-full px-10 py-4 font-bold text-white"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <span>انضمي إلينا الآن</span>
-              <ArrowLeft className="text-xs opacity-70" size={14} aria-hidden />
-            </a>
-          </div>
-        </div>
-
-        <div className="mb-8 grid grid-cols-2 items-start gap-8 border-b border-gray-800 pb-12 text-right md:grid-cols-3 md:gap-12">
-          <div className="col-span-2 ml-auto flex w-fit flex-col items-start text-left md:col-span-1 md:ml-0 md:w-auto md:items-start md:text-right" dir="rtl">
-            <h2 className="mb-4 text-4xl font-bold brand-gradient-text">الملكة جولد</h2>
-            <p className="max-w-xs self-start text-left text-sm leading-relaxed text-gray-400">
+    <footer
+      className="bg-white text-body"
+      style={sans}
+      role="contentinfo"
+      dir="rtl"
+    >
+      <div className={`mx-auto max-w-[1920px] ${pagePaddingX} pt-12 pb-8`}>
+        <div className="mb-8 flex flex-col gap-8 border-b border-brand-light pb-12 lg:mb-10 lg:flex-row lg:items-stretch lg:gap-10 xl:gap-12">
+          <div
+            className="order-2 min-w-0 flex-1 lg:order-1"
+          >
+        <div className="grid grid-cols-2 items-start gap-8 text-right md:grid-cols-3 md:gap-12">
+          <div
+            className="col-span-2 ml-auto flex w-fit flex-col items-start text-left md:col-span-1 md:ml-0 md:w-auto md:items-start md:text-right"
+            dir="rtl"
+          >
+            <Link href="/" className="mb-4 block w-fit transition-opacity hover:opacity-90" aria-label={BRAND_NAME}>
+              {/* eslint-disable-next-line @next/next/no-img-element — matches Navbar */}
+              <img
+                src={LOGO_SRC}
+                alt=""
+                className="h-12 w-auto max-w-[200px] object-contain sm:h-14"
+                width={200}
+                height={56}
+              />
+            </Link>
+            <h2 className="mb-2 text-2xl font-bold text-brand-primary sm:text-3xl">{BRAND_NAME}</h2>
+            <p className="max-w-md self-start text-right text-[15px] leading-relaxed text-body sm:text-base sm:leading-relaxed">
               عناية متكاملة بالجسم والبشرة والشعر بمنتجات طبيعية وآمنة، تمنحك نتائج تدريجية تليق بك.
             </p>
-            <div className="mt-6 flex w-full justify-start gap-4 md:justify-start">
+            <div className="mt-6 flex w-full justify-start gap-3 md:justify-start">
               <a
                 href="https://www.instagram.com/queen__007696"
                 aria-label="Instagram"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex h-10 w-10 items-center justify-center rounded-full bg-[#d44c7d] transition-colors hover:bg-white"
+                className="group flex h-11 w-11 items-center justify-center rounded-full bg-brand-primary text-white transition-colors hover:bg-brand-dark sm:h-12 sm:w-12"
               >
-                <Instagram className="h-4 w-4 text-white transition-colors group-hover:text-[#d44c7d]" aria-hidden />
+                <Instagram className="h-5 w-5" aria-hidden />
               </a>
               <a
                 href={WA_HREF}
                 aria-label="WhatsApp"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex h-10 w-10 items-center justify-center rounded-full bg-[#25D366] transition-colors hover:bg-white"
+                className="group flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-white transition-colors hover:bg-[#1ebe57] sm:h-12 sm:w-12"
               >
-                <WhatsAppIcon className="h-4 w-4 fill-white transition-colors group-hover:fill-[#25D366]" />
+                <WhatsAppIcon className="h-5 w-5 fill-current" />
               </a>
             </div>
           </div>
 
           <div className="min-w-0 text-right">
-            <h4 className="mb-6 font-bold text-white">روابط سريعة</h4>
-            <ul className="space-y-4">
+            <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-brand-primary sm:text-base">
+              روابط سريعة
+            </h4>
+            <ul className="space-y-3.5 sm:space-y-4">
               {QUICK_LINKS.map((item) => (
                 <li key={item.label}>
-                  <Link href={item.href} className="nav-link">
+                  <Link href={item.href} className={linkClass}>
                     {item.label}
                   </Link>
                 </li>
@@ -124,11 +106,13 @@ export function Footer() {
           </div>
 
           <div className="min-w-0 text-right">
-            <h4 className="mb-6 font-bold text-white">عن الملكة جولد</h4>
-            <ul className="space-y-4">
+            <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-brand-primary sm:text-base">
+              عن الملكة جولد
+            </h4>
+            <ul className="space-y-3.5 sm:space-y-4">
               {ABOUT_LINKS.map((item) => (
                 <li key={item.label}>
-                  <Link href={item.href} className="nav-link">
+                  <Link href={item.href} className={linkClass}>
                     {item.label}
                   </Link>
                 </li>
@@ -136,20 +120,60 @@ export function Footer() {
             </ul>
           </div>
         </div>
+        </div>
 
-        <div className="flex flex-col items-center justify-between gap-4 text-xs text-gray-500 md:flex-row">
-          <div className="order-2 flex gap-4 md:order-1">
-            <span>© 2024 الملكة جولد - جميع الحقوق محفوظة</span>
-            <Link href="#" className="underline hover:text-white">
+        <div
+          className="order-1 w-full shrink-0 sm:max-w-md lg:order-2 lg:max-w-sm xl:max-w-md"
+          aria-label="دعوة قناة واتساب"
+        >
+          <div className="relative overflow-hidden rounded-3xl border border-brand-light bg-gradient-to-br from-white via-brand-light/20 to-white p-[1px]">
+            <div className="relative h-full min-h-0 overflow-hidden rounded-[22px] bg-white/95 px-5 py-7 sm:px-6 sm:py-8">
+              <div
+                className="pointer-events-none absolute -start-16 -top-16 size-48 rounded-full bg-brand-accent/20 blur-2xl"
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute -bottom-12 -end-12 size-40 rounded-full bg-brand-primary/10 blur-2xl"
+                aria-hidden
+              />
+
+              <div className="relative z-10 flex flex-col items-stretch gap-4 text-right">
+                <span className="inline-flex h-[22px] w-fit items-center self-end rounded-full bg-brand-primary px-2.5 text-[11px] font-semibold text-white">
+                  قناة الواتساب
+                </span>
+                <h3 className="text-balance text-base font-semibold leading-snug text-title sm:text-lg">
+                  تابعينا على القناة للحصول على آخر العروض والجديد
+                </h3>
+                <a
+                  href={WA_CHANNEL_HREF}
+                  className="qgb-btn-primary inline-flex w-full min-w-0 items-center justify-center gap-2.5"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <WhatsAppIcon className="size-4 shrink-0 fill-current" />
+                  <span>انضمي إلينا الآن</span>
+                  <ArrowLeft className="size-3.5 opacity-90" aria-hidden />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+          <div className="order-2 flex flex-wrap justify-center gap-x-5 gap-y-1.5 md:order-1">
+            <span className="text-sm text-body sm:text-base">© 2026 الملكة جولد — جميع الحقوق محفوظة</span>
+            <Link
+              href="#"
+              className="text-sm text-body underline decoration-brand-accent/60 underline-offset-2 transition-colors hover:text-brand-primary sm:text-base"
+            >
               سياسة الخصوصية
             </Link>
           </div>
 
-          <div className="order-1 flex items-center gap-6 md:order-2">
-            <div className="flex items-center gap-2 cursor-pointer hover:text-white">
-              <Globe className="h-4 w-4" aria-hidden />
-              <span>العربية / اليمن - الريال</span>
-            </div>
+          <div className="order-1 flex items-center gap-2 md:order-2">
+            <Globe className="h-4 w-4 shrink-0 text-brand-accent" aria-hidden />
+            <span className="text-sm text-body sm:text-base">العربية / اليمن - الريال</span>
           </div>
         </div>
       </div>

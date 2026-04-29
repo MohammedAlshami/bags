@@ -1,6 +1,6 @@
+import { ShopPageBanner } from "@/app/components/ShopPageBanner";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
-import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import { SafeImage } from "@/app/components/SafeImage";
 import { sql } from "@/lib/db";
 import { mapProduct, type ProductRow } from "@/lib/db-mappers";
@@ -39,14 +39,18 @@ function ProductCard({ product }: { product: ShopProduct }) {
           sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
         />
       </div>
-      <div className="mt-4 flex flex-col gap-1 text-right">
-        <span className="text-xs text-neutral-500" style={sans}>
+      <div className="mt-4 flex flex-col gap-1.5 text-right">
+        <span
+          className="inline-flex h-7 min-w-0 max-w-full items-center justify-center self-start overflow-hidden text-ellipsis whitespace-nowrap rounded-full border border-brand-accent bg-white px-3 text-[12px] font-medium text-brand-primary transition-colors group-hover:bg-brand-light/25"
+          style={sans}
+          title={category}
+        >
           {category}
         </span>
-        <span className="text-sm font-semibold text-neutral-900" style={sans}>
+        <span className="text-base font-semibold text-neutral-900 sm:text-[17px]" style={sans}>
           {name}
         </span>
-        <span className="text-sm text-neutral-900" style={sans}>
+        <span className="text-base font-medium text-neutral-900" style={sans}>
           {priceLine}
         </span>
       </div>
@@ -128,9 +132,12 @@ export default async function ShopPage() {
   ) as Record<string, ShopProduct[]>;
 
   return (
-    <main className="min-h-screen bg-white pb-24 pt-24 transition-colors md:pb-32 md:pt-32" dir="rtl">
-      <div className={`mx-auto max-w-[1920px] ${pagePaddingX}`}>
-        <Breadcrumbs items={[{ label: "الرئيسية", href: "/" }, { label: "المتجر" }]} />
+    <main
+      className="min-h-screen bg-white pb-24 transition-colors md:pb-32"
+      dir="rtl"
+    >
+      <ShopPageBanner />
+      <div className={`mx-auto max-w-[1920px] ${pagePaddingX} pt-8 md:pt-10`}>
         {categories.map((category) => (
           <CategorySection
             key={category._id}

@@ -29,7 +29,7 @@ const TXT = {
   brand: "الملكة جولد",
   shop: "تسوق",
   blog: "المدونة",
-  about: "عن جولاي",
+  about: "عن الملكة جولد",
   locations: "نقاط البيع",
   account: "حسابي",
   login: "تسجيل الدخول",
@@ -62,7 +62,7 @@ function getMainNavMenu(): MenuItemConfig[] {
   return [
     { id: "home", label: "الرئيسية", href: "/" },
     { id: "shop", label: "تسوق", hasMega: true as const },
-    { id: "about", label: "عن جولاي", hasDropdown: true as const, aboutLinks: [...ABOUT_LINKS] },
+    { id: "about", label: TXT.about, hasDropdown: true as const, aboutLinks: [...ABOUT_LINKS] },
     { id: "blog", label: "المدونة", href: "/blog" },
     { id: "presets", label: "تشكيلة المجموعات", hasDropdown: true as const, isCollections: true as const },
   ];
@@ -351,13 +351,13 @@ export default function Navbar({ categories, collections }: NavbarProps) {
         >
           <div className={`mx-auto w-full max-w-7xl ${pagePaddingX}`}>
             <ul
-              className="flex items-center justify-center gap-6 text-[12px] font-medium uppercase tracking-widest xl:gap-8"
+              className="flex min-h-10 items-center justify-center gap-6 text-[12px] font-medium uppercase tracking-widest xl:gap-8"
               onMouseLeave={() => setActiveMenu(null)}
             >
               {menuItems.map((item) => (
                 <li
                   key={item.id}
-                  className="group relative py-2"
+                  className="group relative flex items-center"
                   onMouseEnter={() => {
                     if (item.hasMega || item.hasDropdown) setActiveMenu(item.id);
                   }}
@@ -365,7 +365,7 @@ export default function Navbar({ categories, collections }: NavbarProps) {
                   {item.id === "home" || item.id === "blog" ? (
                     <Link
                       href={item.href ?? "/"}
-                      className={`border-b-2 border-transparent pb-1 transition-colors hover:border-amber-800 ${
+                      className={`inline-flex h-9 items-center border-b-2 border-transparent transition-colors hover:border-amber-800 ${
                         pathname === (item.href ?? "") ||
                         (item.id === "blog" && (pathname === "/blog" || pathname?.startsWith("/blog/")))
                           ? "border-amber-800"
@@ -378,7 +378,7 @@ export default function Navbar({ categories, collections }: NavbarProps) {
                   {item.id === "shop" && item.hasMega ? (
                     <Link
                       href="/shop"
-                      className={`flex items-center gap-1 border-b-2 border-transparent pb-1 transition-colors hover:border-amber-800 ${
+                      className={`inline-flex h-9 min-h-9 items-center gap-1 border-b-2 border-transparent transition-colors hover:border-amber-800 ${
                         activeMenu === "shop" || pathname === "/shop" || pathname?.startsWith("/product/")
                           ? "border-amber-800"
                           : ""
@@ -394,7 +394,7 @@ export default function Navbar({ categories, collections }: NavbarProps) {
                     </Link>
                   ) : null}
                   {item.id === "about" && item.hasDropdown && item.aboutLinks ? (
-                    <span className="flex items-center gap-1 border-b-2 border-transparent pb-1 text-inherit transition-colors hover:border-amber-800">
+                    <span className="inline-flex h-9 min-h-9 cursor-default items-center gap-1 border-b-2 border-transparent text-inherit transition-colors hover:border-amber-800">
                       {item.label}
                       <ChevronDown
                         size={12}
@@ -405,7 +405,7 @@ export default function Navbar({ categories, collections }: NavbarProps) {
                     </span>
                   ) : null}
                   {item.id === "presets" && item.isCollections ? (
-                    <span className="flex items-center gap-1 border-b-2 border-transparent pb-1 text-inherit transition-colors hover:border-amber-800">
+                    <span className="inline-flex h-9 min-h-9 cursor-default items-center gap-1 border-b-2 border-transparent text-inherit transition-colors hover:border-amber-800">
                       {item.label}
                       <ChevronDown
                         size={12}
