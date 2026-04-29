@@ -69,9 +69,9 @@ function CategoryHeader({ category }: { category: string }) {
   );
 }
 
-function CategorySection({ category, products }: { category: string; products: ShopProduct[] }) {
+function CategorySection({ category, categoryId, products }: { category: string; categoryId: string; products: ShopProduct[] }) {
   return (
-    <section className="mb-10">
+    <section className="mb-10 scroll-mt-36 md:scroll-mt-40" id={`cat-${categoryId}`}>
       <CategoryHeader category={category} />
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5">
         {products.map((product) => (
@@ -132,7 +132,12 @@ export default async function ShopPage() {
       <div className={`mx-auto max-w-[1920px] ${pagePaddingX}`}>
         <Breadcrumbs items={[{ label: "الرئيسية", href: "/" }, { label: "المتجر" }]} />
         {categories.map((category) => (
-          <CategorySection key={category._id} category={category.name} products={productsByCategory[category._id] ?? []} />
+          <CategorySection
+            key={category._id}
+            categoryId={category._id}
+            category={category.name}
+            products={productsByCategory[category._id] ?? []}
+          />
         ))}
       </div>
     </main>

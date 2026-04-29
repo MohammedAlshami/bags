@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
+import { getNavData } from "@/lib/get-nav-categories";
 import ConditionalNavbar from "./components/ConditionalNavbar";
 import ConditionalFooter from "./components/ConditionalFooter";
 import { WhatsAppFloat } from "./components/WhatsAppFloat";
@@ -27,11 +28,12 @@ export const metadata: Metadata = {
   description: "عناية مختارة بعناية — منتجات تليق بكِ.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { categories, collections } = await getNavData();
   return (
     <html lang="ar" dir="rtl">
       <head>
@@ -46,7 +48,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} antialiased font-sans overflow-x-hidden`}
       >
         <CartProvider>
-          <ConditionalNavbar />
+          <ConditionalNavbar categories={categories} collections={collections} />
           {children}
           <ConditionalFooter />
           <WhatsAppFloat />

@@ -41,12 +41,12 @@ export default async function AdminDashboardPage() {
         WHERE status != 'cancelled'
       `,
       sql`
-        SELECT o.created_at::date AS d, COALESCE(SUM(o.total), 0)::float AS revenue
+        SELECT substr(o.created_at, 1, 10) AS d, COALESCE(SUM(o.total), 0) AS revenue
         FROM orders o
         WHERE o.status != 'cancelled'
-          AND o.created_at >= (CURRENT_TIMESTAMP - interval '30 days')
-        GROUP BY o.created_at::date
-        ORDER BY o.created_at::date
+          AND datetime(o.created_at) >= datetime('now', '-30 days')
+        GROUP BY substr(o.created_at, 1, 10)
+        ORDER BY substr(o.created_at, 1, 10)
       `,
       sql`
         SELECT status, COUNT(*)::int AS c

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireCustomer } from "@/lib/auth";
-import { fileToImageDataUrl } from "@/lib/file-to-image-data-url";
+import { uploadImageToR2 } from "@/lib/r2";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const url = await fileToImageDataUrl(file);
+    const url = await uploadImageToR2(file);
     return NextResponse.json({ url });
   } catch (err) {
     const e = err as { status?: number; message?: string };

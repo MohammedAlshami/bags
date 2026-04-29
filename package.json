@@ -4,31 +4,37 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "lint": "eslint",
     "seed": "npx tsx scripts/run-seed.ts",
     "fetch:instagram-grid": "node scripts/fetch-instagram-og-images.mjs",
     "download:instagram-posts": "node scripts/download-instagram-posts.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.937.0",
     "@neondatabase/serverless": "^1.0.2",
     "bcryptjs": "^3.0.3",
     "jose": "^6.1.3",
     "lucide-react": "^0.575.0",
-    "next": "16.1.6",
+    "next": "16.2.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.8.1"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.19.4",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.86.0"
   }
 }

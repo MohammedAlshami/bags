@@ -179,6 +179,26 @@ export function normalizeBlogBlocks(value: unknown): BlogBlock[] {
 
 export function mapBlogPost(row: BlogPostRow): BlogPostRecord {
   const status = normalizeBlogStatus(row.status);
+  const contentValue =
+    typeof row.content === "string"
+      ? (() => {
+          try {
+            return JSON.parse(row.content) as unknown;
+          } catch {
+            return [];
+          }
+        })()
+      : row.content;
+  const tagsValue =
+    typeof row.tags === "string"
+      ? (() => {
+          try {
+            return JSON.parse(row.tags) as unknown;
+          } catch {
+            return [];
+          }
+        })()
+      : row.tags;
   return {
     _id: row.id,
     title: row.title,
@@ -187,10 +207,10 @@ export function mapBlogPost(row: BlogPostRow): BlogPostRecord {
     coverImage: row.cover_image,
     authorName: row.author_name,
     status,
-    content: normalizeBlogBlocks(row.content),
+    content: normalizeBlogBlocks(contentValue),
     seoTitle: row.seo_title ?? "",
     seoDescription: row.seo_description ?? "",
-    tags: normalizeBlogTags(row.tags),
+    tags: normalizeBlogTags(tagsValue),
     publishedAt: row.published_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

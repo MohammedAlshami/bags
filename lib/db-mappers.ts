@@ -12,6 +12,18 @@ export type UserRow = {
   updated_at: string;
 };
 
+function parseJsonField<T>(value: unknown, fallback: T): T {
+  if (value == null) return fallback;
+  if (typeof value !== "string") return value as T;
+  const text = value.trim();
+  if (!text) return fallback;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 export function mapUserPublic(row: UserRow) {
   return {
     _id: row.id,
@@ -82,8 +94,9 @@ export type ProductRow = {
 };
 
 export function mapProduct(row: ProductRow, populated = false) {
-  const sizes = Array.isArray(row.sizes)
-    ? row.sizes
+  const rawSizes = parseJsonField<unknown>(row.sizes, row.sizes);
+  const sizes = Array.isArray(rawSizes)
+    ? rawSizes
         .map((size) => {
           if (!size || typeof size !== "object") return null;
           const raw = size as Record<string, unknown>;
@@ -152,10 +165,12 @@ export type OrderRow = {
 };
 
 function orderCommon(row: OrderRow) {
-  const items = Array.isArray(row.items) ? row.items : [];
+  const rawItems = parseJsonField<unknown>(row.items, row.items);
+  const rawShippingAddress = parseJsonField<unknown>(row.shipping_address, row.shipping_address);
+  const items = Array.isArray(rawItems) ? rawItems : [];
   const shippingAddress =
-    row.shipping_address && typeof row.shipping_address === "object"
-      ? row.shipping_address
+    rawShippingAddress && typeof rawShippingAddress === "object"
+      ? rawShippingAddress
       : {};
   const sa = shippingAddress as Record<string, unknown>;
   const branchFromCol = row.branch_key != null && String(row.branch_key).trim() !== "";

@@ -21,7 +21,7 @@ export function assertImageFileAllowed(file: File): void {
   }
 }
 
-/** Returns a data URL stored in Neon (text column) and used as `src` for `<img>` / Next `Image`. */
+/** Legacy helper kept for compatibility with old rows. New uploads should go to R2 instead. */
 export async function fileToImageDataUrl(file: File): Promise<string> {
   assertImageFileAllowed(file);
   const buf = Buffer.from(await file.arrayBuffer());

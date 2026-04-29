@@ -3,6 +3,22 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+const r2Patterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [];
+
+const r2PublicUrl = process.env.R2_PUBLIC_URL;
+if (r2PublicUrl) {
+  try {
+    const u = new URL(r2PublicUrl);
+    r2Patterns.push({
+      protocol: "https",
+      hostname: u.hostname,
+      port: "",
+      pathname: "/**",
+    });
+  } catch {
+    // Ignore invalid R2_PUBLIC_URL at build time.
+  }
+}
 
 const nextConfig: NextConfig = {
   turbopack: {
@@ -21,6 +37,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
+      ...r2Patterns,
       {
         protocol: "https",
         hostname: "images.unsplash.com",
