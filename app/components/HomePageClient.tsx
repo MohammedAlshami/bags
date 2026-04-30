@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { OffersBanner } from "./OffersBanner";
 import { HeroSection } from "./HeroSection";
 import { QGB } from "@/lib/brand-kit";
-import { FeaturedProductsClient } from "./FeaturedProductsClient";
+import { HomeCategoryProductSections } from "./HomeCategoryProductSections";
 import { SocialMediaSection } from "./SocialMediaSection";
 import { StoreLocationsSection } from "./StoreLocationsSection";
 import { HomeReviewsSection } from "./HomeReviewsSection";
 import { HomeFaqSection } from "./HomeFaqSection";
-import type { FeaturedProductItem } from "./FeaturedProductsClient";
+import type { HomeCategorySectionData } from "./HomeCategoryProductSections";
 import type { SocialReelProduct } from "./SocialMediaSection";
 import type { ReviewProductRef } from "./HomeReviewsSection";
 
@@ -46,11 +46,11 @@ function parseVisibility(value: unknown): HomeVisibility {
 }
 
 export function HomePageClient({
-  featuredProducts,
+  categorySections,
   socialReelProducts,
   reviewProducts,
 }: {
-  featuredProducts: FeaturedProductItem[];
+  categorySections: HomeCategorySectionData[];
   socialReelProducts: SocialReelProduct[];
   reviewProducts: ReviewProductRef[];
 }) {
@@ -78,11 +78,11 @@ export function HomePageClient({
     >
       <OffersBanner />
       {visibility.hero ? <HeroSection /> : null}
-      {visibility.featured ? <FeaturedProductsClient products={featuredProducts} /> : null}
-      {visibility.locations ? <StoreLocationsSection /> : null}
+      {visibility.featured ? <HomeCategoryProductSections sections={categorySections} /> : null}
       {visibility.social ? <SocialMediaSection products={socialReelProducts} /> : null}
       {visibility.reviews ? <HomeReviewsSection products={reviewProducts} /> : null}
       {visibility.faq ? <HomeFaqSection /> : null}
+      {visibility.locations ? <StoreLocationsSection variant="fullBleed" /> : null}
     </main>
   );
 }

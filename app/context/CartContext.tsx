@@ -28,11 +28,19 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(() => getCartFromStorage());
+  /** Empty initial state matches SSR; load from localStorage after mount to avoid hydration mismatch. */
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [cartHydrated, setCartHydrated] = useState(false);
 
   useEffect(() => {
+    setItems(getCartFromStorage());
+    setCartHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!cartHydrated) return;
     saveCartToStorage(items);
-  }, [items]);
+  }, [items, cartHydrated]);
 
   const addToCart = useCallback((item: Omit<CartItem, "quantity">) => {
     setItems((prev) => {

@@ -27,7 +27,7 @@ function StarIcon({ className }: { className?: string }) {
   );
 }
 
-function ProductCard({ item }: { item: FeaturedProductItem }) {
+export function FeaturedProductCard({ item }: { item: FeaturedProductItem }) {
   const { addToCart } = useCart();
   const size = Array.isArray(item.sizes) && item.sizes.length > 0 ? item.sizes[0] : null;
   const priceLine = size ? formatSizePrice(size) : formatDualPrice(item.price, item.oldRiyal);
@@ -126,7 +126,7 @@ export function FeaturedProductsClient({ products }: { products: FeaturedProduct
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:gap-6">
             {filteredProducts.map((item) => (
-              <ProductCard key={item.slug} item={item} />
+              <FeaturedProductCard key={item.slug} item={item} />
             ))}
           </div>
         )}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Instagram, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
+import { pagePaddingX } from "@/lib/page-theme";
 
 const serif = { fontFamily: "var(--font-cormorant), serif" };
 const sans = { fontFamily: "var(--font-playpen-arabic), sans-serif" };
@@ -133,13 +134,13 @@ function ReelCard({ item, onOpen }: { item: SocialReelItem; onOpen: () => void }
         style={{ backgroundColor: WELL_BG }}
         aria-label={`تشغيل الفيديو: ${item.title}`}
       >
-        <div className="relative aspect-[9/16] w-full min-w-0">
+        <div className="relative aspect-[4/5] w-full min-w-0">
           <Image
             src={item.posterSrc}
             alt=""
             fill
             className={`object-cover transition-opacity duration-200 ${hover ? "opacity-0" : "opacity-100"}`}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             priority={false}
           />
           <video
@@ -182,9 +183,9 @@ export function SocialMediaSection({ products }: { products: SocialReelProduct[]
   }, [openId, close]);
 
   return (
-    <section className="w-full bg-white py-14 md:py-20" aria-labelledby="social-media-heading" dir="rtl">
-      <div className="w-full px-1">
-        <div className="mx-auto max-w-5xl text-center">
+    <section className="w-full bg-white py-6 md:py-8" aria-labelledby="social-media-heading" dir="rtl">
+      <div className={`mx-auto w-full max-w-[1600px] ${pagePaddingX}`}>
+        <div className="max-w-5xl mx-auto text-center">
           <h2
             id="social-media-heading"
             className="text-2xl font-medium tracking-tight text-neutral-900 md:text-3xl"
@@ -214,7 +215,7 @@ export function SocialMediaSection({ products }: { products: SocialReelProduct[]
         </div>
 
         {reels.length > 0 ? (
-          <div className="mx-auto mt-12 grid w-full max-w-6xl grid-cols-2 items-stretch gap-3 px-1 sm:gap-4 md:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-4 sm:mt-10 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:gap-6">
             {reels.map((item) => (
               <ReelCard key={item.id} item={item} onOpen={() => setOpenId(item.id)} />
             ))}
