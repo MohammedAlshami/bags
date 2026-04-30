@@ -4,6 +4,7 @@ import { getSession, requireCustomer } from "@/lib/auth";
 import { isValidBranchKey } from "@/lib/store-locations";
 import { parsePrice } from "@/lib/cart";
 import { mapOrderAdminDetail, type OrderRow } from "@/lib/db-mappers";
+import { applyCheckoutDiscount } from "@/lib/order-discount";
 
 export const dynamic = "force-dynamic";
 
@@ -101,8 +102,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid items" }, { status: 400 });
     }
 
-    const total = items.reduce((sum, it) => sum + parsePrice(it.price) * it.quantity, 0);
+    const subtotal = items.reduce((sum, it) => sum + parsePrice(it.price) * it.quantity, 0);
+    const rawDiscountCode = typeof body.discountCode === "string" ? body.discountCode.trim() : "";
+    const discountOutcome = applyCheckoutDiscount(subtotal, rawDiscountCode || undefined);
+    if (rawDiscountCode && !discountOutcome.appliedCode) {
+      return NextResponse.json({ error: "كود الخصم غير صالح" }, { status: 400 });
+    }
+    const total = discountOutcome.total;
     const itemsJson = JSON.stringify(items);
+
+    const rawPm = typeof body.paymentMethod === "string" ? body.paymentMethod.trim().toLowerCase() : "";
+    const paymentMethod = rawPm === "cod" ? "cod" : "bank";
 
     const userRows = await sql`
       SELECT address, full_name, phone FROM users WHERE id = ${session.sub}::uuid AND role = 'customer' LIMIT 1
@@ -118,6 +128,8 @@ export async function POST(request: Request) {
       country: "",
       phone: u?.phone ?? "",
       branchKey,
+      paymentMethod,
+      ...(discountOutcome.appliedCode ? { discountCode: discountOutcome.appliedCode } : {}),
     };
 
     const inserted = await sql`

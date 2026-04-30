@@ -2,6 +2,8 @@ export type CartItem = {
   slug: string;
   name: string;
   price: string;
+  /** Yemeni riyal amount for dual-price display (ر.ق / ر.س); optional for legacy cart rows */
+  oldRiyal?: number | null;
   image: string;
   quantity: number;
 };

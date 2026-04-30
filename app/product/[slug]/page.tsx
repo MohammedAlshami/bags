@@ -183,6 +183,7 @@ function ProductMainSection({ product }: { product: ProductItem }) {
                 name: selectedSize ? `${product.name} - ${selectedSize.label}` : product.name,
                 price: selectedSize ? `${selectedSize.sarPrice} ر.س` : product.price,
                 image: product.image,
+                oldRiyal: selectedSize ? selectedSize.oldRiyal : product.oldRiyal,
               })
             }
             className="mt-12 w-full rounded-full bg-neutral-900 py-4 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"

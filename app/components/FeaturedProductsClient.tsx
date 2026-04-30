@@ -43,6 +43,7 @@ function ProductCard({ item }: { item: FeaturedProductItem }) {
       name: size ? `${item.name} - ${size.label}` : item.name,
       price: size ? `${size.sarPrice} ر.س` : item.price,
       image: item.image,
+      oldRiyal: size ? size.oldRiyal : item.oldRiyal,
     });
   };
 

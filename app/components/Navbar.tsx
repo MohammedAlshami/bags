@@ -316,14 +316,16 @@ export default function Navbar({ categories, collections }: NavbarProps) {
                 <button
                   type="button"
                   onClick={() => setCartOpen(true)}
-                  className="inline-flex h-9 w-9 items-center justify-center"
+                  className="group inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-all duration-200 hover:bg-brand-light/40 active:scale-[0.97]"
                   title="السلة"
                   aria-label="السلة"
                 >
                   <ShoppingBag
                     size={18}
-                    className={`shrink-0 transition-colors hover:text-black ${
-                      isShopPink ? "text-[#B63A6B] hover:text-black" : "text-gray-500 hover:text-black"
+                    className={`shrink-0 transition-colors ${
+                      isShopPink
+                        ? "text-[#B63A6B] group-hover:text-brand-dark"
+                        : "text-gray-500 group-hover:text-brand-primary"
                     }`}
                     strokeWidth={2.25}
                   />
@@ -558,14 +560,17 @@ export default function Navbar({ categories, collections }: NavbarProps) {
             )}
             <button
               type="button"
-              className="relative inline-flex"
+              className="group relative inline-flex cursor-pointer items-center justify-center rounded-full p-1.5 transition-all duration-200 hover:bg-brand-light/40 active:scale-[0.97]"
               onClick={() => {
                 setCartOpen(true);
                 setMobileMenuOpen(false);
               }}
               aria-label="السلة"
             >
-              <ShoppingBag className="h-5 w-5 text-gray-500" strokeWidth={2.25} />
+              <ShoppingBag
+                className="h-5 w-5 text-gray-500 transition-colors group-hover:text-brand-primary"
+                strokeWidth={2.25}
+              />
               {count > 0 ? (
                 <span className="absolute -end-1 -top-1 min-h-[0.9rem] min-w-[0.9rem] rounded-full bg-gray-800 px-0.5 text-[8px] leading-4 text-white">
                   {count > 9 ? "9+" : count}
@@ -887,7 +892,7 @@ export default function Navbar({ categories, collections }: NavbarProps) {
                     setCartOpen(true);
                     setMobileMenuOpen(false);
                   }}
-                  className={`flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-[10px] font-medium leading-none transition-colors ${
+                  className={`flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-[10px] font-medium leading-none transition-colors hover:bg-brand-light/35 active:scale-95 ${
                     isActive ? "text-black" : "text-neutral-500"
                   }`}
                 >
