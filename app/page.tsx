@@ -1,6 +1,9 @@
 import { HomePageClient } from "./components/HomePageClient";
 import { sql } from "@/lib/db";
 import { mapProduct, type ProductRow } from "@/lib/db-mappers";
+import { formatDualPrice, formatSizePrice } from "@/lib/price-format";
+import type { SocialReelProduct } from "./components/SocialMediaSection";
+import type { ReviewProductRef } from "./components/HomeReviewsSection";
 
 export default async function Home() {
   const rows = await sql`
@@ -15,7 +18,9 @@ export default async function Home() {
     LIMIT 8
   `;
 
-  const featuredProducts = (rows as ProductRow[]).map((row) => {
+  const productRows = rows as ProductRow[];
+
+  const featuredProducts = productRows.map((row) => {
     const mapped = mapProduct(row, true);
     return {
       slug: mapped._id,
@@ -28,5 +33,30 @@ export default async function Home() {
     };
   });
 
-  return <HomePageClient featuredProducts={featuredProducts} />;
+  const socialReelProducts: SocialReelProduct[] = productRows.slice(0, 4).map((row) => {
+    const mapped = mapProduct(row, true);
+    const size =
+      Array.isArray(mapped.sizes) && mapped.sizes.length > 0 ? mapped.sizes[0] : null;
+    const priceLine = size ? formatSizePrice(size) : formatDualPrice(mapped.price, mapped.oldRiyal);
+    return {
+      slug: mapped._id,
+      name: mapped.name,
+      image: mapped.image,
+      priceLine,
+    };
+  });
+
+  const reviewProducts: ReviewProductRef[] = featuredProducts.map((p) => ({
+    slug: p.slug,
+    name: p.name,
+    image: p.image,
+  }));
+
+  return (
+    <HomePageClient
+      featuredProducts={featuredProducts}
+      socialReelProducts={socialReelProducts}
+      reviewProducts={reviewProducts}
+    />
+  );
 }

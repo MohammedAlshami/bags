@@ -3,58 +3,106 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Instagram, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SafeImage } from "@/app/components/SafeImage";
 
 const serif = { fontFamily: "var(--font-cormorant), serif" };
 const sans = { fontFamily: "var(--font-playpen-arabic), sans-serif" };
 
 const WELL_BG = "#FCF0F2";
 
-const REELS: {
-  id: string;
-  title: string;
-  videoSrc: string;
-  posterSrc: string;
-}[] = [
+/** Video / poster for each of the four slots (only as many are shown as products from the DB). */
+const VIDEO_SLOTS: { id: string; videoSrc: string; posterSrc: string }[] = [
   {
-    id: "cream",
-    title: "كريم الملكة للتبييض والنضارة",
+    id: "reel-0",
     videoSrc: "/social/queen-cream-whitening.mp4",
     posterSrc: "/social/queen-cream-whitening-thumb.jpg",
   },
   {
-    id: "mask",
-    title: "ماسك الملكة البديل",
+    id: "reel-1",
     videoSrc: "/social/queen-deep-mask.mp4",
     posterSrc: "/social/queen-deep-mask-thumb.jpg",
   },
   {
-    id: "bridal-box",
-    title: "بوكس العروس من منتجات الملكة",
+    id: "reel-2",
     videoSrc: "/social/queen-bridal-box.mp4",
     posterSrc: "/social/queen-bridal-box-thumb.jpg",
   },
   {
-    id: "cream-2",
-    title: "كريم الملكة للتبييض والنضارة",
-    videoSrc: "/social/queen-cream-whitening.mp4",
-    posterSrc: "/social/queen-cream-whitening-thumb.jpg",
-  },
-  {
-    id: "mask-2",
-    title: "ماسك الملكة البديل",
+    id: "reel-3",
     videoSrc: "/social/queen-deep-mask.mp4",
     posterSrc: "/social/queen-deep-mask-thumb.jpg",
   },
 ];
+
+export type SocialReelProduct = {
+  slug: string;
+  name: string;
+  image: string;
+  /** Formatted as on the product page: sizes, or dual currency from DB. */
+  priceLine: string;
+};
+
+type SocialReelItem = {
+  id: string;
+  videoSrc: string;
+  posterSrc: string;
+  title: string;
+  product: SocialReelProduct;
+};
+
+function zipReels(products: SocialReelProduct[]): SocialReelItem[] {
+  const out: SocialReelItem[] = [];
+  const n = Math.min(products.length, VIDEO_SLOTS.length);
+  for (let i = 0; i < n; i++) {
+    const slot = VIDEO_SLOTS[i]!;
+    const product = products[i]!;
+    out.push({
+      id: slot.id,
+      videoSrc: slot.videoSrc,
+      posterSrc: slot.posterSrc,
+      title: product.name,
+      product,
+    });
+  }
+  return out;
+}
 
 const SOCIAL_LINKS: { href: string; label: string; Icon: typeof Instagram }[] = [
   { href: "https://www.instagram.com/", label: "Instagram", Icon: Instagram },
 ];
 
-type ReelItem = (typeof REELS)[number];
+function ReelProductCard({ product }: { product: SocialReelProduct }) {
+  return (
+    <Link
+      href={`/product/${product.slug}`}
+      className="mt-3.5 flex min-h-0 flex-1 items-center gap-3 rounded-2xl border border-neutral-200/90 bg-white p-3.5 transition-colors duration-200 hover:border-brand-primary/35"
+      style={sans}
+    >
+      <div className="relative size-14 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-[#faf4f6] to-[#f0e4e8] p-0.5 ring-2 ring-white">
+        <div className="relative h-full w-full overflow-hidden rounded-full">
+          <SafeImage
+            src={product.image}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="56px"
+          />
+        </div>
+      </div>
+      <div className="min-w-0 flex-1 self-center text-start">
+        <p className="line-clamp-2 break-words text-[14px] font-semibold leading-snug text-neutral-900 sm:text-[15px]">
+          {product.name}
+        </p>
+        <p className="mt-1.5 line-clamp-2 break-words text-[14px] font-semibold leading-snug text-brand-primary sm:text-[15px]">
+          {product.priceLine}
+        </p>
+      </div>
+    </Link>
+  );
+}
 
-function ReelCard({ item, onOpen }: { item: ReelItem; onOpen: () => void }) {
+function ReelCard({ item, onOpen }: { item: SocialReelItem; onOpen: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hover, setHover] = useState(false);
 
@@ -75,13 +123,13 @@ function ReelCard({ item, onOpen }: { item: ReelItem; onOpen: () => void }) {
   };
 
   return (
-    <article className="flex min-w-0 flex-col items-center">
+    <article className="flex h-full min-h-0 flex-col items-stretch">
       <button
         type="button"
         onClick={onOpen}
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
-        className="group relative w-full cursor-pointer overflow-hidden rounded-2xl shadow-sm ring-1 ring-black/5 transition-transform hover:scale-[1.01] focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+        className="group relative w-full shrink-0 cursor-pointer overflow-hidden rounded-2xl ring-1 ring-black/5 transition-transform hover:scale-[1.01] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/40 focus-visible:ring-offset-2"
         style={{ backgroundColor: WELL_BG }}
         aria-label={`تشغيل الفيديو: ${item.title}`}
       >
@@ -91,7 +139,7 @@ function ReelCard({ item, onOpen }: { item: ReelItem; onOpen: () => void }) {
             alt=""
             fill
             className={`object-cover transition-opacity duration-200 ${hover ? "opacity-0" : "opacity-100"}`}
-            sizes="(max-width: 640px) 50vw, (max-width: 768px) 49vw, (max-width: 1024px) 32vw, 19vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
             priority={false}
           />
           <video
@@ -105,17 +153,16 @@ function ReelCard({ item, onOpen }: { item: ReelItem; onOpen: () => void }) {
           />
         </div>
       </button>
-      <h3 className="mt-3 w-full text-center text-sm font-semibold text-neutral-900 sm:text-base md:text-lg" style={sans}>
-        {item.title}
-      </h3>
+      <ReelProductCard product={item.product} />
     </article>
   );
 }
 
-export function SocialMediaSection() {
+export function SocialMediaSection({ products }: { products: SocialReelProduct[] }) {
+  const reels = useMemo(() => zipReels(products), [products]);
   const [openId, setOpenId] = useState<string | null>(null);
 
-  const open = openId ? REELS.find((r) => r.id === openId) : null;
+  const open = openId ? reels.find((r) => r.id === openId) : null;
 
   const close = useCallback(() => {
     setOpenId(null);
@@ -166,11 +213,13 @@ export function SocialMediaSection() {
           </div>
         </div>
 
-        <div className="mx-auto mt-12 grid w-full grid-cols-2 gap-1 md:grid-cols-3 md:gap-1 lg:grid-cols-5 lg:gap-1">
-          {REELS.map((item) => (
-            <ReelCard key={item.id} item={item} onOpen={() => setOpenId(item.id)} />
-          ))}
-        </div>
+        {reels.length > 0 ? (
+          <div className="mx-auto mt-12 grid w-full max-w-6xl grid-cols-2 items-stretch gap-3 px-1 sm:gap-4 md:grid-cols-4">
+            {reels.map((item) => (
+              <ReelCard key={item.id} item={item} onOpen={() => setOpenId(item.id)} />
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {open && (
@@ -194,7 +243,7 @@ export function SocialMediaSection() {
           </button>
 
           <div
-            className="relative z-[101] w-full max-w-lg overflow-hidden rounded-2xl bg-black shadow-2xl ring-1 ring-white/10"
+            className="relative z-[101] w-full max-w-lg overflow-hidden rounded-2xl bg-black ring-1 ring-white/10"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl">

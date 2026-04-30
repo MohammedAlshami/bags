@@ -7,7 +7,11 @@ import { QGB } from "@/lib/brand-kit";
 import { FeaturedProductsClient } from "./FeaturedProductsClient";
 import { SocialMediaSection } from "./SocialMediaSection";
 import { StoreLocationsSection } from "./StoreLocationsSection";
+import { HomeReviewsSection } from "./HomeReviewsSection";
+import { HomeFaqSection } from "./HomeFaqSection";
 import type { FeaturedProductItem } from "./FeaturedProductsClient";
+import type { SocialReelProduct } from "./SocialMediaSection";
+import type { ReviewProductRef } from "./HomeReviewsSection";
 
 type HomeBg = "white" | "pink";
 type HomeVisibility = {
@@ -15,6 +19,8 @@ type HomeVisibility = {
   featured: boolean;
   social: boolean;
   locations: boolean;
+  reviews: boolean;
+  faq: boolean;
 };
 
 const DEFAULT_VISIBILITY: HomeVisibility = {
@@ -22,6 +28,8 @@ const DEFAULT_VISIBILITY: HomeVisibility = {
   featured: true,
   social: true,
   locations: true,
+  reviews: true,
+  faq: true,
 };
 
 function parseVisibility(value: unknown): HomeVisibility {
@@ -32,10 +40,20 @@ function parseVisibility(value: unknown): HomeVisibility {
     featured: v.featured ?? true,
     social: v.social ?? true,
     locations: v.locations ?? true,
+    reviews: v.reviews ?? true,
+    faq: v.faq ?? true,
   };
 }
 
-export function HomePageClient({ featuredProducts }: { featuredProducts: FeaturedProductItem[] }) {
+export function HomePageClient({
+  featuredProducts,
+  socialReelProducts,
+  reviewProducts,
+}: {
+  featuredProducts: FeaturedProductItem[];
+  socialReelProducts: SocialReelProduct[];
+  reviewProducts: ReviewProductRef[];
+}) {
   const [bg, setBg] = useState<HomeBg>("white");
   const [visibility, setVisibility] = useState<HomeVisibility>(DEFAULT_VISIBILITY);
 
@@ -62,7 +80,9 @@ export function HomePageClient({ featuredProducts }: { featuredProducts: Feature
       {visibility.hero ? <HeroSection /> : null}
       {visibility.featured ? <FeaturedProductsClient products={featuredProducts} /> : null}
       {visibility.locations ? <StoreLocationsSection /> : null}
-      {visibility.social ? <SocialMediaSection /> : null}
+      {visibility.social ? <SocialMediaSection products={socialReelProducts} /> : null}
+      {visibility.reviews ? <HomeReviewsSection products={reviewProducts} /> : null}
+      {visibility.faq ? <HomeFaqSection /> : null}
     </main>
   );
 }

@@ -12,9 +12,6 @@ import {
   X,
   Plus,
   Minus,
-  Ticket,
-  Truck,
-  FileText,
 } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
 import { parsePrice, type CartItem } from "@/lib/cart";
@@ -827,34 +824,6 @@ export default function Navbar({ categories, collections }: NavbarProps) {
             </div>
 
             <div className="border-t border-gray-100 bg-white p-4 sm:p-6">
-              <div
-                className="mb-3 flex flex-wrap items-center justify-between gap-y-1 border-b border-gray-50 pb-3 text-[9px] uppercase tracking-widest text-gray-400 min-[400px]:text-[10px]"
-                style={sans}
-              >
-                <button
-                  type="button"
-                  className="inline-flex min-h-[2.5rem] items-center justify-center gap-1.5 rounded-md px-1.5 text-gray-500 transition-colors hover:text-black sm:min-h-0"
-                >
-                  <FileText size={14} className="shrink-0" />
-                  <span>ملاحظة</span>
-                </button>
-                <span className="min-h-px w-full bg-gray-100 min-[400px]:hidden" aria-hidden />
-                <button
-                  type="button"
-                  className="inline-flex min-h-[2.5rem] items-center justify-center gap-1.5 rounded-md px-1.5 text-gray-500 transition-colors hover:text-black sm:min-h-0"
-                >
-                  <Truck size={14} className="shrink-0" />
-                  <span>الشحن</span>
-                </button>
-                <span className="min-h-px w-full bg-gray-100 min-[400px]:hidden" aria-hidden />
-                <button
-                  type="button"
-                  className="inline-flex min-h-[2.5rem] items-center justify-center gap-1.5 rounded-md px-1.5 text-gray-500 transition-colors hover:text-black sm:min-h-0"
-                >
-                  <Ticket size={14} className="shrink-0" />
-                  <span>كوبون</span>
-                </button>
-              </div>
               <div className="mb-4 flex flex-col gap-1 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
                 <span className="text-xs font-bold uppercase tracking-widest text-gray-700" style={sans}>
                   المجموع
@@ -875,14 +844,16 @@ export default function Navbar({ categories, collections }: NavbarProps) {
                 <Link
                   href="/cart"
                   onClick={() => setCartOpen(false)}
-                  className="whitespace-nowrap border border-black py-3.5 text-center text-[10px] font-bold uppercase tracking-widest transition-all hover:bg-black hover:text-white sm:py-4"
+                  className="qgb-btn-outline w-full"
+                  style={sans}
                 >
                   عرض السلة
                 </Link>
                 <Link
                   href="/cart"
                   onClick={() => setCartOpen(false)}
-                  className="whitespace-nowrap bg-black py-3.5 text-center text-[10px] font-bold uppercase tracking-widest text-white transition-all hover:bg-gray-900 sm:py-4"
+                  className="qgb-btn-primary w-full"
+                  style={sans}
                 >
                   إتمام الشراء
                 </Link>

@@ -2,42 +2,18 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { SITE_FAQ_ITEMS } from "@/lib/home-faq-items";
 
 const sans = { fontFamily: "var(--font-playpen-arabic), sans-serif" };
 const serif = { fontFamily: "var(--font-cormorant), serif" };
 
-const FAQ_ITEMS: { q: string; a: string }[] = [
-  {
-    q: "ما هي مكوّنات منتجات الملكة جولد؟",
-    a: "نختار مكوّنات طبيعية وآمنة، مع شفافية في الوصف. التفاصيل الكاملة تجدينها على صفحة كل منتج.",
-  },
-  {
-    q: "متى يصل طلبي؟",
-    a: "مدة التوصيل تعتمد على منطقتك. بعد تأكيد الطلب ستصلك تفاصيل التتبع عند الشحن.",
-  },
-  {
-    q: "كيف ألغي طلباً؟",
-    a: "تواصلي مع خدمة العملاء عبر الواتساب في أقرب وقت بعد الطلب إن رغبتِ بالإلغاء قبل الشحن.",
-  },
-  {
-    q: "كم سعر المنتج؟",
-    a: "الأسعار معروضة على كل منتج في المتجر بالريال، وقد تتوفر عروض موسمية.",
-  },
-  {
-    q: "ماذا لو لم أكن متواجدة لاستلام الطلب؟",
-    a: "يُعاد التوصيل حسب سياسة شركة الشحن أو يُترك إشعار للاستلام من نقطة التسليم.",
-  },
-  {
-    q: "هل يمكنني تتبع الطلب؟",
-    a: "نعم، عند الشحن يُرسل رقم تتبع يمكنك متابعته من صفحة الطلب أو الرسالة النصية.",
-  },
-];
+const FAQ_ITEMS = SITE_FAQ_ITEMS;
 
 export function AboutFaq() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section className="w-full bg-white py-16 md:py-24" aria-labelledby="about-faq-heading" dir="rtl">
+    <section id="faq" className="w-full scroll-mt-24 bg-white py-16 md:py-24" aria-labelledby="about-faq-heading" dir="rtl">
       <div className="mx-auto max-w-3xl px-4 sm:px-8 md:px-6">
         <h2 id="about-faq-heading" className="text-center text-3xl font-semibold text-neutral-900 md:text-4xl" style={serif}>
           أسئلة شائعة
