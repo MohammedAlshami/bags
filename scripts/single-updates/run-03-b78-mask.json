@@ -1,0 +1,22 @@
+{
+  "id": "b78d347b-8c78-4575-8a84-5c99d460d2f3",
+  "verify": {
+    "nameEquals": "ماسك البشرة (ماسك الملكة البديل)",
+    "imageEquals": "/product_Images/product-018-fattening-honey.jpeg"
+  },
+  "noteForHuman": "products.json[2] — disambiguated by current image path",
+  "payload": {
+    "name": "ماسك البشرة: ماسك الملكة البديل",
+    "price": "15 ر.س",
+    "oldRiyal": 2000,
+    "categoryId": "5d66695f-c080-4ff1-bfd7-8ac78698f81f",
+    "image": "/product_Images/product-018-fattening-honey.jpeg",
+    "descriptionAr": "ينظف البشرة بعمق، يزيل الجلد الميت والرؤوس السوداء وآثار الحبوب، ويعمل على تفتيح ونضارة البشرة.",
+    "ingredientsAr": "طين الكاولين، الفحم النشط، مسحوق الأرز، السدر، خلاصة الذرة، النيلة الزرقاء",
+    "usageAr": "يوضع على بشرة نظيفة، يُترك 15-20 دقيقة، ثم يُغسل.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

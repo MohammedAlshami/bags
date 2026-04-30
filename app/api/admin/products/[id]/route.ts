@@ -98,6 +98,10 @@ export async function PUT(
     const contentsAr =
       body.contentsAr !== undefined ? normalizeNullableText(body.contentsAr) : cur.contents_ar ?? null;
     const sizes = body.sizes !== undefined ? JSON.stringify(body.sizes) : JSON.stringify(cur.sizes ?? null);
+    const collectionId =
+      body.collectionId !== undefined && body.collectionId !== null && String(body.collectionId).trim() !== ""
+        ? String(body.collectionId).trim()
+        : cur.collection_id ?? null;
 
     await sql`
       UPDATE products SET
@@ -114,7 +118,7 @@ export async function PUT(
         free_from_ar = ${freeFromAr},
         warning_ar = ${warningAr},
         contents_ar = ${contentsAr},
-        collection_id = NULL,
+        collection_id = ${collectionId},
         updated_at = now()
       WHERE id = ${id}::uuid
     `;

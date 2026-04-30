@@ -1,0 +1,22 @@
+{
+  "id": "7cac8f1e-899c-4526-a966-2b8ead14138f",
+  "verify": {
+    "nameEquals": "غسول الوجه المرطب",
+    "imageEquals": "/product_Images/product-002-moisturizing-face-cleanser.jpeg"
+  },
+  "noteForHuman": "products.json[21] lip balm — empty duplicate cleanser row; verify exact name + image",
+  "payload": {
+    "name": "مرطب الشفاه ومعالج التصبغات",
+    "price": "8 ر.س",
+    "oldRiyal": 1000,
+    "categoryId": "4ab16541-e20b-4b6d-b830-b432a4298b0e",
+    "image": "/product_Images/product-002-moisturizing-face-cleanser.jpeg",
+    "descriptionAr": "يعالج سواد الشفاه ويمنحها توريد طبيعي وترطيب عميق، آمن وطبيعي 100%.",
+    "ingredientsAr": "زبدة المانجو، أعشاب الزهور، العكر الفاسي، عشبة دم الأخوين",
+    "usageAr": "يُستخدم يوميًا وقبل النوم كمرطب دائم.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

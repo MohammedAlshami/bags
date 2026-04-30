@@ -1,0 +1,21 @@
+{
+  "id": "6acc8140-fbc5-41b8-becf-cd205e743d80",
+  "verify": {
+    "nameEquals": "بودرة تبييض الأسنان"
+  },
+  "noteForHuman": "products.json[18] tooth powder — unique name",
+  "payload": {
+    "name": "مسحوق الملكة لتبييض الأسنان",
+    "price": "18 ر.س",
+    "oldRiyal": 2500,
+    "categoryId": "4ab16541-e20b-4b6d-b830-b432a4298b0e",
+    "image": "/product_Images/product-022-tooth-whitening-powder.jpeg",
+    "descriptionAr": "يزيل التصبغات والاصفرار، يعطي بياض طبيعي وانتعاش فوري، آمن على اللثة والمينا.",
+    "ingredientsAr": "الأرز، الفحم العضوي، فيتامين D، فيتامينات مخصصة لصحة الفم",
+    "usageAr": "يستخدم مرتين في الاسبوع توضع الفرشة في البودر كل ما انتهى منها المسحوق وتفرش الاسنان لمدة خمس دقايق.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

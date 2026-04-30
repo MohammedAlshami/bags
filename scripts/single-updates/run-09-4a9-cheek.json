@@ -1,0 +1,21 @@
+{
+  "id": "4a9045ae-21b3-4438-9078-287d9bce1569",
+  "verify": {
+    "nameEquals": "بودر تسمين الخدود"
+  },
+  "noteForHuman": "products.json[7] — unique name",
+  "payload": {
+    "name": "بودر تسمين الخدود: بودر تسمين الخدود الطبيعي",
+    "price": "18 ر.س",
+    "oldRiyal": 2500,
+    "categoryId": "5d66695f-c080-4ff1-bfd7-8ac78698f81f",
+    "image": "/product_Images/product-008-cheek-powder.jpeg",
+    "descriptionAr": "يساعد على امتلاء الخدود بشكل طبيعي وآمن، يمنح إشراقة وصحة للوجه.",
+    "ingredientsAr": "أعشاب مخصصة، بودر فيتامين C، فيتامينات مغذية للبشرة",
+    "usageAr": "3 مرات بالأسبوع، يخلط مع ماء ورد حتى يصبح قوامه كريمي، يُوضع على الخدود لمدة نصف ساعة ثم يُغسل.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

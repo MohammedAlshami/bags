@@ -1,0 +1,21 @@
+{
+  "id": "e289acb8-bbc0-471a-8e49-4efa7c5d12d4",
+  "verify": {
+    "nameEquals": "شامبو الملكة العضوي"
+  },
+  "noteForHuman": "products.json[10] shampoo",
+  "payload": {
+    "name": "شامبو: شامبو الملكة العضوي لعلاج الشعر",
+    "price": "18 ر.س",
+    "oldRiyal": 2500,
+    "categoryId": "2890ab10-b2b6-4486-af99-1522576082ca",
+    "image": "/product_Images/product-011-organic-shampoo.jpeg",
+    "descriptionAr": "يمنح ترطيبًا عميقًا ويصلح الأضرار الناتجة عن العوامل البيئية وحرارة السشوار، يحمي الشعر المعالج بالبروتين والكيراتين، ينظف بلطف مع الحفاظ على نعومة ولمعان الشعر.",
+    "ingredientsAr": "فيتامين E، فيتامين B5، خالي من الكبريتات والبارابين والسيليكون",
+    "usageAr": "مناسب للاستخدام من عمر 4 سنوات.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

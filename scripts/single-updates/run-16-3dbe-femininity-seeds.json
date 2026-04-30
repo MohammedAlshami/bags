@@ -1,0 +1,22 @@
+{
+  "id": "3dbe0b1d-35ea-4059-9822-a38fd6c5e47f",
+  "verify": {
+    "nameEquals": "بذور الأكبي",
+    "imageEquals": "/product_Images/product-021-eyelash-serum.jpeg"
+  },
+  "noteForHuman": "products.json[16] — row had wrong eyelash image; verify name + image",
+  "payload": {
+    "name": "بذور الأكبي لتسمين المناطق الأنثوية",
+    "price": "50 ر.س",
+    "oldRiyal": 7000,
+    "categoryId": "93eb6c3d-4fc0-47f7-97aa-0c00777860a8",
+    "image": "/product_Images/product-021-eyelash-serum.jpeg",
+    "descriptionAr": "تساعد على تسمين المؤخرة والفخذين والصدر بشكل طبيعي وآمن، تعزز امتلاء المناطق الأنثوية دون زيادة عامة في الوزن.",
+    "ingredientsAr": null,
+    "usageAr": "تُطحن وتُؤخذ مع الحليب أو العسل مرة إلى مرتين يوميًا.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": "ملاحظة السعر: 100 جرام",
+    "sizes": null
+  }
+}

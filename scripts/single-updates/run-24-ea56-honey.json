@@ -1,0 +1,22 @@
+{
+  "id": "ea56fec4-ad99-4202-879d-df329da2d3ff",
+  "verify": {
+    "nameEquals": "لوشن ترطيب الجسم",
+    "imageEquals": "/product_Images/product-006-body-lotion.jpeg"
+  },
+  "noteForHuman": "products.json[14] fattening honey — orphan lotion row; verify exact name + body lotion image",
+  "payload": {
+    "name": "عسل التسمين: عسل تسمين الجسم الطبيعي",
+    "price": "60 ر.س",
+    "oldRiyal": 8000,
+    "categoryId": "93eb6c3d-4fc0-47f7-97aa-0c00777860a8",
+    "image": "/product_Images/product-018-fattening-honey.jpeg",
+    "descriptionAr": "يزيد وزن الجسم بشكل طبيعي وآمن، لا يسبب أضرار أو آثار جانبية.",
+    "ingredientsAr": "غذاء ملكات النحل، أعشاب طبيعية، مكسرات",
+    "usageAr": "يُؤخذ مرتين يوميًا قبل الأكل للحصول على أفضل النتائج.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

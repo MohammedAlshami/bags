@@ -1,0 +1,22 @@
+{
+  "id": "8b31d8a0-1388-4142-b61b-6e80c97cdb91",
+  "verify": {
+    "nameEquals": "كريم أر بوتين",
+    "imageEquals": "/product_Images/product-001-arbutin-cream.jpeg"
+  },
+  "noteForHuman": "products.json[3] micellar — repurposed row; verify old product name + image",
+  "payload": {
+    "name": "مياة الميسلار: مياه الميسلار لإزالة المكياج وتنظيف المسام",
+    "price": "21 ر.س",
+    "oldRiyal": 3000,
+    "categoryId": "5d66695f-c080-4ff1-bfd7-8ac78698f81f",
+    "image": "/product_Images/product-004-micellar-water.jpeg",
+    "descriptionAr": "تنظف البشرة بلطف من المكياج والزيوت والغبار، مرطبة وخالية من الكحول والعطور، مناسبة لكل أنواع البشرة حتى الحساسة.",
+    "ingredientsAr": null,
+    "usageAr": "ضعي قليلاً من مياه الملكة على قطنه وامسحي الوجه بلطف.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

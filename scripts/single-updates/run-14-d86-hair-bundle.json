@@ -1,0 +1,22 @@
+{
+  "id": "d86baddf-a848-4527-be52-1c4b7f078369",
+  "verify": {
+    "nameEquals": "باكج العناية بالشعر (بوكس الشعر)",
+    "imageEquals": "/product_Images/product-019-slimming-herbs.jpeg"
+  },
+  "noteForHuman": "products.json[13] — disambiguated by wrong slimming-herbs image",
+  "payload": {
+    "name": "باكج العناية بالشعر: بوكس الشعر من منتجات الملكة",
+    "price": "49 ر.س",
+    "oldRiyal": 6900,
+    "categoryId": "2890ab10-b2b6-4486-af99-1522576082ca",
+    "image": "/product_Images/product-016-hair-bundle.jpeg",
+    "descriptionAr": "حل متكامل للعناية بشعرك بمنتجات طبيعية وآمنة تمنحك النعومة والكثافة والطول.",
+    "ingredientsAr": null,
+    "usageAr": null,
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": "[\"زيت الملكة لتطويل وتكثيف الشعر\",\"شامبو الملكة العضوي لعلاج الشعر\",\"بلسم الملكة\"]",
+    "sizes": null
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "f26d436b-e6bc-4c24-ad40-5ef4f9013869",
+  "verify": {
+    "nameEquals": "اللوشن (لوشن الملكة)",
+    "imageEquals": "/product_Images/product-015-hair-oil-45.jpeg"
+  },
+  "noteForHuman": "products.json[5] — disambiguated by wrong hair-oil image on lotion row",
+  "payload": {
+    "name": "اللوشن: لوشن الملكة لترطيب الجسم والوجة",
+    "price": "15 ر.س",
+    "oldRiyal": 2000,
+    "categoryId": "5d66695f-c080-4ff1-bfd7-8ac78698f81f",
+    "image": "/product_Images/product-006-body-lotion.jpeg",
+    "descriptionAr": "يرطب البشرة بعمق ويحميها من الجفاف، يفتح ويوحد اللون ويمنحها نعومة ومرونة ويقلل من التجاعيد والخطوط الناتجة عن الجفاف.",
+    "ingredientsAr": "جلسرين طبيعي، زبدة الشيا والكاكاو الخام، زيت اللوز الحلو، فيتامين E، فيتامين C",
+    "usageAr": null,
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": [
+      { "label": "200 مل", "sarPrice": 15, "oldRiyal": 2000 },
+      { "label": "500 مل", "sarPrice": 35, "oldRiyal": 4500 }
+    ]
+  }
+}

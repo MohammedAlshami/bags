@@ -12,7 +12,9 @@
     "lint": "eslint",
     "seed": "npx tsx scripts/run-seed.ts",
     "fetch:instagram-grid": "node scripts/fetch-instagram-og-images.mjs",
-    "download:instagram-posts": "node scripts/download-instagram-posts.mjs"
+    "download:instagram-posts": "node scripts/download-instagram-posts.mjs",
+    "export:products-d1": "npx tsx scripts/export-products-d1.ts",
+    "update:one-product": "npx tsx scripts/update-one-product.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.937.0",

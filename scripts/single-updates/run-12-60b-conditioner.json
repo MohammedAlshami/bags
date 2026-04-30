@@ -1,0 +1,21 @@
+{
+  "id": "60b117ac-2579-41f5-8c8b-4003fa5fcef8",
+  "verify": {
+    "nameEquals": "بلسم الملكة للشعر"
+  },
+  "noteForHuman": "products.json[11] conditioner",
+  "payload": {
+    "name": "البلسم: بلسم الملكة للشعر طبيعي وآمن",
+    "price": "18 ر.س",
+    "oldRiyal": 2500,
+    "categoryId": "2890ab10-b2b6-4486-af99-1522576082ca",
+    "image": "/product_Images/product-012-natural-conditioner.jpeg",
+    "descriptionAr": "يرطب بعمق ويمنع الجفاف والتقصف، يغذي فروة الرأس ويقوي بصيلات الشعر، يسهل تسريح الشعر ويقلل التشابك ويمنحه نعومة ولمعان طبيعي.",
+    "ingredientsAr": "شموع طبيعية، زيت خروع، زيت جوز الهند، زيت لوز، زيت جوجوبا، فيتامين E، فيتامين B5",
+    "usageAr": null,
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "e0abdc46-b92f-4982-ba02-a57fe74ceb13",
+  "verify": {
+    "nameEquals": "زيت الشعر (زيت الملكة لتطويل وتكثيف الشعر)"
+  },
+  "noteForHuman": "products.json[12] hair oil — unique long name",
+  "payload": {
+    "name": "زيت الشعر: زيت الملكة لتطويل وتكثيف الشعر",
+    "price": "18 ر.س",
+    "oldRiyal": 2500,
+    "categoryId": "2890ab10-b2b6-4486-af99-1522576082ca",
+    "image": "/product_Images/product-013-hair-oil.jpeg",
+    "descriptionAr": "يعالج التساقط، يغذي البصيلات، يطول ويكثف الشعر، مناسب لجميع أنواع الشعر.",
+    "ingredientsAr": "مجموعة 45 نوع زيت بارد وأعشاب طبيعية",
+    "usageAr": "يُوضع على فروة الرأس مع تدليك خفيف 2-3 مرات أسبوعيًا، يُترك ساعتين أو أكثر قبل الغسل.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

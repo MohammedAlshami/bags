@@ -1,0 +1,23 @@
+{
+  "id": "d18e0bd5-a84c-4ca4-9970-e72f8433b64e",
+  "verify": {
+    "nameEquals": "المقشر البارد (مقشر الأحماض)",
+    "categoryIdEquals": "4ab16541-e20b-4b6d-b830-b432a4298b0e",
+    "imageEquals": "/product_Images/product-024-natural-deodorant.jpeg"
+  },
+  "noteForHuman": "products.json[9] laser oil — wrong duplicate row; verify beauty cat + deodorant image",
+  "payload": {
+    "name": "زيت بديل الليزر",
+    "price": "18 ر.س",
+    "oldRiyal": 2500,
+    "categoryId": "5d66695f-c080-4ff1-bfd7-8ac78698f81f",
+    "image": "/product_Images/product-010-laser-oil-alternative.jpeg",
+    "descriptionAr": "زيت بديل الليزر لإزالة الشعر وتنعيم البشرة يخفف ويزيل الشعر الزائد، يقلل المسام ويعالج جلد الوزة بفعالية طبيعية.",
+    "ingredientsAr": "زيت السعد، زيت النمل، أعشاب طبيعية",
+    "usageAr": "يُستخدم بعد النتف أو الحلاقة، يُدلك على الجسم قبل النوم لمدة 5 أيام متتالية.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

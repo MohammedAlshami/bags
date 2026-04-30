@@ -1,0 +1,21 @@
+{
+  "id": "c5e1881b-e642-46fc-85f6-fff227c10d19",
+  "verify": {
+    "nameEquals": "سيروم الملكة لتقوية وتطويل الأظافر"
+  },
+  "noteForHuman": "products.json[19] nail serum — unique name",
+  "payload": {
+    "name": "سيروم الملكة لتقوية وتطويل الأظافر",
+    "price": "18 ر.س",
+    "oldRiyal": 2500,
+    "categoryId": "4ab16541-e20b-4b6d-b830-b432a4298b0e",
+    "image": "/product_Images/product-023-nail-serum.jpeg",
+    "descriptionAr": "يغذي الأظافر من الجذور، يمنع التكسر والتقصف، ويمنحها لمعان وصحة قوية.",
+    "ingredientsAr": "زيوت طبيعية، فيتامينات مركزة، خلاصة الثوم",
+    "usageAr": "يُوضع مرتين في اليوم على الأظافر والجلد المحيط بها مع التدليك الخفيف.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "e008e5e3-78ef-44fa-a046-db55b5c90675",
+  "verify": {
+    "nameEquals": "سيروم الهالات",
+    "imageEquals": "/product_Images/product-014-hair-care-bundle.jpeg"
+  },
+  "noteForHuman": "products.json[8] — disambiguated by wrong bundle image",
+  "payload": {
+    "name": "سيروم الهالات: سيروم الملكة للهالات",
+    "price": "21 ر.س",
+    "oldRiyal": 3000,
+    "categoryId": "5d66695f-c080-4ff1-bfd7-8ac78698f81f",
+    "image": "/product_Images/product-014-hair-care-bundle.jpeg",
+    "descriptionAr": "يعالج الهالات والتصبغات تحت العين، يرطب ويخفف الانتفاخ، آمن وخفيف على البشرة الحساسة.",
+    "ingredientsAr": "فيتامين B5، الكافيين، فيتامين C، كولاجين، حمض الهيالورونيك",
+    "usageAr": "يستخدم صباحًا ومساءً، تُوضع نقطة وتُربت برفق بدون فرك.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

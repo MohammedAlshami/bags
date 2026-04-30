@@ -1,0 +1,26 @@
+{
+  "id": "7ede9c11-f45d-4943-8e27-b6291be1e6d8",
+  "verify": {
+    "nameEquals": "المقشر البارد (مقشر الأحماض)",
+    "categoryIdEquals": "5d66695f-c080-4ff1-bfd7-8ac78698f81f",
+    "imageEquals": "/product_Images/product-005-cold-exfoliator.jpeg"
+  },
+  "noteForHuman": "products.json[4] — skin-category duplicate of المقشر",
+  "payload": {
+    "name": "المقشر البارد (مقشر الأحماض)",
+    "price": "18 ر.س",
+    "oldRiyal": 2500,
+    "categoryId": "5d66695f-c080-4ff1-bfd7-8ac78698f81f",
+    "image": "/product_Images/product-005-cold-exfoliator.jpeg",
+    "descriptionAr": "يفتح البشرة، يزيل التصبغات والجلد الميت، يعطي نعومة ونضارة من أول استخدام، آمن وخفيف على البشرة.",
+    "ingredientsAr": "حمض اللاكتيك، حمض الساليسيليك، حمض الجليكوليك، نياسيناميد، خلاصة الألوفيرا",
+    "usageAr": "يستخدم لمدة ست ايام قبل النوم ومن ثم يستمر الترطيب. (لا يستخدم للحامل والمرضع)",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": [
+      { "label": "صغير", "sarPrice": 18, "oldRiyal": 2500 },
+      { "label": "كبير كامل الجسم", "sarPrice": 100, "oldRiyal": 14000 }
+    ]
+  }
+}

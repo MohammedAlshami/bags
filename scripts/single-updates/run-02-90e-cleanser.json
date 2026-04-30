@@ -1,0 +1,21 @@
+{
+  "id": "90e43b5d-fb6c-40d6-a928-2b4568cd8f57",
+  "verify": {
+    "nameEquals": "غسول الوجه (Gentle Face Cleanser)"
+  },
+  "noteForHuman": "products.json[1] — only row with this exact name",
+  "payload": {
+    "name": "غسول الوجة: Gentle Face Cleanser",
+    "price": "21 ر.س",
+    "oldRiyal": 3000,
+    "categoryId": "5d66695f-c080-4ff1-bfd7-8ac78698f81f",
+    "image": "/product_Images/WhatsApp Image 2026-04-07 at 5.24.38 PM.jpeg",
+    "descriptionAr": "غسول الوجه المرطّب ينظف بلطف، يرطّب، يهدئ البشرة، مناسب لجميع الأنواع.",
+    "ingredientsAr": "يوريا، بيتانين، مونوبروبيلين غلايكول، فيتامين B5، فيتامين E، صمغ الزانثان، الانتويين",
+    "usageAr": "يُوضع على بشرة مبللة، يُدلك بلطف، يُشطف بالماء، يُستخدم مرتين يوميًا.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

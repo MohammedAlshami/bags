@@ -1,0 +1,21 @@
+{
+  "id": "660f6f36-8649-41ae-bb27-cafa5eba93fd",
+  "verify": {
+    "nameEquals": "كريم التبييض وصفة (Queen Cream)"
+  },
+  "noteForHuman": "products.json[0] cream — id matches only this row",
+  "payload": {
+    "name": "كريم التبييض وصفة (Queen Cream)",
+    "price": "45 ر.س",
+    "oldRiyal": 6000,
+    "categoryId": "5d66695f-c080-4ff1-bfd7-8ac78698f81f",
+    "image": "/product_Images/product-004-micellar-water.jpeg",
+    "descriptionAr": "كريم الملكة لتبييض والنضارة طبيعي وآمن، يفتح ويوحد اللون ويمنح نضارة، نتيجته ثابتة ومضمونة.",
+    "ingredientsAr": "ألفا أربوتين، كولاجين، فيتامين C، حمض الكوجيك، هيالورونيك أسيد، فيتامين A",
+    "usageAr": "قبل النوم على بشرة نظيفة، يُدلك حتى الامتصاص.",
+    "freeFromAr": null,
+    "warningAr": "يُمنع للحامل والمرضع",
+    "contentsAr": "صلاحية: 3 أشهر، يُحفظ في مكان بارد وجاف.",
+    "sizes": null
+  }
+}

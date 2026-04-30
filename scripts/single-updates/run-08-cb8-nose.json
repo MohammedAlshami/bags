@@ -1,0 +1,21 @@
+{
+  "id": "cb8b5f41-6410-409c-9d86-e886c515f14d",
+  "verify": {
+    "nameEquals": "كريم الأنف"
+  },
+  "noteForHuman": "products.json[6] — unique name",
+  "payload": {
+    "name": "كريم الأنف: كريم امتصاص دهون الأنف ومعالج المسام",
+    "price": "21 ر.س",
+    "oldRiyal": 3000,
+    "categoryId": "5d66695f-c080-4ff1-bfd7-8ac78698f81f",
+    "image": "/product_Images/product-007-nose-cream.jpeg",
+    "descriptionAr": "كريم فعال يعالج تراكم الدهون في منطقة الأنف، يساعد على تقليل حجم الدهون واللمعان غير المرغوب فيه، ويعمل على تنظيف وتضييق مسام الأنف.",
+    "ingredientsAr": null,
+    "usageAr": "يُستخدم يوميًا لمدة 3 دقائق على الأنف، ثم يُغسل جيدًا.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "798e5b4c-66c7-4411-b2f3-5e160de67656",
+  "verify": {
+    "nameEquals": "سيروم الملكة للرموش",
+    "imageEquals": "/product_Images/product-010-laser-oil-alternative.jpeg"
+  },
+  "noteForHuman": "products.json[17] — disambiguated by laser-oil filename on lash row",
+  "payload": {
+    "name": "سيروم الملكة للرموش",
+    "price": "11 ر.س",
+    "oldRiyal": 1500,
+    "categoryId": "4ab16541-e20b-4b6d-b830-b432a4298b0e",
+    "image": "/product_Images/product-010-laser-oil-alternative.jpeg",
+    "descriptionAr": "يغذي ويطول الرموش، يمنع التساقط ويزيد الكثافة بشكل آمن وطبيعي مع نتائج ملاحظة بالتدريج.",
+    "ingredientsAr": "فيتامينات مخصصة، وخلاصة كحل الإثمد الأصفهاني",
+    "usageAr": "يُوضع على رموش نظيفة قبل النوم باستخدام الفرشاة، يُستخدم يوميًا.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

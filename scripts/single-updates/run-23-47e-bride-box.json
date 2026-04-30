@@ -1,0 +1,22 @@
+{
+  "id": "47e7bf3f-7d7d-48a1-8167-d803f014a009",
+  "verify": {
+    "nameEquals": "باكج الشعر",
+    "imageEquals": "/product_Images/product-016-hair-bundle.jpeg"
+  },
+  "noteForHuman": "products.json[23] bride box — empty placeholder row; verify short name + bundle image",
+  "payload": {
+    "name": "بوكس العروس من منتجات الملكة",
+    "price": "275 ر.س",
+    "oldRiyal": 37500,
+    "categoryId": "4ab16541-e20b-4b6d-b830-b432a4298b0e",
+    "image": "/product_Images/product-016-hair-bundle.jpeg",
+    "descriptionAr": "مجموعة متكاملة تضم 12 منتج طبيعي وآمن للعناية الكاملة بالجسم والبشرة والشعر، صُممت خصيصًا لتمنحك إشراقة وجمال متكامل في ليلة العمر وما بعدها.",
+    "ingredientsAr": null,
+    "usageAr": null,
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": "[\"المقشر البارد (الحجم الكبير)\",\"كريم الملكة لتبييض الوجه وترطيبه\",\"لوشن الملكة لترطيب الجسم بعمق\",\"ماسك الملكة (بديل جلسات تنظيف البشرة)\",\"سيروم الملكة للهالات\",\"مورد ومرطب للقدمين والمناطق الحساسة\",\"مزيل العرق للتفتيح\",\"زيت الملكة لتطويل وتكثيف الشعر\",\"سيروم الرموش والحواجب\",\"كريم الشفاه لترطيب عميق\",\"بودرة تبييض الأسنان\",\"سيروم الأظافر\"]",
+    "sizes": null
+  }
+}

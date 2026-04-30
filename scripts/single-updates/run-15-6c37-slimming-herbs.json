@@ -1,0 +1,21 @@
+{
+  "id": "6c3739c6-f8e9-43b2-9904-21551588737c",
+  "verify": {
+    "nameEquals": "أعشاب التخسيس"
+  },
+  "noteForHuman": "products.json[15] slimming herbs",
+  "payload": {
+    "name": "أعشاب التخسيس: أعشاب التخسيس وإنقاص الوزن",
+    "price": "38 ر.س",
+    "oldRiyal": 5000,
+    "categoryId": "93eb6c3d-4fc0-47f7-97aa-0c00777860a8",
+    "image": "/product_Images/product-020-femininity-seeds.jpeg",
+    "descriptionAr": "تنقص من 4 إلى 7 كيلو بأمان، مصرح بها ومصنوعة تحت إشراف أطباء، لا تسبب أضرار.",
+    "ingredientsAr": null,
+    "usageAr": "تُؤخذ ملعقة على كوب ماء دافئ، يُغطى لمدة 10 دقائق، ويُشرب بعد الوجبات 3 مرات يوميًا (إن وجدت). (لا تستخدم للحامل)",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

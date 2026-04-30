@@ -1,0 +1,22 @@
+{
+  "id": "4c8c4496-ad05-4e96-a8cb-9cd6a811019f",
+  "verify": {
+    "nameEquals": "مزيل عرق الملكة الطبيعي",
+    "imageEquals": "/product_Images/product-025-ithmid-kohl.jpeg"
+  },
+  "noteForHuman": "products.json[22] deodorant — disambiguated by kohl filename on deodorant row",
+  "payload": {
+    "name": "مزيل عرق الملكة الطبيعي",
+    "price": "15 ر.س",
+    "oldRiyal": 2000,
+    "categoryId": "4ab16541-e20b-4b6d-b830-b432a4298b0e",
+    "image": "/product_Images/product-025-ithmid-kohl.jpeg",
+    "descriptionAr": "يمنع التعرق والرائحة، يفتح منطقة الإبط، خالي من الألمنيوم والمواد الضارة، آمن حتى للمناطق الحساسة.",
+    "ingredientsAr": null,
+    "usageAr": "يُستخدم بعد الاستحمام على بشرة نظيفة وجافة.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

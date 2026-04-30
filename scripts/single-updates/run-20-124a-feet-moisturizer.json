@@ -1,0 +1,22 @@
+{
+  "id": "124a9279-b988-4d77-823f-3a5fbc274d62",
+  "verify": {
+    "nameEquals": "مورد ومرطب القدمين والمناطق الحساسة",
+    "imageEquals": "/product_Images/product-009-eye-serum.jpeg"
+  },
+  "noteForHuman": "products.json[20] — disambiguated by wrong eye-serum image on feet product",
+  "payload": {
+    "name": "مورد ومرطب القدمين والمناطق الحساسة",
+    "price": "15 ر.س",
+    "oldRiyal": 2000,
+    "categoryId": "4ab16541-e20b-4b6d-b830-b432a4298b0e",
+    "image": "/product_Images/product-009-eye-serum.jpeg",
+    "descriptionAr": "يمنح ترطيب عالي وتوريد فوري مع الاستمرار، آمن وطبيعي 100%.",
+    "ingredientsAr": "العكر الفاسي، أعشاب الزهور، عشبة دم الأخوين، جل الصبار، الجلسرين",
+    "usageAr": "يُوضع على بشرة نظيفة يوميًا، ويفضل قبل النوم.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}

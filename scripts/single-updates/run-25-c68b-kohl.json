@@ -1,0 +1,22 @@
+{
+  "id": "c68b8589-ac2c-4180-bb12-e91db3303ffb",
+  "verify": {
+    "nameEquals": "زيت لتطويل الشعر",
+    "imageEquals": "/product_Images/product-017-hair-growth-oil.jpeg"
+  },
+  "noteForHuman": "products.json[27] kohl — empty duplicate row; verify old short hair title + image",
+  "payload": {
+    "name": "كحل الأثمد الأصفهاني الأصلي",
+    "price": "11 ر.س",
+    "oldRiyal": 1500,
+    "categoryId": "4ab16541-e20b-4b6d-b830-b432a4298b0e",
+    "image": "/product_Images/product-017-hair-growth-oil.jpeg",
+    "descriptionAr": "مستخرج من جبال عُمان، طبيعي 100%، يكثف الرموش، يمنع التساقط، ويقوي النظر، يعالج اصفرار وحساسية العين، خال من أي مواد كيميائية.",
+    "ingredientsAr": null,
+    "usageAr": "يتكحل داخل العين مرة أو مرتين يوميًا، مناسب للرجال والنساء.",
+    "freeFromAr": null,
+    "warningAr": null,
+    "contentsAr": null,
+    "sizes": null
+  }
+}
