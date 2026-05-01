@@ -1,11 +1,8 @@
 import { ShopPageBanner } from "@/app/components/ShopPageBanner";
-import Link from "next/link";
-import { Sparkles } from "lucide-react";
-import { SafeImage } from "@/app/components/SafeImage";
+import { ShopCategoryCards } from "@/app/components/shop/ShopCategoryCards";
+import { ShopCatalogClient, type CatalogCategory, type CatalogProduct } from "@/app/components/shop/ShopCatalogClient";
 import { sql } from "@/lib/db";
 import { mapProduct, type ProductRow } from "@/lib/db-mappers";
-import { sans, pagePaddingX } from "@/lib/page-theme";
-import { formatDualPrice } from "@/lib/price-format";
 
 type ShopCategory = {
   _id: string;
@@ -13,85 +10,21 @@ type ShopCategory = {
   sortOrder: number;
 };
 
-type ShopProduct = {
-  name: string;
-  price: string;
-  oldRiyal?: number | null;
-  sizes?: { label: string; sarPrice: number; oldRiyal: number }[] | null;
-  category: string;
-  categoryId?: string | null;
-  image: string;
-  slug: string;
-};
+export default async function ShopPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; collection?: string }>;
+}) {
+  const { category: categoryParam, collection: collectionParam } = await searchParams;
+  const initialCategoryId = categoryParam?.trim() ? categoryParam.trim() : null;
+  const initialCollectionSlug = collectionParam?.trim() ? collectionParam.trim() : null;
 
-function ProductCard({ product }: { product: ShopProduct }) {
-  const { name, price, oldRiyal, category, image, slug } = product;
-  const size = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes[0] : null;
-  const priceLine = size ? `${size.oldRiyal.toLocaleString("en-US")} ر ق / ${size.sarPrice} ر س` : formatDualPrice(price, oldRiyal);
-  return (
-    <Link href={`/product/${slug}`} className="group flex flex-col" dir="rtl">
-      <div className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl bg-white">
-        <SafeImage
-          src={image}
-          alt={name}
-          fill
-          className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.03]"
-          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
-        />
-      </div>
-      <div className="mt-4 flex flex-col gap-1.5 text-right">
-        <span
-          className="inline-flex h-7 min-w-0 max-w-full items-center justify-center self-start overflow-hidden text-ellipsis whitespace-nowrap rounded-full border border-brand-accent bg-white px-3 text-[12px] font-medium text-brand-primary transition-colors group-hover:bg-brand-light/25"
-          style={sans}
-          title={category}
-        >
-          {category}
-        </span>
-        <span className="text-base font-semibold text-neutral-900 sm:text-[17px]" style={sans}>
-          {name}
-        </span>
-        <span className="text-base font-medium text-neutral-900" style={sans}>
-          {priceLine}
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-function CategoryHeader({ category }: { category: string }) {
-  return (
-    <div className="mb-5 w-full overflow-hidden rounded-3xl bg-[#d44c7d] px-5 py-4 md:px-6 md:py-5">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Sparkles className="h-4 w-4 shrink-0 text-white" aria-hidden />
-          <h2 className="text-xl font-black tracking-wide text-white md:text-2xl" style={sans}>
-            {category}
-          </h2>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CategorySection({ category, categoryId, products }: { category: string; categoryId: string; products: ShopProduct[] }) {
-  return (
-    <section className="mb-10 scroll-mt-36 md:scroll-mt-40" id={`cat-${categoryId}`}>
-      <CategoryHeader category={category} />
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-4 lg:gap-6 xl:grid-cols-5">
-        {products.map((product) => (
-          <ProductCard key={product.slug} product={product} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-export default async function ShopPage() {
   const categoryRows = await sql`
     SELECT id, name, sort_order, created_at, updated_at
     FROM categories
     ORDER BY sort_order ASC, name ASC
   `;
+
   const rows = await sql`
     SELECT p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.category_id, p.image,
            p.created_at, p.updated_at,
@@ -103,17 +36,23 @@ export default async function ShopPage() {
     ORDER BY p.name ASC
   `;
 
-  const products = (rows as ProductRow[]).map((row) => {
+  const products: CatalogProduct[] = (rows as ProductRow[]).map((row) => {
     const mapped = mapProduct(row, true);
+    const col = mapped.collection;
+    const collectionSlug =
+      col && typeof col === "object" && "slug" in col && typeof col.slug === "string"
+        ? col.slug
+        : null;
     return {
       name: mapped.name,
       price: mapped.price,
       oldRiyal: mapped.oldRiyal,
-      sizes: mapped.sizes as ShopProduct["sizes"],
+      sizes: mapped.sizes as CatalogProduct["sizes"],
       category: mapped.category,
       categoryId: mapped.categoryId,
       image: mapped.image,
       slug: mapped._id,
+      collectionSlug,
     };
   });
 
@@ -127,9 +66,38 @@ export default async function ShopPage() {
   const productsByCategory = Object.fromEntries(
     categories.map((category) => [
       category._id,
-      products.filter((product) => product.categoryId === category._id || product.category === category.name),
+      products.filter(
+        (product) => product.categoryId === category._id || product.category === category.name
+      ),
     ])
-  ) as Record<string, ShopProduct[]>;
+  ) as Record<string, CatalogProduct[]>;
+
+  const catalogCategories: CatalogCategory[] = categories.map((c) => ({
+    _id: c._id,
+    name: c.name,
+    products: productsByCategory[c._id] ?? [],
+  }));
+
+  const categoryCards = catalogCategories
+    .filter((c) => c.products.length > 0)
+    .map((c) => ({
+      id: c._id,
+      name: c.name,
+      productCount: c.products.length,
+      image: c.products[0]?.image ?? "",
+    }))
+    .filter((c) => c.image);
+
+  const allCategoryIds = new Set(catalogCategories.map((c) => c._id));
+  const validatedInitialCategoryId =
+    initialCategoryId && allCategoryIds.has(initialCategoryId) ? initialCategoryId : null;
+
+  const collectionSlugRows = (await sql`SELECT slug FROM collections`) as { slug: string }[];
+  const collectionSlugs = new Set(collectionSlugRows.map((r) => r.slug));
+  const validatedInitialCollectionSlug =
+    initialCollectionSlug && collectionSlugs.has(initialCollectionSlug)
+      ? initialCollectionSlug
+      : null;
 
   return (
     <main
@@ -137,17 +105,12 @@ export default async function ShopPage() {
       dir="rtl"
     >
       <ShopPageBanner />
-      <div className={`mx-auto max-w-[1920px] ${pagePaddingX} pt-8 md:pt-10`}>
-        {categories.map((category) => (
-          <CategorySection
-            key={category._id}
-            categoryId={category._id}
-            category={category.name}
-            products={productsByCategory[category._id] ?? []}
-          />
-        ))}
-      </div>
+      <ShopCategoryCards items={categoryCards} />
+      <ShopCatalogClient
+        categories={catalogCategories}
+        initialCategoryId={validatedInitialCategoryId}
+        initialCollectionSlug={validatedInitialCollectionSlug}
+      />
     </main>
   );
 }
-

@@ -9,7 +9,9 @@ import { SocialMediaSection } from "./SocialMediaSection";
 import { StoreLocationsSection } from "./StoreLocationsSection";
 import { HomeReviewsSection } from "./HomeReviewsSection";
 import { HomeFaqSection } from "./HomeFaqSection";
+import { ShopByCategorySection } from "./ShopByCategorySection";
 import type { HomeCategorySectionData } from "./HomeCategoryProductSections";
+import type { ShopByCategoryStripItem } from "./ShopByCategorySection";
 import type { SocialReelProduct } from "./SocialMediaSection";
 import type { ReviewProductRef } from "./HomeReviewsSection";
 
@@ -46,10 +48,12 @@ function parseVisibility(value: unknown): HomeVisibility {
 }
 
 export function HomePageClient({
+  shopByCategoryItems,
   categorySections,
   socialReelProducts,
   reviewProducts,
 }: {
+  shopByCategoryItems: ShopByCategoryStripItem[];
   categorySections: HomeCategorySectionData[];
   socialReelProducts: SocialReelProduct[];
   reviewProducts: ReviewProductRef[];
@@ -78,6 +82,7 @@ export function HomePageClient({
     >
       <OffersBanner />
       {visibility.hero ? <HeroSection /> : null}
+      <ShopByCategorySection items={shopByCategoryItems} />
       {visibility.featured ? <HomeCategoryProductSections sections={categorySections} /> : null}
       {visibility.social ? <SocialMediaSection products={socialReelProducts} /> : null}
       {visibility.reviews ? <HomeReviewsSection products={reviewProducts} /> : null}

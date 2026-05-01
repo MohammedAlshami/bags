@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Menu,
   Search,
@@ -15,10 +15,10 @@ import {
 } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
 import { parsePrice, type CartItem } from "@/lib/cart";
-import { pagePaddingX, sans, adminIconClassName } from "@/lib/page-theme";
+import { pagePaddingX, sans, serif, adminIconClassName } from "@/lib/page-theme";
 import { formatSar } from "@/lib/format-sar";
 import { SafeImage } from "@/app/components/SafeImage";
-import type { NavCategory, NavCollection } from "@/lib/get-nav-categories";
+import type { NavCategory } from "@/lib/get-nav-categories";
 import { Home, MapPin, UserCircle2, ShoppingCart } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -40,6 +40,12 @@ const SCROLL_TOP_REVEAL_PX = 20;
 /** Side cart panel transition duration (ms); keep in sync with `duration-[]` on cart UI */
 const CART_DRAWER_MS = 300;
 
+const ABOUT_LINKS = [
+  { label: "من نحن", href: "/about" },
+  { label: "المدونة", href: "/blog" },
+  { label: "نقاط البيع", href: "/locations" },
+] as const;
+
 function splitInto3(cats: NavCategory[]): [NavCategory[], NavCategory[], NavCategory[]] {
   if (cats.length === 0) return [[], [], []];
   const a = Math.ceil(cats.length / 3);
@@ -49,19 +55,13 @@ function splitInto3(cats: NavCategory[]): [NavCategory[], NavCategory[], NavCate
 
 const MEGA_TITLES = ["تسوقي حسب الفئة", "اكتشفي المزيد", "مختارات"] as const;
 
-const ABOUT_LINKS = [
-  { label: "من نحن", href: "/about" },
-  { label: "المدونة", href: "/blog" },
-  { label: "نقاط البيع", href: "/locations" },
-] as const;
-
 function getMainNavMenu(): MenuItemConfig[] {
   return [
     { id: "home", label: "الرئيسية", href: "/" },
     { id: "shop", label: "تسوق", hasMega: true as const },
     { id: "about", label: TXT.about, hasDropdown: true as const, aboutLinks: [...ABOUT_LINKS] },
     { id: "blog", label: "المدونة", href: "/blog" },
-    { id: "presets", label: "تشكيلة المجموعات", hasDropdown: true as const, isCollections: true as const },
+    { id: "presets", label: "تشكيلة المجموعات", hasMega: true as const },
   ];
 }
 
@@ -74,7 +74,6 @@ type MenuItemConfig = {
   hasMega?: boolean;
   hasDropdown?: boolean;
   aboutLinks?: readonly AboutLink[];
-  isCollections?: boolean;
 };
 
 type MobileNavItem = { href: string; label: string; icon: LucideIcon };
@@ -89,12 +88,53 @@ function lineTotalString(item: CartItem): string {
   return formatSar(parsePrice(item.price) * item.quantity);
 }
 
+/** Shop-page-style cards for «تشكيلة المجموعات» mega only (not «تسوق»). */
+function NavMegaCategoryCard({ c }: { c: NavCategory }) {
+  const img = c.image?.trim();
+  return (
+    <Link
+      href={`/shop?category=${encodeURIComponent(c.id)}`}
+      className="group relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-neutral-100 outline-none ring-0 transition hover:opacity-[0.98] focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+      prefetch
+    >
+      {img ? (
+        <SafeImage
+          src={img}
+          alt={c.name}
+          fill
+          className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.05]"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-neutral-200 to-neutral-100" aria-hidden />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent" aria-hidden />
+      <div className="absolute inset-x-0 bottom-0 flex flex-col items-stretch p-4 text-right text-white md:p-5">
+        <p className="text-sm font-medium text-white/85 md:text-base" style={sans}>
+          ( {c.productCount.toLocaleString("ar-SA")} منتج )
+        </p>
+        <h3
+          className="mt-1 text-xl font-semibold leading-snug md:text-2xl lg:text-[1.65rem]"
+          style={serif}
+        >
+          {c.name}
+        </h3>
+        <span
+          className="mt-4 inline-flex w-fit self-end border border-white/90 px-4 py-2 text-xs font-semibold tracking-[0.14em] text-white md:text-[13px]"
+          style={sans}
+        >
+          عرض المنتجات
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 type NavbarProps = {
   categories: NavCategory[];
-  collections: NavCollection[];
 };
 
-export default function Navbar({ categories, collections }: NavbarProps) {
+export default function Navbar({ categories }: NavbarProps) {
   const [user, setUser] = useState<{ username: string; role: string } | null>(null);
   const [shopBg, setShopBg] = useState<"white" | "pink">("white");
   const pathname = usePathname();
@@ -113,7 +153,13 @@ export default function Navbar({ categories, collections }: NavbarProps) {
   const headerShellRef = useRef<HTMLElement | null>(null);
 
   const isShopPink = pathname === "/shop" && shopBg === "pink";
-  const [c1, c2, c3] = splitInto3(categories);
+
+  const shopMegaCategories = useMemo(
+    () => categories.filter((c) => c.productCount > 0),
+    [categories]
+  );
+
+  const shopMegaColumns = useMemo(() => splitInto3(categories), [categories]);
 
   useEffect(() => {
     fetch("/api/auth/me", { credentials: "include" })
@@ -348,11 +394,9 @@ export default function Navbar({ categories, collections }: NavbarProps) {
             scrolled ? "py-2 shadow-sm" : "py-4"
           } ${mainNavClass} border-b border-gray-100`}
         >
-          <div className={`mx-auto w-full max-w-7xl ${pagePaddingX}`}>
-            <ul
-              className="flex min-h-10 items-center justify-center gap-6 text-[12px] font-medium uppercase tracking-widest xl:gap-8"
-              onMouseLeave={() => setActiveMenu(null)}
-            >
+          <div className="relative" onMouseLeave={() => setActiveMenu(null)}>
+            <div className={`mx-auto w-full max-w-7xl ${pagePaddingX}`}>
+              <ul className="flex min-h-10 items-center justify-center gap-6 text-[12px] font-medium uppercase tracking-widest xl:gap-8">
               {menuItems.map((item) => (
                 <li
                   key={item.id}
@@ -403,8 +447,13 @@ export default function Navbar({ categories, collections }: NavbarProps) {
                       />
                     </span>
                   ) : null}
-                  {item.id === "presets" && item.isCollections ? (
-                    <span className="inline-flex h-9 min-h-9 cursor-default items-center gap-1 border-b-2 border-transparent text-inherit transition-colors hover:border-amber-800">
+                  {item.id === "presets" && item.hasMega ? (
+                    <Link
+                      href="/shop"
+                      className={`inline-flex h-9 min-h-9 items-center gap-1 border-b-2 border-transparent transition-colors hover:border-amber-800 ${
+                        activeMenu === "presets" ? "border-amber-800" : ""
+                      }`}
+                    >
                       {item.label}
                       <ChevronDown
                         size={12}
@@ -412,11 +461,11 @@ export default function Navbar({ categories, collections }: NavbarProps) {
                         className={`shrink-0 transition-transform duration-200 ${activeMenu === "presets" ? "rotate-180" : ""}`}
                         aria-hidden
                       />
-                    </span>
+                    </Link>
                   ) : null}
 
                   {item.id === "about" && item.hasDropdown && item.aboutLinks && activeMenu === "about" ? (
-                    <div className="absolute end-0 top-full w-48 animate-[fade_0.2s_ease-out] border-t border-gray-100 bg-white py-4 shadow-2xl">
+                    <div className="absolute end-0 top-full z-50 w-48 animate-[fade_0.2s_ease-out] border-t border-gray-100 bg-white py-4 shadow-2xl">
                       {item.aboutLinks.map((l) => (
                         <Link
                           key={l.label}
@@ -429,92 +478,99 @@ export default function Navbar({ categories, collections }: NavbarProps) {
                       ))}
                     </div>
                   ) : null}
-                  {item.isCollections && activeMenu === "presets" ? (
-                    <div className="absolute end-0 top-full w-48 animate-[fade_0.2s_ease-out] border-t border-gray-100 bg-white py-4 shadow-2xl">
-                      {collections.length === 0 ? (
-                        <Link
-                          href="/shop"
-                          className="block px-6 py-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-black"
-                          style={sans}
-                        >
-                          {TXT.shop}
-                        </Link>
-                      ) : (
-                        collections.map((c) => (
-                          <Link
-                            key={c.slug}
-                            href="/shop"
-                            className="block px-6 py-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-black"
-                            style={sans}
-                          >
-                            {c.name}
-                          </Link>
-                        ))
-                      )}
-                    </div>
-                  ) : null}
                 </li>
               ))}
-            </ul>
-          </div>
+              </ul>
+            </div>
 
-          {activeMenu === "shop" ? (
-            <div
-              className="absolute end-0 start-0 top-full w-full border-t border-gray-100 bg-white shadow-2xl"
-              onMouseEnter={() => setActiveMenu("shop")}
-              onMouseLeave={() => setActiveMenu(null)}
-            >
-              <div className="mx-auto grid max-w-7xl grid-cols-12 gap-8 p-8 xl:p-12" style={sans}>
-                {([c1, c2, c3] as const).map((chunk, idx) => (
-                  <div key={MEGA_TITLES[idx]} className="col-span-2">
-                    <h3 className="mb-4 border-b border-gray-100 pb-2 text-lg font-semibold not-italic text-gray-800">
-                      {MEGA_TITLES[idx]}
-                    </h3>
-                    <ul className="space-y-3">
-                      {chunk.length === 0 && idx === 0 ? (
-                        <li>
-                          <Link
-                            href="/shop"
-                            className="text-xs font-medium tracking-widest text-gray-500 transition-colors hover:text-black"
-                            style={sans}
-                          >
-                            {TXT.shop}
-                          </Link>
-                        </li>
-                      ) : (
-                        chunk.map((c) => (
-                          <li key={c.id}>
+            {activeMenu === "shop" ? (
+              <div
+                className="absolute end-0 start-0 top-full z-30 w-full border-t border-gray-100 bg-white shadow-2xl"
+                onMouseEnter={() => setActiveMenu("shop")}
+              >
+                <div className="mx-auto grid max-w-7xl grid-cols-12 gap-8 p-8 xl:p-12" style={sans}>
+                  {([shopMegaColumns[0], shopMegaColumns[1], shopMegaColumns[2]] as const).map((chunk, idx) => (
+                    <div key={MEGA_TITLES[idx]} className="col-span-2">
+                      <h3 className="mb-4 border-b border-gray-100 pb-2 text-lg font-semibold not-italic text-gray-800">
+                        {MEGA_TITLES[idx]}
+                      </h3>
+                      <ul className="space-y-3">
+                        {chunk.length === 0 && idx === 0 ? (
+                          <li>
                             <Link
-                              href={`/shop#cat-${c.id}`}
+                              href="/shop"
                               className="text-xs font-medium tracking-widest text-gray-500 transition-colors hover:text-black"
+                              style={sans}
                             >
-                              {c.name}
+                              {TXT.shop}
                             </Link>
                           </li>
-                        ))
-                      )}
-                    </ul>
-                  </div>
-                ))}
-                <div className="relative col-span-6 h-[min(70vw,240px)] overflow-hidden rounded-sm bg-[#f2f0eb] min-[1200px]:h-[280px]">
-                  <div className="absolute inset-0 z-10 flex flex-col justify-center p-6 sm:p-10" style={sans}>
-                    <span className="mb-1 text-[10px] font-bold uppercase tracking-widest text-red-800">
-                      مميز
-                    </span>
-                    <h2 className="mb-3 max-w-[200px] text-2xl font-medium leading-tight text-gray-800 min-[1200px]:text-3xl">
-                      تسوقي اختياراتك المفضلة
-                    </h2>
-                    <Link
-                      href="/shop"
-                      className="w-fit border-b-2 border-black pb-0.5 text-[10px] font-bold uppercase tracking-widest transition-colors hover:border-amber-800 hover:text-amber-800"
-                    >
-                      استكشف الآن
-                    </Link>
+                        ) : (
+                          chunk.map((c) => (
+                            <li key={c.id}>
+                              <Link
+                                href={`/shop#cat-${c.id}`}
+                                className="text-xs font-medium tracking-widest text-gray-500 transition-colors hover:text-black"
+                              >
+                                {c.name}
+                              </Link>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </div>
+                  ))}
+                  <div className="relative col-span-6 h-[min(70vw,240px)] overflow-hidden rounded-sm bg-[#f2f0eb] min-[1200px]:h-[280px]">
+                    <div className="absolute inset-0 z-10 flex flex-col justify-center p-6 sm:p-10" style={sans}>
+                      <span className="mb-1 text-[10px] font-bold uppercase tracking-widest text-red-800">مميز</span>
+                      <h2 className="mb-3 max-w-[200px] text-2xl font-medium leading-tight text-gray-800 min-[1200px]:text-3xl">
+                        تسوقي اختياراتك المفضلة
+                      </h2>
+                      <Link
+                        href="/shop"
+                        className="w-fit border-b-2 border-black pb-0.5 text-[10px] font-bold uppercase tracking-widest transition-colors hover:border-amber-800 hover:text-amber-800"
+                      >
+                        استكشف الآن
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ) : null}
+            ) : null}
+
+            {activeMenu === "presets" ? (
+              <div
+                className="absolute end-0 start-0 top-full z-30 w-full border-t border-gray-100 bg-white shadow-2xl"
+                onMouseEnter={() => setActiveMenu("presets")}
+              >
+                <div className="mx-auto max-w-7xl p-8 xl:p-12" style={sans}>
+                  <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-gray-100 pb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">تشكيلة المجموعات</h3>
+                    <Link
+                      href="/shop"
+                      className="text-xs font-bold uppercase tracking-widest text-gray-500 transition-colors hover:text-black"
+                    >
+                      كل المنتجات
+                    </Link>
+                  </div>
+                  {shopMegaCategories.length === 0 ? (
+                    <Link
+                      href="/shop"
+                      className="text-sm text-gray-500 underline-offset-2 hover:text-black"
+                    >
+                      {TXT.shop}
+                    </Link>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+                      {shopMegaCategories.map((c) => (
+                        <NavMegaCategoryCard key={c.id} c={c} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null}
+          </div>
         </nav>
       </div>
 
@@ -672,11 +728,11 @@ export default function Navbar({ categories, collections }: NavbarProps) {
                     </li>
                   );
                 }
-                if (item.id === "presets" && item.isCollections) {
+                if (item.id === "presets" && item.hasMega) {
                   return (
                     <li key="presets" className="border-b border-gray-50">
                       <span className="block px-4 py-3 text-sm text-gray-400">{item.label}</span>
-                      {collections.length === 0 ? (
+                      {shopMegaCategories.length === 0 ? (
                         <Link
                           href="/shop"
                           onClick={() => setMobileMenuOpen(false)}
@@ -685,10 +741,10 @@ export default function Navbar({ categories, collections }: NavbarProps) {
                           {TXT.shop}
                         </Link>
                       ) : (
-                        collections.map((c) => (
+                        shopMegaCategories.map((c) => (
                           <Link
-                            key={c.slug}
-                            href="/shop"
+                            key={c.id}
+                            href={`/shop?category=${encodeURIComponent(c.id)}`}
                             onClick={() => setMobileMenuOpen(false)}
                             className="block py-1.5 pe-4 ps-6 text-sm text-gray-800"
                           >

@@ -26,7 +26,7 @@ const BRAND_NAME = "الملكة جولد";
 const WA_CHANNEL_HREF = "https://whatsapp.com/channel/0029Vb6EdFc3GJP6WMzfXn2N";
 
 const linkClass =
-  "text-[15px] sm:text-base text-body transition-colors hover:text-brand-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary";
+  "text-[13px] sm:text-sm text-body transition-colors hover:text-brand-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary";
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -64,8 +64,8 @@ export function Footer() {
                 height={56}
               />
             </Link>
-            <h2 className="mb-2 text-2xl font-bold text-brand-primary sm:text-3xl">{BRAND_NAME}</h2>
-            <p className="max-w-md self-start text-right text-[15px] leading-relaxed text-body sm:text-base sm:leading-relaxed">
+            <h2 className="mb-2 text-xl font-bold text-brand-primary sm:text-2xl">{BRAND_NAME}</h2>
+            <p className="max-w-md self-start text-right text-[13px] leading-relaxed text-body sm:text-sm sm:leading-relaxed">
               عناية متكاملة بالجسم والبشرة والشعر بمنتجات طبيعية وآمنة، تمنحك نتائج تدريجية تليق بك.
             </p>
             <div className="mt-6 flex w-full justify-start gap-3 md:justify-start">
@@ -91,7 +91,7 @@ export function Footer() {
           </div>
 
           <div className="min-w-0 text-right">
-            <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-brand-primary sm:text-base">
+            <h4 className="mb-4 text-xs font-bold uppercase tracking-wide text-brand-primary sm:text-sm">
               روابط سريعة
             </h4>
             <ul className="space-y-3.5 sm:space-y-4">
@@ -106,7 +106,7 @@ export function Footer() {
           </div>
 
           <div className="min-w-0 text-right">
-            <h4 className="mb-4 text-sm font-bold uppercase tracking-wide text-brand-primary sm:text-base">
+            <h4 className="mb-4 text-xs font-bold uppercase tracking-wide text-brand-primary sm:text-sm">
               عن الملكة جولد
             </h4>
             <ul className="space-y-3.5 sm:space-y-4">
@@ -141,7 +141,7 @@ export function Footer() {
                 <span className="inline-flex h-[22px] w-fit items-center self-end rounded-full bg-brand-primary px-2.5 text-[11px] font-semibold text-white">
                   قناة الواتساب
                 </span>
-                <h3 className="text-balance text-base font-semibold leading-snug text-title sm:text-lg">
+                <h3 className="text-balance text-sm font-semibold leading-snug text-title sm:text-base">
                   تابعينا على القناة للحصول على آخر العروض والجديد
                 </h3>
                 <a
@@ -162,10 +162,10 @@ export function Footer() {
 
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="order-2 flex flex-wrap justify-center gap-x-5 gap-y-1.5 md:order-1">
-            <span className="text-sm text-body sm:text-base">© 2026 الملكة جولد — جميع الحقوق محفوظة</span>
+            <span className="text-xs text-body sm:text-sm">© 2026 الملكة جولد — جميع الحقوق محفوظة</span>
             <Link
               href="#"
-              className="text-sm text-body underline decoration-brand-accent/60 underline-offset-2 transition-colors hover:text-brand-primary sm:text-base"
+              className="text-xs text-body underline decoration-brand-accent/60 underline-offset-2 transition-colors hover:text-brand-primary sm:text-sm"
             >
               سياسة الخصوصية
             </Link>
@@ -173,7 +173,7 @@ export function Footer() {
 
           <div className="order-1 flex items-center gap-2 md:order-2">
             <Globe className="h-4 w-4 shrink-0 text-brand-accent" aria-hidden />
-            <span className="text-sm text-body sm:text-base">العربية / اليمن - الريال</span>
+            <span className="text-xs text-body sm:text-sm">العربية / اليمن - الريال</span>
           </div>
         </div>
       </div>

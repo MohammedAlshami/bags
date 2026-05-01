@@ -6,6 +6,7 @@ import type { SocialReelProduct } from "./components/SocialMediaSection";
 import type { ReviewProductRef } from "./components/HomeReviewsSection";
 import type { FeaturedProductItem } from "./components/FeaturedProductsClient";
 import type { HomeCategorySectionData } from "./components/HomeCategoryProductSections";
+import type { ShopByCategoryStripItem } from "./components/ShopByCategorySection";
 
 type RankedProductRow = ProductRow & { rn: number };
 
@@ -63,6 +64,12 @@ export default async function Home() {
     }))
     .filter((s) => s.products.length > 0);
 
+  const shopByCategoryItems: ShopByCategoryStripItem[] = categories.slice(0, 6).map((c) => ({
+    categoryId: c.id,
+    label: c.name,
+    imageSrc: byCategoryId.get(c.id)?.[0]?.image ?? null,
+  }));
+
   const recentRows = (await sql`
     SELECT p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.category_id, p.image,
            p.created_at, p.updated_at,
@@ -101,6 +108,7 @@ export default async function Home() {
 
   return (
     <HomePageClient
+      shopByCategoryItems={shopByCategoryItems}
       categorySections={categorySections}
       socialReelProducts={socialReelProducts}
       reviewProducts={reviewProducts}

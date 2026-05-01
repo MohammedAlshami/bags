@@ -1,84 +1,83 @@
-"use client";
-
-import Image from "next/image";
 import Link from "next/link";
+import { SafeImage } from "@/app/components/SafeImage";
+import { pagePaddingX, sans, serif } from "@/lib/page-theme";
+import { QGB } from "@/lib/brand-kit";
 
-const CATEGORIES = [
-  {
-    image:
-      "https://palo-alto-theme-main.myshopify.com/cdn/shop/files/E-COM-32_3000x_8d8a7154-5be4-489d-b2ed-5339f7378448.png?v=1749492735&width=360",
-    label: "JUST ADDED",
-    title: "New",
-    subtitle: "Shop the latest",
-    href: "/shop",
-  },
-  {
-    image:
-      "https://palo-alto-theme-main.myshopify.com/cdn/shop/files/E-COM-5-727_3000x_8554d774-d118-402d-839f-1d2eaa901c6e.jpg?v=1749491700&width=360",
-    label: "LAYERS TO LOVE",
-    title: "Fall/Winter",
-    subtitle: "Bundle up in style",
-    href: "/shop",
-  },
-  {
-    image:
-      "https://palo-alto-theme-main.myshopify.com/cdn/shop/files/E-COM-5-722_900x_aacec23d-20c7-4248-832f-442482b2ec59.jpg?v=1749492737&width=360",
-    label: "SLEEK STYLES",
-    title: "Dresses",
-    subtitle: "For every occasion",
-    href: "/shop",
-  },
-  {
-    image:
-      "https://palo-alto-theme-main.myshopify.com/cdn/shop/files/E-COM-5-73_3000x_3f281009-80ba-41d1-80a7-613341ea1457.jpg?v=1749491783&width=360",
-    label: "MOST-WANTED",
-    title: "Bestselling",
-    subtitle: "Selling fast!",
-    href: "/shop",
-  },
-];
+export type ShopByCategoryStripItem = {
+  categoryId: string;
+  label: string;
+  imageSrc: string | null;
+};
 
-export function ShopByCategorySection() {
+const SECTION_BG = "#F9F7F2";
+
+type ShopByCategorySectionProps = {
+  items: ShopByCategoryStripItem[];
+};
+
+export function ShopByCategorySection({ items }: ShopByCategorySectionProps) {
+  if (items.length === 0) return null;
+
   return (
-    <section className="w-full px-4 py-12 md:py-16" aria-label="Shop by category">
-      <div className="mx-auto max-w-6xl">
-        {/* Header */}
-        <header className="text-center mb-8 md:mb-10">
-          <p className="text-xs md:text-sm font-medium tracking-widest text-neutral-400 uppercase mb-2">
-            THE ESSENTIALS
+    <section
+      className="w-full py-12 md:py-16"
+      style={{ backgroundColor: SECTION_BG }}
+      aria-labelledby="shop-by-category-heading"
+      lang="ar"
+    >
+      <div className={`mx-auto max-w-6xl ${pagePaddingX}`}>
+        <header className="mb-10 text-center md:mb-14">
+          <p
+            className="mb-2.5 text-xs font-semibold tracking-[0.26em] text-brand-dark/90 sm:text-[13px] md:text-sm"
+            style={sans}
+          >
+            المجتمع
           </p>
-          <h2 className="text-2xl md:text-3xl font-bold text-black">
-            Shop by Category
+          <h2
+            id="shop-by-category-heading"
+            className="text-[1.9rem] font-medium leading-tight text-[#1a1a1a] sm:text-[2.1rem] md:text-5xl md:font-normal lg:text-[3.25rem]"
+            style={serif}
+          >
+            تسوق حسب الفئة
           </h2>
         </header>
 
-        {/* Four-column category grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {CATEGORIES.map((cat) => (
+        <div className="-mx-1 flex flex-nowrap justify-start gap-7 overflow-x-auto overflow-y-hidden pb-2 [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:justify-center sm:gap-10 sm:overflow-visible sm:pb-0 md:gap-12 [&::-webkit-scrollbar]:hidden">
+          {items.map((item) => (
             <Link
-              key={cat.title}
-              href={cat.href}
-              className="group block rounded-lg overflow-hidden aspect-[3/4] min-h-[200px] relative"
+              key={item.categoryId}
+              href={`/shop#cat-${item.categoryId}`}
+              className="group flex w-[124px] shrink-0 flex-col items-center gap-3.5 sm:w-[138px] md:w-[152px] lg:w-[160px]"
+              prefetch
             >
-              <Image
-                src={cat.image}
-                alt=""
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                sizes="(max-width: 768px) 50vw, 25vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
-                <div className="bg-white/85 backdrop-blur-sm rounded px-3 py-2.5 md:px-4 md:py-3 inline-block max-w-full">
-                  <p className="text-[10px] md:text-xs font-medium tracking-widest text-neutral-500 uppercase">
-                    {cat.label}
-                  </p>
-                  <p className="text-lg md:text-xl font-bold text-black leading-tight">
-                    {cat.title}
-                  </p>
-                  <p className="text-sm text-neutral-600">{cat.subtitle}</p>
-                </div>
-              </div>
+              <span
+                className="relative block aspect-square w-full overflow-hidden rounded-full bg-white shadow-[0_10px_28px_rgba(153,40,79,0.11)] ring-1 ring-[rgba(0,0,0,0.05)] transition duration-300 group-hover:-translate-y-0.5 group-hover:shadow-[0_14px_32px_rgba(153,40,79,0.16)] group-hover:ring-brand-primary/20"
+                aria-hidden={item.imageSrc ? undefined : true}
+              >
+                {item.imageSrc ? (
+                  <SafeImage
+                    src={item.imageSrc}
+                    alt={item.label}
+                    fill
+                    sizes="(max-width: 640px) 124px, (max-width: 768px) 138px, 160px"
+                    className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.05]"
+                  />
+                ) : (
+                  <span
+                    className="flex h-full w-full items-center justify-center text-2xl font-semibold text-brand-dark/70 md:text-3xl"
+                    style={{ backgroundColor: QGB.color.light, ...sans }}
+                    aria-hidden
+                  >
+                    {item.label.trim().slice(0, 1) || "؟"}
+                  </span>
+                )}
+              </span>
+              <span
+                className="max-w-[9.5rem] text-center text-[13px] font-semibold leading-snug tracking-wide text-neutral-800 sm:text-sm md:text-[15px]"
+                style={sans}
+              >
+                {item.label}
+              </span>
             </Link>
           ))}
         </div>

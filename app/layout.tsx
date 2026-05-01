@@ -40,7 +40,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { categories, collections } = await getNavData();
+  const { categories } = await getNavData();
   return (
     <html lang="ar" dir="rtl">
       <head />
@@ -48,7 +48,7 @@ export default async function RootLayout({
         className={`${tajawal.variable} ${geistSans.variable} ${geistMono.variable} ${cormorant.variable} antialiased font-sans overflow-x-hidden`}
       >
         <CartProvider>
-          <ConditionalNavbar categories={categories} collections={collections} />
+          <ConditionalNavbar categories={categories} />
           {children}
           <ConditionalFooter />
           <WhatsAppFloat />
