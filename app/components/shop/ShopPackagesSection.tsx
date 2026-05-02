@@ -1,6 +1,7 @@
 import { SafeImage } from "@/app/components/SafeImage";
 import { pagePaddingX, sans, serif } from "@/lib/page-theme";
 import { formatDualPrice } from "@/lib/price-format";
+import Link from "next/link";
 
 export type ShopPackageProduct = {
   id: string;
@@ -44,13 +45,15 @@ export function ShopPackagesSection({ packages }: { packages: ShopPackage[] }) {
             const heroImage = item.image || item.products[0]?.image || "";
             const singlePackage = packages.length === 1;
             return (
-              <article
+              <Link
                 key={item.id}
+                href={`/package/${encodeURIComponent(item.id)}`}
                 className={[
                   "group relative h-[260px] shrink-0 overflow-hidden rounded-xl bg-neutral-100 outline-none ring-0 transition hover:opacity-[0.98] md:h-[300px]",
                   singlePackage ? "w-full" : "w-[min(88vw,760px)]",
                 ].join(" ")}
                 dir="rtl"
+                aria-label={`عرض الباقة ${item.name}`}
               >
                 {heroImage ? (
                   <SafeImage
@@ -90,7 +93,7 @@ export function ShopPackagesSection({ packages }: { packages: ShopPackage[] }) {
                     </div>
                   </div>
                 </div>
-              </article>
+              </Link>
             );
           })}
         </div>
