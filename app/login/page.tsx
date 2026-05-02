@@ -92,7 +92,7 @@ function LoginForm() {
           <div className="flex flex-col gap-6">
             <button
               type="submit"
-              className="w-full rounded-full bg-neutral-900 py-4 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+              className="qgb-btn-primary h-13 w-full text-sm"
               style={sans}
             >
               دخول

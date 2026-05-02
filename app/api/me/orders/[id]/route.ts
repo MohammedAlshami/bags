@@ -62,7 +62,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Order cannot be updated" }, { status: 400 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
     const paymentProofUrl =
       typeof body?.paymentProofUrl === "string" ? body.paymentProofUrl.trim() : undefined;
     if (paymentProofUrl === undefined) {

@@ -9,9 +9,11 @@ import { sans, pagePaddingX } from "@/lib/page-theme";
 import { ProfileBreadcrumb, ProfileAccountNav, profileAccentIcon } from "@/app/components/profile/ProfileAccountChrome";
 import { getStoreLocationById } from "@/lib/store-locations";
 import { formatSar } from "@/lib/format-sar";
+import { formatDualPrice } from "@/lib/price-format";
 
 type OrderItem = { slug?: string; name?: string; price?: string; quantity?: number; image?: string };
 type ShippingAddress = Record<string, unknown>;
+type LinePriceMeta = { oldRiyal: number | null };
 
 type OrderDetail = {
   _id: string;
@@ -43,6 +45,7 @@ export default function ProfileOrderDetailPage() {
   const id = params?.id as string;
   const [user, setUser] = useState<{ username: string; role: string } | null>(null);
   const [order, setOrder] = useState<OrderDetail | null>(null);
+  const [linePriceMetaBySlug, setLinePriceMetaBySlug] = useState<Record<string, LinePriceMeta>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +53,8 @@ export default function ProfileOrderDetailPage() {
     fetch("/api/auth/me", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
-        const u = data.user ?? null;
+        const auth = data as { user?: { username: string; role: string } | null };
+        const u = auth.user ?? null;
         setUser(u);
         if (!u) {
           router.replace("/login");
@@ -75,12 +79,45 @@ export default function ProfileOrderDetailPage() {
         }
         return res.json();
       })
-      .then((data: OrderDetail | undefined) => {
-        if (data) setOrder(data);
+      .then((data) => {
+        if (data) setOrder(data as OrderDetail);
       })
       .catch(() => setError("حدث خطأ."))
       .finally(() => setLoading(false));
   }, [id, router]);
+
+  useEffect(() => {
+    const slugs = [...new Set((order?.items ?? []).map((item) => item.slug).filter((slug): slug is string => Boolean(slug)))];
+    if (slugs.length === 0) {
+      setLinePriceMetaBySlug({});
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const entries = await Promise.all(
+        slugs.map(async (slug) => {
+          try {
+            const res = await fetch(`/api/products/${encodeURIComponent(slug)}`);
+            if (!res.ok) return [slug, null] as const;
+            const data = (await res.json()) as { oldRiyal?: unknown };
+            const oldRiyal = typeof data.oldRiyal === "number" ? data.oldRiyal : data.oldRiyal ? Number(data.oldRiyal) : null;
+            return [slug, { oldRiyal: Number.isFinite(oldRiyal) ? oldRiyal : null }] as const;
+          } catch {
+            return [slug, null] as const;
+          }
+        })
+      );
+      if (cancelled) return;
+      const next: Record<string, LinePriceMeta> = {};
+      for (const [slug, meta] of entries) {
+        if (meta) next[slug] = meta;
+      }
+      setLinePriceMetaBySlug(next);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [order?.items]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -213,19 +250,6 @@ export default function ProfileOrderDetailPage() {
               ) : null}
             </div>
 
-            {order.paymentProofUrl ? (
-              <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
-                <h2 className="flex items-center gap-2 text-lg font-medium text-neutral-900" style={sans}>
-                  <Banknote className={profileAccentIcon} strokeWidth={1.35} />
-                  إثبات الدفع
-                </h2>
-                <div className="relative mt-4 max-h-96 w-full overflow-hidden rounded-xl bg-neutral-50">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={order.paymentProofUrl} alt="إثبات الدفع" className="max-h-96 w-full object-contain" />
-                </div>
-              </div>
-            ) : null}
-
             {(order.trackingNumber || order.carrier || order.shippedAt) && order.status !== "cancelled" ? (
               <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
                 <h2 className="flex items-center gap-2 text-lg font-medium text-neutral-900" style={sans}>
@@ -274,23 +298,27 @@ export default function ProfileOrderDetailPage() {
               </h2>
               {order.items?.length ? (
                 <ul className="mt-6 space-y-4">
-                  {order.items.map((it, i) => (
-                    <li key={i} className="flex gap-4">
-                      <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-[#FCF0F2]">
-                        {it.image ? (
-                          <SafeImage src={it.image} alt="" fill className="object-contain p-1" sizes="80px" />
-                        ) : null}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-neutral-900" style={sans}>
-                          {it.name ?? "—"}
-                        </p>
-                        <p className="mt-0.5 text-sm text-neutral-500" style={sans}>
-                          {it.price ?? ""} × {it.quantity ?? 0}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
+                  {order.items.map((it, i) => {
+                    const meta = it.slug ? linePriceMetaBySlug[it.slug] : undefined;
+                    const priceLine = it.price ? formatDualPrice(it.price, meta?.oldRiyal) : "";
+                    return (
+                      <li key={i} className="flex gap-4">
+                        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-[#FCF0F2]">
+                          {it.image ? (
+                            <SafeImage src={it.image} alt="" fill className="object-contain p-1" sizes="80px" />
+                          ) : null}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-neutral-900" style={sans}>
+                            {it.name ?? "—"}
+                          </p>
+                          <p className="mt-0.5 text-sm text-neutral-500" style={sans}>
+                            {priceLine} × {it.quantity ?? 0}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <p className="mt-4 text-sm text-neutral-500" style={sans}>
@@ -298,6 +326,19 @@ export default function ProfileOrderDetailPage() {
                 </p>
               )}
             </div>
+
+            {order.paymentProofUrl ? (
+              <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
+                <h2 className="flex items-center gap-2 text-lg font-medium text-neutral-900" style={sans}>
+                  <Banknote className={profileAccentIcon} strokeWidth={1.35} />
+                  إثبات الدفع
+                </h2>
+                <div className="relative mt-4 max-h-96 w-full overflow-hidden rounded-xl bg-neutral-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={order.paymentProofUrl} alt="إثبات الدفع" className="max-h-96 w-full object-contain" />
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

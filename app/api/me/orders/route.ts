@@ -90,8 +90,12 @@ export async function POST(request: Request) {
   try {
     const session = await requireCustomer();
     const body = (await request.json()) as Record<string, unknown>;
-    const branchKey = typeof body.branchKey === "string" ? body.branchKey.trim() : "";
-    if (!branchKey || !isValidBranchKey(branchKey)) {
+    const cityScope = body.cityScope === "outside" ? "outside" : "sanaa";
+    const deliveryMethod = cityScope === "outside" ? "pickup" : body.deliveryMethod === "pickup" ? "pickup" : "direct";
+    const needsBranch = cityScope === "outside" || deliveryMethod === "pickup";
+    const rawBranchKey = typeof body.branchKey === "string" ? body.branchKey.trim() : "";
+    const branchKey = needsBranch ? rawBranchKey : "";
+    if (needsBranch && (!branchKey || !isValidBranchKey(branchKey))) {
       return NextResponse.json({ error: "Branch required" }, { status: 400 });
     }
 
@@ -112,22 +116,33 @@ export async function POST(request: Request) {
     const itemsJson = JSON.stringify(items);
 
     const rawPm = typeof body.paymentMethod === "string" ? body.paymentMethod.trim().toLowerCase() : "";
-    const paymentMethod = rawPm === "cod" ? "cod" : "bank";
+    const paymentMethod = cityScope === "outside" ? "bank" : rawPm === "cod" ? "cod" : "bank";
+    const submittedAddress =
+      body.address && typeof body.address === "object" ? (body.address as Record<string, unknown>) : null;
 
     const userRows = await sql`
       SELECT address, full_name, phone FROM users WHERE id = ${session.sub}::uuid AND role = 'customer' LIMIT 1
     `;
     const u = userRows[0] as { address: string; full_name: string; phone: string } | undefined;
+    const directAddress =
+      deliveryMethod === "direct"
+        ? String(submittedAddress?.address ?? u?.address ?? "").trim()
+        : "";
+    if (deliveryMethod === "direct" && !directAddress) {
+      return NextResponse.json({ error: "Address required" }, { status: 400 });
+    }
     const shippingAddress = {
-      fullName: u?.full_name ?? "",
-      line1: u?.address ?? "",
+      fullName: String(submittedAddress?.fullName ?? u?.full_name ?? ""),
+      line1: directAddress,
       line2: "",
-      city: "",
+      city: cityScope === "sanaa" ? "صنعاء" : "خارج صنعاء",
       state: "",
       postCode: "",
-      country: "",
-      phone: u?.phone ?? "",
-      branchKey,
+      country: "YE",
+      phone: String(submittedAddress?.phone ?? u?.phone ?? ""),
+      cityScope,
+      deliveryMethod,
+      branchKey: branchKey || null,
       paymentMethod,
       ...(discountOutcome.appliedCode ? { discountCode: discountOutcome.appliedCode } : {}),
     };

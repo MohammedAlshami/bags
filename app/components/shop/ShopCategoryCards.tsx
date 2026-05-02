@@ -23,7 +23,7 @@ export function ShopCategoryCards({ items }: { items: ShopCategoryCardModel[] })
           {items.map((c) => (
             <Link
               key={c.id}
-              href={`/shop?category=${encodeURIComponent(c.id)}`}
+              href={`/shop?category=${encodeURIComponent(c.id)}#shop-catalog`}
               className="group relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-neutral-100 outline-none ring-0 transition hover:opacity-[0.98] focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
               prefetch
             >

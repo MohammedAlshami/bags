@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, LayoutDashboard, Package, Users, ShoppingBag } from "lucide-react";
+import { BookOpen, Boxes, LayoutDashboard, Package, Users, ShoppingBag } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { adminIconClassName, sans } from "@/lib/page-theme";
@@ -10,6 +10,7 @@ import { adminIconClassName, sans } from "@/lib/page-theme";
 const TABS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/admin", label: "نظرة عامة", icon: LayoutDashboard },
   { href: "/admin/products", label: "المنتجات", icon: Package },
+  { href: "/admin/packages", label: "الباقات", icon: Boxes },
   { href: "/admin/blogs", label: "المدونة", icon: BookOpen },
   { href: "/admin/customers", label: "العملاء", icon: Users },
   { href: "/admin/orders", label: "الطلبات", icon: ShoppingBag },
@@ -42,7 +43,7 @@ export function AdminTabs() {
       </nav>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden" aria-label="أقسام لوحة الإدارة">
-        <div className="mx-auto grid max-w-lg grid-cols-5 rounded-full border border-black/5 bg-white/95 px-2 py-2 shadow-[0_14px_40px_rgba(0,0,0,0.16)] backdrop-blur-xl">
+        <div className="mx-auto grid max-w-xl grid-cols-6 rounded-full border border-black/5 bg-white/95 px-2 py-2 shadow-[0_14px_40px_rgba(0,0,0,0.16)] backdrop-blur-xl">
           {TABS.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href));
             return (

@@ -1,6 +1,7 @@
 import { ShopPageBanner } from "@/app/components/ShopPageBanner";
 import { ShopCategoryCards } from "@/app/components/shop/ShopCategoryCards";
 import { ShopCatalogClient, type CatalogCategory, type CatalogProduct } from "@/app/components/shop/ShopCatalogClient";
+import { ShopPackagesSection, type ShopPackage } from "@/app/components/shop/ShopPackagesSection";
 import { sql } from "@/lib/db";
 import { mapProduct, type ProductRow } from "@/lib/db-mappers";
 
@@ -9,6 +10,27 @@ type ShopCategory = {
   name: string;
   sortOrder: number;
 };
+
+type PackageRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  image: string | null;
+  product_ids: unknown;
+  price: string;
+  old_riyal: number | null;
+};
+
+function parsePackageProductIds(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string");
+  if (typeof value !== "string" || !value.trim()) return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 export default async function ShopPage({
   searchParams,
@@ -88,6 +110,36 @@ export default async function ShopPage({
     }))
     .filter((c) => c.image);
 
+  const packageRows = (await sql`
+    SELECT id, name, description, image, product_ids, price, old_riyal
+    FROM packages
+    ORDER BY created_at DESC
+  `) as PackageRow[];
+
+  const productsById = new Map(
+    products.map((product) => [
+      product.slug,
+      {
+        id: product.slug,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+      },
+    ])
+  );
+
+  const packages: ShopPackage[] = packageRows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    description: row.description ?? "",
+    image: row.image ?? "",
+    price: row.price,
+    oldRiyal: row.old_riyal == null ? null : Number(row.old_riyal),
+    products: parsePackageProductIds(row.product_ids)
+      .map((id) => productsById.get(id))
+      .filter((product): product is NonNullable<typeof product> => Boolean(product)),
+  }));
+
   const allCategoryIds = new Set(catalogCategories.map((c) => c._id));
   const validatedInitialCategoryId =
     initialCategoryId && allCategoryIds.has(initialCategoryId) ? initialCategoryId : null;
@@ -106,6 +158,7 @@ export default async function ShopPage({
     >
       <ShopPageBanner />
       <ShopCategoryCards items={categoryCards} />
+      <ShopPackagesSection packages={packages} />
       <ShopCatalogClient
         categories={catalogCategories}
         initialCategoryId={validatedInitialCategoryId}

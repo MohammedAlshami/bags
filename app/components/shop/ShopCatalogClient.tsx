@@ -285,7 +285,7 @@ export function ShopCatalogClient({
   }, [categories, flatProducts]);
 
   return (
-    <div className={`mx-auto max-w-[1920px] px-4 pt-8 sm:px-8 md:px-14 md:pt-10 lg:px-24`}>
+    <div id="shop-catalog" className={`scroll-mt-28 mx-auto max-w-[1920px] px-4 pt-8 sm:px-8 md:px-14 md:pt-10 lg:px-24`}>
       <FilterToggle open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
 
       <div className="mb-6 flex flex-col gap-4 border-b border-neutral-200 pb-6 md:flex-row md:items-center md:justify-between">

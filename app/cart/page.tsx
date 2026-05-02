@@ -23,6 +23,9 @@ function formatSar(n: number) {
 }
 
 type MeUser = { username: string; role: string } | null;
+type ProfileAddress = { fullName: string; address: string; phone: string };
+type CityScope = "sanaa" | "outside";
+type DeliveryMethod = "direct" | "pickup";
 
 function BranchSelectDropdown({
   id,
@@ -310,7 +313,13 @@ function CartCheckoutInner() {
   }, [cartSlugKey]);
 
   const [me, setMe] = useState<MeUser | undefined>(undefined);
+  const [profileAddress, setProfileAddress] = useState<ProfileAddress | null>(null);
+  const [addressPanelOpen, setAddressPanelOpen] = useState(false);
+  const [addressDraft, setAddressDraft] = useState<ProfileAddress>({ fullName: "", address: "", phone: "" });
+  const [addressSaving, setAddressSaving] = useState(false);
   const [branchKey, setBranchKey] = useState<string>(STORE_LOCATIONS[0]?.id ?? "");
+  const [cityScope, setCityScope] = useState<CityScope>("sanaa");
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("direct");
   const [paymentMethod, setPaymentMethod] = useState<"bank" | "cod">("bank");
   const [voucherInput, setVoucherInput] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState<string | null>(null);
@@ -331,9 +340,37 @@ function CartCheckoutInner() {
   useEffect(() => {
     fetch("/api/auth/me", { credentials: "include" })
       .then((r) => r.json())
-      .then((d) => setMe(d.user ?? null))
+      .then((d) => {
+        const data = d as { user?: MeUser };
+        setMe(data.user ?? null);
+      })
       .catch(() => setMe(null));
   }, []);
+
+  useEffect(() => {
+    if (me?.role !== "customer") return;
+    fetch("/api/me/profile", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+        const profile = data as { fullName?: unknown; address?: unknown; phone?: unknown };
+        const next = {
+          fullName: typeof profile.fullName === "string" ? profile.fullName : "",
+          address: typeof profile.address === "string" ? profile.address : "",
+          phone: typeof profile.phone === "string" ? profile.phone : "",
+        };
+        setProfileAddress(next);
+        setAddressDraft(next);
+      })
+      .catch(() => undefined);
+  }, [me]);
+
+  useEffect(() => {
+    if (cityScope === "outside") {
+      setDeliveryMethod("pickup");
+      setPaymentMethod("bank");
+    }
+  }, [cityScope]);
 
   useEffect(() => {
     if (!paymentOrderId) {
@@ -352,12 +389,13 @@ function CartCheckoutInner() {
         return r.json();
       })
       .then((data) => {
-        if (data) {
+        const order = data as { _id?: string; total?: number; status?: string; paymentProofUrl?: string | null } | null;
+        if (order?._id) {
           setPaymentOrder({
-            _id: data._id,
-            total: data.total,
-            status: data.status,
-            paymentProofUrl: data.paymentProofUrl ?? null,
+            _id: order._id,
+            total: Number(order.total ?? 0),
+            status: order.status ?? "",
+            paymentProofUrl: order.paymentProofUrl ?? null,
           });
         }
       })
@@ -366,7 +404,15 @@ function CartCheckoutInner() {
   }, [paymentOrderId, router]);
 
   const placeOrder = useCallback(async () => {
-    if (!branchKey || items.length === 0) return;
+    const needsBranch = cityScope === "outside" || deliveryMethod === "pickup";
+    const needsAddress = cityScope === "sanaa" && deliveryMethod === "direct";
+    const normalizedPaymentMethod = cityScope === "outside" ? "bank" : paymentMethod;
+    if ((needsBranch && !branchKey) || items.length === 0) return;
+    if (needsAddress && !profileAddress?.address?.trim()) {
+      setPlaceError("أضيفي عنوان التوصيل داخل صنعاء أولاً.");
+      setAddressPanelOpen(true);
+      return;
+    }
     setPlacing(true);
     setPlaceError(null);
     try {
@@ -375,8 +421,11 @@ function CartCheckoutInner() {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          branchKey,
-          paymentMethod,
+          branchKey: needsBranch ? branchKey : null,
+          cityScope,
+          deliveryMethod,
+          paymentMethod: normalizedPaymentMethod,
+          address: needsAddress ? profileAddress : null,
           ...(appliedVoucher ? { discountCode: appliedVoucher } : {}),
           items: items.map((i) => ({
             slug: i.slug,
@@ -387,7 +436,7 @@ function CartCheckoutInner() {
           })),
         }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as { _id?: string; error?: string };
       if (res.status === 401) {
         router.push(`/login?next=${encodeURIComponent("/cart")}`);
         return;
@@ -397,13 +446,17 @@ function CartCheckoutInner() {
         throw new Error(err || "تعذر إنشاء الطلب");
       }
       clearCart();
-      router.replace(`/cart?payment=${data._id}`);
+      if (normalizedPaymentMethod === "cod") {
+        router.replace("/profile");
+      } else {
+        router.replace(`/cart?payment=${data._id}`);
+      }
     } catch (e) {
       setPlaceError(e instanceof Error ? e.message : "خطأ");
     } finally {
       setPlacing(false);
     }
-  }, [branchKey, items, clearCart, router, paymentMethod, appliedVoucher]);
+  }, [branchKey, cityScope, deliveryMethod, items, clearCart, router, paymentMethod, appliedVoucher, profileAddress]);
 
   const checkoutTotals = useMemo(
     () => applyCheckoutDiscount(subtotal, appliedVoucher ?? undefined),
@@ -418,7 +471,7 @@ function CartCheckoutInner() {
       const fd = new FormData();
       fd.set("file", file);
       const up = await fetch("/api/me/upload", { method: "POST", body: fd, credentials: "include" });
-      const upData = await up.json().catch(() => ({}));
+      const upData = (await up.json().catch(() => ({}))) as { error?: string; url?: string };
       if (!up.ok) {
         const err = typeof upData.error === "string" ? upData.error : "";
         throw new Error(err || "فشل رفع الملف");
@@ -432,21 +485,52 @@ function CartCheckoutInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paymentProofUrl: url }),
       });
-      const pData = await patch.json().catch(() => ({}));
+      const pData = (await patch.json().catch(() => ({}))) as { _id?: string; total?: number; status?: string; paymentProofUrl?: string | null; error?: string };
       if (!patch.ok) {
         const err = typeof pData.error === "string" ? pData.error : "";
         throw new Error(err || "تعذر حفظ إثبات الدفع");
       }
       setPaymentOrder({
-        _id: pData._id,
-        total: pData.total,
-        status: pData.status,
+        _id: pData._id ?? paymentOrderId,
+        total: Number(pData.total ?? 0),
+        status: pData.status ?? "",
         paymentProofUrl: pData.paymentProofUrl ?? null,
       });
     } catch (e) {
       setPaymentError(e instanceof Error ? e.message : "خطأ");
     } finally {
       setUploadBusy(false);
+    }
+  };
+
+  const saveAddressDraft = async () => {
+    setAddressSaving(true);
+    setPlaceError(null);
+    try {
+      const res = await fetch("/api/me/profile", {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: addressDraft.fullName,
+          address: addressDraft.address,
+          phone: addressDraft.phone,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { fullName?: string; address?: string; phone?: string; error?: string };
+      if (!res.ok) throw new Error(data.error || "تعذر حفظ العنوان");
+      const next = {
+        fullName: data.fullName ?? addressDraft.fullName,
+        address: data.address ?? addressDraft.address,
+        phone: data.phone ?? addressDraft.phone,
+      };
+      setProfileAddress(next);
+      setAddressDraft(next);
+      setAddressPanelOpen(false);
+    } catch (e) {
+      setPlaceError(e instanceof Error ? e.message : "تعذر حفظ العنوان");
+    } finally {
+      setAddressSaving(false);
     }
   };
 
@@ -483,12 +567,6 @@ function CartCheckoutInner() {
           ) : paymentOrder ? (
             <div className="mt-10 space-y-8">
               <section className="rounded-2xl border border-neutral-200 bg-[#FCF0F2]/40 p-6">
-                <p className="text-xs text-neutral-500" style={sans}>
-                  رقم الطلب (انسخيه في ملاحظات التحويل)
-                </p>
-                <p className="mt-2 font-mono text-lg text-neutral-900 break-all" dir="ltr">
-                  {paymentOrder._id}
-                </p>
                 <p className="mt-4 text-sm text-neutral-700" style={sans}>
                   المبلغ المستحق:{" "}
                   <span className="font-semibold text-neutral-900">{formatSar(Number(paymentOrder.total))}</span>
@@ -510,13 +588,13 @@ function CartCheckoutInner() {
                   </div>
                   <div>
                     <dt className="text-neutral-500">الآيبان (IBAN)</dt>
-                    <dd className="font-mono text-neutral-900" dir="ltr">
+                    <dd className="font-mono text-right text-neutral-900" dir="ltr">
                       {BANK_TRANSFER_INFO.iban}
                     </dd>
                   </div>
                   <div>
                     <dt className="text-neutral-500">رقم الحساب</dt>
-                    <dd className="font-mono text-neutral-900" dir="ltr">
+                    <dd className="font-mono text-right text-neutral-900" dir="ltr">
                       {BANK_TRANSFER_INFO.accountNumber}
                     </dd>
                   </div>
@@ -676,47 +754,6 @@ function CartCheckoutInner() {
               <div className="sticky top-32 space-y-8 pt-2">
                 <div>
                   <p className="text-xs font-medium text-neutral-500" style={sans}>
-                    طريقة الدفع
-                  </p>
-                  <p className="mt-1 text-[11px] text-neutral-400" style={sans}>
-                    جميع الخيارات آمنة؛ يُخزَّن اختيارك مع الطلب.
-                  </p>
-                  <div className="mt-4 space-y-3">
-                    <label className="flex cursor-pointer items-start gap-3 text-start">
-                      <input
-                        type="radio"
-                        name="checkout-payment"
-                        checked={paymentMethod === "bank"}
-                        onChange={() => setPaymentMethod("bank")}
-                        className="mt-1 size-4 shrink-0 accent-brand-primary"
-                      />
-                      <span className="text-sm leading-snug text-neutral-800" style={sans}>
-                        <span className="font-medium text-neutral-900">تحويل بنكي</span>
-                        <span className="mt-1 block text-[13px] font-normal text-neutral-500">
-                          بعد تأكيد الطلب ستجدين بيانات الحساب لإتمام التحويل ورفع إثبات الدفع.
-                        </span>
-                      </span>
-                    </label>
-                    <label className="flex cursor-pointer items-start gap-3 text-start">
-                      <input
-                        type="radio"
-                        name="checkout-payment"
-                        checked={paymentMethod === "cod"}
-                        onChange={() => setPaymentMethod("cod")}
-                        className="mt-1 size-4 shrink-0 accent-brand-primary"
-                      />
-                      <span className="text-sm leading-snug text-neutral-800" style={sans}>
-                        <span className="font-medium text-neutral-900">الدفع عند الاستلام</span>
-                        <span className="mt-1 block text-[13px] font-normal text-neutral-500">
-                          الدفع نقداً عند استلام الطلب من الفرع المختار.
-                        </span>
-                      </span>
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium text-neutral-500" style={sans}>
                     المبالغ
                   </p>
                   <dl className="mt-3 space-y-2 text-sm" style={sans}>
@@ -823,13 +860,159 @@ function CartCheckoutInner() {
                 ) : (
                   <div className="space-y-5">
                     <div>
-                      <label htmlFor="branch" className="mb-2 block text-xs font-medium text-neutral-500" style={sans}>
-                        الفرع المطلوب
-                      </label>
-                      <BranchSelectDropdown id="branch" value={branchKey} onChange={setBranchKey} />
-                      <p className="mt-2 text-[11px] leading-relaxed text-neutral-500" style={sans}>
-                        الفرع الذي تفضّلين التنسيق معه أو الاستلام منه عند توفر الخدمة.
+                      <p className="mb-2 text-xs font-medium text-neutral-500" style={sans}>
+                        المدينة
                       </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setCityScope("sanaa")}
+                          className={`rounded-xl px-3 py-3 text-sm ring-1 transition-colors ${
+                            cityScope === "sanaa"
+                              ? "bg-brand-light text-brand-primary ring-brand-primary"
+                              : "bg-neutral-50 text-neutral-700 ring-neutral-200/80 hover:ring-neutral-300"
+                          }`}
+                          style={sans}
+                        >
+                          داخل صنعاء
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCityScope("outside")}
+                          className={`rounded-xl px-3 py-3 text-sm ring-1 transition-colors ${
+                            cityScope === "outside"
+                              ? "bg-brand-light text-brand-primary ring-brand-primary"
+                              : "bg-neutral-50 text-neutral-700 ring-neutral-200/80 hover:ring-neutral-300"
+                          }`}
+                          style={sans}
+                        >
+                          خارج صنعاء
+                        </button>
+                      </div>
+                    </div>
+
+                    {cityScope === "sanaa" ? (
+                      <div>
+                        <p className="mb-2 text-xs font-medium text-neutral-500" style={sans}>
+                          طريقة الاستلام
+                        </p>
+                        <div className="grid gap-2">
+                          <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-neutral-50 px-3 py-3 ring-1 ring-neutral-200/80">
+                            <input
+                              type="radio"
+                              name="delivery-method"
+                              checked={deliveryMethod === "direct"}
+                              onChange={() => setDeliveryMethod("direct")}
+                              className="mt-1 size-4 accent-brand-primary"
+                            />
+                            <span className="text-sm text-neutral-800" style={sans}>
+                              <span className="font-medium text-neutral-900">توصيل مباشر داخل صنعاء</span>
+                              <span className="mt-1 block text-xs text-neutral-500">سنستخدم عنوانك المحفوظ للتوصيل.</span>
+                            </span>
+                          </label>
+                          <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-neutral-50 px-3 py-3 ring-1 ring-neutral-200/80">
+                            <input
+                              type="radio"
+                              name="delivery-method"
+                              checked={deliveryMethod === "pickup"}
+                              onChange={() => setDeliveryMethod("pickup")}
+                              className="mt-1 size-4 accent-brand-primary"
+                            />
+                            <span className="text-sm text-neutral-800" style={sans}>
+                              <span className="font-medium text-neutral-900">استلام من نقطة بيع</span>
+                              <span className="mt-1 block text-xs text-neutral-500">اختاري نقطة البيع المناسبة لك.</span>
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="rounded-xl bg-neutral-50 px-3 py-3 text-xs leading-6 text-neutral-600 ring-1 ring-neutral-200/80" style={sans}>
+                        خارج صنعاء: الدفع يكون بتحويل بنكي فقط، والاستلام من نقاط البيع.
+                      </p>
+                    )}
+
+                    {cityScope === "sanaa" && deliveryMethod === "direct" ? (
+                      <div className="rounded-xl bg-neutral-50 p-3 ring-1 ring-neutral-200/80">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0" style={sans}>
+                            <p className="text-xs font-medium text-neutral-500">عنوان التوصيل</p>
+                            <p className="mt-1 whitespace-pre-wrap text-sm text-neutral-900">
+                              {profileAddress?.address?.trim() || "لا يوجد عنوان محفوظ."}
+                            </p>
+                            {profileAddress?.phone ? <p className="mt-1 text-xs text-neutral-500">{profileAddress.phone}</p> : null}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAddressDraft(profileAddress ?? { fullName: "", address: "", phone: "" });
+                              setAddressPanelOpen(true);
+                            }}
+                            className="shrink-0 rounded-full border border-brand-primary px-3 py-1.5 text-xs font-semibold text-brand-primary hover:bg-brand-light"
+                            style={sans}
+                          >
+                            {profileAddress?.address?.trim() ? "تغيير" : "إضافة"}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div>
+                      {(cityScope === "outside" || deliveryMethod === "pickup") ? (
+                        <>
+                          <label htmlFor="branch" className="mb-2 block text-xs font-medium text-neutral-500" style={sans}>
+                            نقطة البيع للاستلام
+                          </label>
+                          <BranchSelectDropdown id="branch" value={branchKey} onChange={setBranchKey} />
+                          <p className="mt-2 text-[11px] leading-relaxed text-neutral-500" style={sans}>
+                            اختاري نقطة البيع التي تريدين استلام الطلب منها.
+                          </p>
+                        </>
+                      ) : null}
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-medium text-neutral-500" style={sans}>
+                        طريقة الدفع
+                      </p>
+                      <p className="mt-1 text-[11px] text-neutral-400" style={sans}>
+                        {cityScope === "outside"
+                          ? "خارج صنعاء متاح التحويل البنكي فقط."
+                          : "داخل صنعاء يمكنك اختيار التحويل أو الدفع عند الاستلام."}
+                      </p>
+                      <div className="mt-4 space-y-3">
+                        <label className="flex cursor-pointer items-start gap-3 text-start">
+                          <input
+                            type="radio"
+                            name="checkout-payment"
+                            checked={paymentMethod === "bank"}
+                            onChange={() => setPaymentMethod("bank")}
+                            className="mt-1 size-4 shrink-0 accent-brand-primary"
+                          />
+                          <span className="text-sm leading-snug text-neutral-800" style={sans}>
+                            <span className="font-medium text-neutral-900">تحويل بنكي</span>
+                            <span className="mt-1 block text-[13px] font-normal text-neutral-500">
+                              بعد تأكيد الطلب ستجدين بيانات الحساب لإتمام التحويل ورفع إثبات الدفع.
+                            </span>
+                          </span>
+                        </label>
+                        {cityScope === "sanaa" ? (
+                          <label className="flex cursor-pointer items-start gap-3 text-start">
+                            <input
+                              type="radio"
+                              name="checkout-payment"
+                              checked={paymentMethod === "cod"}
+                              onChange={() => setPaymentMethod("cod")}
+                              className="mt-1 size-4 shrink-0 accent-brand-primary"
+                            />
+                            <span className="text-sm leading-snug text-neutral-800" style={sans}>
+                              <span className="font-medium text-neutral-900">الدفع عند الاستلام</span>
+                              <span className="mt-1 block text-[13px] font-normal text-neutral-500">
+                                الدفع نقداً عند استلام الطلب.
+                              </span>
+                            </span>
+                          </label>
+                        ) : null}
+                      </div>
                     </div>
                     {placeError ? (
                       <p className="text-sm text-red-600" role="alert">
@@ -852,6 +1035,76 @@ function CartCheckoutInner() {
           </div>
         )}
       </div>
+      {addressPanelOpen ? (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-[60] bg-black/40"
+            aria-label="إغلاق"
+            onClick={() => setAddressPanelOpen(false)}
+          />
+          <aside className="fixed inset-x-0 bottom-0 z-[70] flex max-h-[85vh] flex-col rounded-t-2xl border-t border-black/10 bg-white shadow-2xl md:inset-x-auto md:bottom-0 md:left-0 md:top-0 md:h-full md:max-h-none md:w-full md:max-w-md md:rounded-none md:border-l md:border-t-0">
+            <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3">
+              <h2 className="text-lg font-semibold text-neutral-900" style={sans}>
+                عنوان التوصيل
+              </h2>
+              <button type="button" onClick={() => setAddressPanelOpen(false)} className="rounded-sm p-2 text-neutral-600 hover:opacity-70">
+                إغلاق
+              </button>
+            </div>
+            <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4" style={sans}>
+              {profileAddress?.address?.trim() ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddressDraft(profileAddress);
+                    setAddressPanelOpen(false);
+                  }}
+                  className="w-full rounded-xl border border-brand-primary bg-brand-light/25 p-4 text-right text-sm text-neutral-900"
+                >
+                  <span className="block font-semibold">العنوان المحفوظ</span>
+                  <span className="mt-1 block whitespace-pre-wrap text-neutral-700">{profileAddress.address}</span>
+                  {profileAddress.phone ? <span className="mt-1 block text-xs text-neutral-500">{profileAddress.phone}</span> : null}
+                </button>
+              ) : null}
+              <div>
+                <label className="mb-1 block text-xs text-neutral-500">الاسم</label>
+                <input
+                  value={addressDraft.fullName}
+                  onChange={(e) => setAddressDraft((prev) => ({ ...prev, fullName: e.target.value }))}
+                  className="w-full rounded-xl bg-neutral-50 px-3 py-2.5 text-sm ring-1 ring-neutral-200/80 outline-none focus:ring-2 focus:ring-brand-primary/35"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-neutral-500">رقم الهاتف</label>
+                <input
+                  value={addressDraft.phone}
+                  onChange={(e) => setAddressDraft((prev) => ({ ...prev, phone: e.target.value }))}
+                  className="w-full rounded-xl bg-neutral-50 px-3 py-2.5 text-sm ring-1 ring-neutral-200/80 outline-none focus:ring-2 focus:ring-brand-primary/35"
+                  dir="ltr"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-neutral-500">العنوان داخل صنعاء</label>
+                <textarea
+                  value={addressDraft.address}
+                  onChange={(e) => setAddressDraft((prev) => ({ ...prev, address: e.target.value }))}
+                  className="min-h-28 w-full rounded-xl bg-neutral-50 px-3 py-2.5 text-sm ring-1 ring-neutral-200/80 outline-none focus:ring-2 focus:ring-brand-primary/35"
+                  placeholder="الحي، الشارع، أقرب معلم..."
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => void saveAddressDraft()}
+                disabled={addressSaving || !addressDraft.address.trim()}
+                className="qgb-btn-primary flex w-full justify-center disabled:pointer-events-none disabled:opacity-45"
+              >
+                {addressSaving ? "جاري الحفظ..." : "حفظ واستخدام العنوان"}
+              </button>
+            </div>
+          </aside>
+        </>
+      ) : null}
     </main>
   );
 }

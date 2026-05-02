@@ -254,6 +254,8 @@ export default function Navbar({ categories }: NavbarProps) {
   const logoSrc = "/logo_img.png";
 
   const showHeaderBar = headerBarVisible || cartMounted || mobileMenuOpen;
+  const isAdmin = user?.role === "admin";
+  const mobileNavItems = isAdmin ? MOBILE_NAV_ITEMS.filter((item) => item.href !== "/cart") : MOBILE_NAV_ITEMS;
 
   return (
     <div
@@ -358,33 +360,35 @@ export default function Navbar({ categories }: NavbarProps) {
                   <User size={18} className={`shrink-0 ${iconAccent} transition-colors`} strokeWidth={2.25} />
                 </Link>
               )}
-              <div className="relative flex h-9 w-9 items-center justify-center">
-                <button
-                  type="button"
-                  onClick={() => setCartOpen(true)}
-                  className="group inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-all duration-200 hover:bg-brand-light/40 active:scale-[0.97]"
-                  title="السلة"
-                  aria-label="السلة"
-                >
-                  <ShoppingBag
-                    size={18}
-                    className={`shrink-0 transition-colors ${
-                      isShopPink
-                        ? "text-[#B63A6B] group-hover:text-brand-dark"
-                        : "text-gray-500 group-hover:text-brand-primary"
-                    }`}
-                    strokeWidth={2.25}
-                  />
-                  {count > 0 ? (
-                    <span
-                      className="absolute -end-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-gray-800 text-[8px] text-white"
-                      style={sans}
-                    >
-                      {count > 99 ? "99+" : count}
-                    </span>
-                  ) : null}
-                </button>
-              </div>
+              {!isAdmin ? (
+                <div className="relative flex h-9 w-9 items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setCartOpen(true)}
+                    className="group inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-all duration-200 hover:bg-brand-light/40 active:scale-[0.97]"
+                    title="السلة"
+                    aria-label="السلة"
+                  >
+                    <ShoppingBag
+                      size={18}
+                      className={`shrink-0 transition-colors ${
+                        isShopPink
+                          ? "text-[#B63A6B] group-hover:text-brand-dark"
+                          : "text-gray-500 group-hover:text-brand-primary"
+                      }`}
+                      strokeWidth={2.25}
+                    />
+                    {count > 0 ? (
+                      <span
+                        className="absolute -end-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-gray-800 text-[8px] text-white"
+                        style={sans}
+                      >
+                        {count > 99 ? "99+" : count}
+                      </span>
+                    ) : null}
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
@@ -614,25 +618,27 @@ export default function Navbar({ categories }: NavbarProps) {
                 <User className="h-5 w-5 text-gray-500" strokeWidth={2.25} />
               </Link>
             )}
-            <button
-              type="button"
-              className="group relative inline-flex cursor-pointer items-center justify-center rounded-full p-1.5 transition-all duration-200 hover:bg-brand-light/40 active:scale-[0.97]"
-              onClick={() => {
-                setCartOpen(true);
-                setMobileMenuOpen(false);
-              }}
-              aria-label="السلة"
-            >
-              <ShoppingBag
-                className="h-5 w-5 text-gray-500 transition-colors group-hover:text-brand-primary"
-                strokeWidth={2.25}
-              />
-              {count > 0 ? (
-                <span className="absolute -end-1 -top-1 min-h-[0.9rem] min-w-[0.9rem] rounded-full bg-gray-800 px-0.5 text-[8px] leading-4 text-white">
-                  {count > 9 ? "9+" : count}
-                </span>
-              ) : null}
-            </button>
+            {!isAdmin ? (
+              <button
+                type="button"
+                className="group relative inline-flex cursor-pointer items-center justify-center rounded-full p-1.5 transition-all duration-200 hover:bg-brand-light/40 active:scale-[0.97]"
+                onClick={() => {
+                  setCartOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+                aria-label="السلة"
+              >
+                <ShoppingBag
+                  className="h-5 w-5 text-gray-500 transition-colors group-hover:text-brand-primary"
+                  strokeWidth={2.25}
+                />
+                {count > 0 ? (
+                  <span className="absolute -end-1 -top-1 min-h-[0.9rem] min-w-[0.9rem] rounded-full bg-gray-800 px-0.5 text-[8px] leading-4 text-white">
+                    {count > 9 ? "9+" : count}
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -928,9 +934,9 @@ export default function Navbar({ categories }: NavbarProps) {
       <div className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden">
         <nav
           aria-label={TXT.quickNav}
-          className="mx-auto grid max-w-sm grid-cols-4 place-items-center rounded-full border border-black/5 bg-white/95 px-1.5 py-2 backdrop-blur-xl"
+          className={`mx-auto grid max-w-sm ${isAdmin ? "grid-cols-3" : "grid-cols-4"} place-items-center rounded-full border border-black/5 bg-white/95 px-1.5 py-2 backdrop-blur-xl`}
         >
-          {MOBILE_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          {mobileNavItems.map(({ href, label, icon: Icon }) => {
             const targetHref =
               href === "/profile" ? (user ? (user.role === "admin" ? "/admin" : "/profile") : "/login") : href;
             const isActive =
