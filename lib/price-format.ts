@@ -10,6 +10,31 @@ export function formatDualPrice(price: string, oldRiyal?: number | string | null
   return `${Number(normalizedOldRiyal).toLocaleString("en-US")} ${oldYemenRiyal} / ${saudiPrice}`;
 }
 
+export function formatDualDiscountPrice({
+  price,
+  oldRiyal,
+  beforeDiscountPrice,
+  beforeDiscountOldRiyal,
+}: {
+  price: string;
+  oldRiyal?: number | string | null;
+  beforeDiscountPrice?: string | null;
+  beforeDiscountOldRiyal?: number | string | null;
+}) {
+  const current = formatDualPrice(price, oldRiyal);
+  const hasBeforeSar = typeof beforeDiscountPrice === "string" && beforeDiscountPrice.trim().length > 0;
+  const normalizedBeforeOldRiyal =
+    typeof beforeDiscountOldRiyal === "string" ? Number(beforeDiscountOldRiyal) : beforeDiscountOldRiyal;
+  if (!hasBeforeSar && !normalizedBeforeOldRiyal) {
+    return { current, before: null };
+  }
+
+  return {
+    current,
+    before: formatDualPrice(hasBeforeSar ? beforeDiscountPrice : "", normalizedBeforeOldRiyal),
+  };
+}
+
 export type ProductSizePrice = {
   label: string;
   sarPrice: number;

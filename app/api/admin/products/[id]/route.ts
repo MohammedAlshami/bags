@@ -22,7 +22,8 @@ function normalizeNullableNumber(value: unknown): number | null {
 async function fetchProductJoined(id: string) {
   const rows = await sql`
     SELECT p.id, p.name, p.price, p.category, p.category_id, p.image,
-           p.old_riyal, p.sizes, p.description_ar, p.ingredients_ar, p.usage_ar, p.free_from_ar, p.warning_ar, p.contents_ar,
+           p.old_riyal, p.before_discount_price, p.before_discount_old_riyal,
+           p.sizes, p.description_ar, p.ingredients_ar, p.usage_ar, p.free_from_ar, p.warning_ar, p.contents_ar,
            p.collection_id,
            p.created_at, p.updated_at,
            cat.id AS cat_id, cat.name AS cat_name,
@@ -66,7 +67,7 @@ export async function PUT(
     if (!isUuid(id)) {
       return NextResponse.json({ error: "Invalid id" }, { status: 400 });
     }
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
 
     const cur = await fetchProductJoined(id);
     if (!cur) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -87,6 +88,10 @@ export async function PUT(
     }
     const image = body.image !== undefined ? String(body.image).trim() : cur.image;
     const oldRiyal = body.oldRiyal !== undefined ? normalizeNullableNumber(body.oldRiyal) : cur.old_riyal ?? null;
+    const beforeDiscountPrice =
+      body.beforeDiscountPrice !== undefined ? normalizeNullableText(body.beforeDiscountPrice) : cur.before_discount_price ?? null;
+    const beforeDiscountOldRiyal =
+      body.beforeDiscountOldRiyal !== undefined ? normalizeNullableNumber(body.beforeDiscountOldRiyal) : cur.before_discount_old_riyal ?? null;
     const descriptionAr =
       body.descriptionAr !== undefined ? normalizeNullableText(body.descriptionAr) : cur.description_ar ?? null;
     const ingredientsAr =
@@ -98,7 +103,7 @@ export async function PUT(
     const contentsAr =
       body.contentsAr !== undefined ? normalizeNullableText(body.contentsAr) : cur.contents_ar ?? null;
     const sizes = body.sizes !== undefined ? JSON.stringify(body.sizes) : JSON.stringify(cur.sizes ?? null);
-    const collectionId =
+    const collectionId: string | null =
       body.collectionId !== undefined && body.collectionId !== null && String(body.collectionId).trim() !== ""
         ? String(body.collectionId).trim()
         : cur.collection_id ?? null;
@@ -111,6 +116,8 @@ export async function PUT(
         category_id = ${category?.id ?? cur.category_id}::uuid,
         image = ${image},
         old_riyal = ${oldRiyal},
+        before_discount_price = ${beforeDiscountPrice},
+        before_discount_old_riyal = ${beforeDiscountOldRiyal},
         sizes = ${sizes}::jsonb,
         description_ar = ${descriptionAr},
         ingredients_ar = ${ingredientsAr},

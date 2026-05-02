@@ -26,7 +26,9 @@ export async function GET(request: Request) {
     }
 
     const rows = await sql`
-      SELECT p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.category_id, p.image, p.collection_id,
+      SELECT p.id, p.name, p.price, p.old_riyal,
+             p.before_discount_price, p.before_discount_old_riyal,
+             p.sizes, p.category, p.category_id, p.image, p.collection_id,
              p.created_at, p.updated_at,
              cat.id AS cat_id, cat.name AS cat_name,
              c.id AS col_id, c.name AS col_name, c.slug AS col_slug

@@ -19,6 +19,8 @@ type PackageRow = {
   product_ids: unknown;
   price: string;
   old_riyal: number | null;
+  before_discount_price: string | null;
+  before_discount_old_riyal: number | null;
 };
 
 function parsePackageProductIds(value: unknown): string[] {
@@ -48,7 +50,9 @@ export default async function ShopPage({
   `;
 
   const rows = await sql`
-    SELECT p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.category_id, p.image,
+    SELECT p.id, p.name, p.price, p.old_riyal,
+           p.before_discount_price, p.before_discount_old_riyal,
+           p.sizes, p.category, p.category_id, p.image,
            p.created_at, p.updated_at,
            cat.id AS cat_id, cat.name AS cat_name,
            c.id AS col_id, c.name AS col_name, c.slug AS col_slug
@@ -69,6 +73,8 @@ export default async function ShopPage({
       name: mapped.name,
       price: mapped.price,
       oldRiyal: mapped.oldRiyal,
+      beforeDiscountPrice: mapped.beforeDiscountPrice,
+      beforeDiscountOldRiyal: mapped.beforeDiscountOldRiyal,
       sizes: mapped.sizes as CatalogProduct["sizes"],
       category: mapped.category,
       categoryId: mapped.categoryId,
@@ -111,7 +117,8 @@ export default async function ShopPage({
     .filter((c) => c.image);
 
   const packageRows = (await sql`
-    SELECT id, name, description, image, product_ids, price, old_riyal
+    SELECT id, name, description, image, product_ids, price, old_riyal,
+           before_discount_price, before_discount_old_riyal
     FROM packages
     ORDER BY created_at DESC
   `) as PackageRow[];
@@ -135,6 +142,8 @@ export default async function ShopPage({
     image: row.image ?? "",
     price: row.price,
     oldRiyal: row.old_riyal == null ? null : Number(row.old_riyal),
+    beforeDiscountPrice: row.before_discount_price ?? null,
+    beforeDiscountOldRiyal: row.before_discount_old_riyal == null ? null : Number(row.before_discount_old_riyal),
     products: parsePackageProductIds(row.product_ids)
       .map((id) => productsById.get(id))
       .filter((product): product is NonNullable<typeof product> => Boolean(product)),

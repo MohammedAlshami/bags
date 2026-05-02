@@ -1,6 +1,6 @@
 import { SafeImage } from "@/app/components/SafeImage";
 import { pagePaddingX, sans, serif } from "@/lib/page-theme";
-import { formatDualPrice } from "@/lib/price-format";
+import { formatDualDiscountPrice } from "@/lib/price-format";
 import Link from "next/link";
 
 export type ShopPackageProduct = {
@@ -17,6 +17,8 @@ export type ShopPackage = {
   image: string;
   price: string;
   oldRiyal: number | null;
+  beforeDiscountPrice?: string | null;
+  beforeDiscountOldRiyal?: number | null;
   products: ShopPackageProduct[];
 };
 
@@ -44,6 +46,12 @@ export function ShopPackagesSection({ packages }: { packages: ShopPackage[] }) {
           {packages.map((item) => {
             const heroImage = item.image || item.products[0]?.image || "";
             const singlePackage = packages.length === 1;
+            const priceLines = formatDualDiscountPrice({
+              price: item.price,
+              oldRiyal: item.oldRiyal,
+              beforeDiscountPrice: item.beforeDiscountPrice,
+              beforeDiscountOldRiyal: item.beforeDiscountOldRiyal,
+            });
             return (
               <Link
                 key={item.id}
@@ -73,8 +81,13 @@ export function ShopPackagesSection({ packages }: { packages: ShopPackage[] }) {
                     {item.name}
                   </h3>
                   <p className="mt-2 text-xs font-semibold text-white md:text-sm" style={sans}>
-                    {formatDualPrice(item.price, item.oldRiyal)}
+                    {priceLines.current}
                   </p>
+                  {priceLines.before ? (
+                    <p className="mt-1 text-xs text-white/60 line-through" style={sans}>
+                      {priceLines.before}
+                    </p>
+                  ) : null}
                   <p className="mt-2 line-clamp-2 text-xs leading-5 text-white/80 md:text-sm" style={sans}>
                     {item.description || "مجموعة منتجات مختارة بعناية."}
                   </p>

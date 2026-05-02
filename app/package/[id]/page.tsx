@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
 import { useCart } from "@/app/context/CartContext";
 import { RecommendedProductsSection } from "@/app/components/RecommendedProductsSection";
-import { formatDualPrice, type ProductSizePrice } from "@/lib/price-format";
+import { formatDualDiscountPrice, formatDualPrice, type ProductSizePrice } from "@/lib/price-format";
 import { sans } from "@/lib/page-theme";
 
 type PackageProduct = {
@@ -14,6 +14,8 @@ type PackageProduct = {
   name: string;
   price: string;
   oldRiyal?: number | null;
+  beforeDiscountPrice?: string | null;
+  beforeDiscountOldRiyal?: number | null;
   sizes?: ProductSizePrice[] | null;
   category: string;
   image: string;
@@ -24,9 +26,14 @@ type PackageDeal = {
   _id: string;
   name: string;
   description: string;
+  introAr: string;
+  contentsAr: Array<{ title: string; body: string }>;
+  closingAr: string;
   image: string;
   price: string;
   oldRiyal?: number | null;
+  beforeDiscountPrice?: string | null;
+  beforeDiscountOldRiyal?: number | null;
   products: PackageProduct[];
 };
 
@@ -36,8 +43,13 @@ const FALLBACK_DESCRIPTION =
 function PackageMainSection({ packageDeal }: { packageDeal: PackageDeal }) {
   const { addToCart } = useCart();
   const heroImage = packageDeal.image || packageDeal.products[0]?.image || "";
-  const description = packageDeal.description?.trim() || FALLBACK_DESCRIPTION;
-  const displayPrice = formatDualPrice(packageDeal.price, packageDeal.oldRiyal ?? null);
+  const description = packageDeal.introAr?.trim() || packageDeal.description?.trim() || FALLBACK_DESCRIPTION;
+  const displayPrice = formatDualDiscountPrice({
+    price: packageDeal.price,
+    oldRiyal: packageDeal.oldRiyal ?? null,
+    beforeDiscountPrice: packageDeal.beforeDiscountPrice,
+    beforeDiscountOldRiyal: packageDeal.beforeDiscountOldRiyal,
+  });
   const regularTotal = useMemo(
     () =>
       packageDeal.products.reduce((sum, product) => {
@@ -73,12 +85,49 @@ function PackageMainSection({ packageDeal }: { packageDeal: PackageDeal }) {
             {packageDeal.name}
           </h1>
           <div className="mt-5 text-lg font-medium text-neutral-900 md:text-2xl" style={sans}>
-            {displayPrice}
+            {displayPrice.current}
           </div>
+          {displayPrice.before ? (
+            <div className="mt-2 text-base text-neutral-400 line-through md:text-lg" style={sans}>
+              {displayPrice.before}
+            </div>
+          ) : null}
 
           <p className="mt-8 text-sm leading-relaxed text-neutral-600 md:text-base" style={sans}>
             {description}
           </p>
+
+          <div className="mt-8 space-y-8 border-t border-neutral-200/90 pt-8 md:mt-10">
+            {packageDeal.contentsAr.length > 0 ? (
+              <section className="space-y-3">
+                <h2 className="text-sm font-semibold text-neutral-900 md:text-base" style={sans}>
+                  يحتوي البوكس على
+                </h2>
+                <div className="space-y-3">
+                  {packageDeal.contentsAr.map((item) => (
+                    <div key={`${item.title}-${item.body}`} className="flex items-start gap-3 text-sm text-neutral-700 md:text-base" style={sans}>
+                      <span className="mt-2.5 h-1 w-1 shrink-0 rounded-full bg-neutral-400" aria-hidden />
+                      <span>
+                        {item.title ? <strong className="font-semibold text-neutral-900">{item.title}: </strong> : null}
+                        {item.body}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {packageDeal.closingAr ? (
+              <section className="space-y-3">
+                <h2 className="text-sm font-semibold text-neutral-900 md:text-base" style={sans}>
+                  النتيجة
+                </h2>
+                <p className="text-sm leading-relaxed text-neutral-700 md:text-base" style={sans}>
+                  {packageDeal.closingAr}
+                </p>
+              </section>
+            ) : null}
+          </div>
 
           <div className="mt-8 border-t border-neutral-200/90 pt-8">
             <h2 className="text-sm font-semibold text-neutral-900 md:text-base" style={sans}>
@@ -176,18 +225,29 @@ export default function PackagePage() {
           setPackageDeal(null);
           return;
         }
+        const packageData = data as Record<string, unknown>;
         setPackageDeal({
-          _id: String(data._id),
-          name: String(data.name),
-          description: typeof data.description === "string" ? data.description : "",
-          image: typeof data.image === "string" ? data.image : "",
-          price: String(data.price),
+          _id: String(packageData._id),
+          name: String(packageData.name),
+          description: typeof packageData.description === "string" ? packageData.description : "",
+          introAr: typeof packageData.introAr === "string" ? packageData.introAr : "",
+          contentsAr: Array.isArray(packageData.contentsAr)
+            ? (packageData.contentsAr as Array<{ title: string; body: string }>)
+            : [],
+          closingAr: typeof packageData.closingAr === "string" ? packageData.closingAr : "",
+          image: typeof packageData.image === "string" ? packageData.image : "",
+          price: String(packageData.price),
           oldRiyal:
-            typeof (data as { oldRiyal?: unknown }).oldRiyal === "number"
-              ? Number((data as { oldRiyal: number }).oldRiyal)
+            typeof packageData.oldRiyal === "number"
+              ? Number(packageData.oldRiyal)
               : null,
-          products: Array.isArray((data as { products?: unknown }).products)
-            ? ((data as { products: PackageProduct[] }).products)
+          beforeDiscountPrice: typeof packageData.beforeDiscountPrice === "string" ? String(packageData.beforeDiscountPrice) : null,
+          beforeDiscountOldRiyal:
+            typeof packageData.beforeDiscountOldRiyal === "number"
+              ? Number(packageData.beforeDiscountOldRiyal)
+              : null,
+          products: Array.isArray(packageData.products)
+            ? (packageData.products as PackageProduct[])
             : [],
         });
       })
@@ -222,7 +282,7 @@ export default function PackagePage() {
   return (
     <main className="min-h-screen bg-white pt-20" dir="rtl">
       <PackageMainSection packageDeal={packageDeal} />
-      <RecommendedProductsSection />
+      <RecommendedProductsSection excludeSlug={packageDeal._id} />
     </main>
   );
 }

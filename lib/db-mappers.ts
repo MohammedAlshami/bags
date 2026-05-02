@@ -76,6 +76,8 @@ export type ProductRow = {
   image: string;
   slug?: string | null;
   old_riyal?: number | null;
+  before_discount_price?: string | null;
+  before_discount_old_riyal?: number | null;
   sizes?: unknown;
   description_ar?: string | null;
   ingredients_ar?: string | null;
@@ -117,6 +119,8 @@ export function mapProduct(row: ProductRow, populated = false) {
     image: row.image,
     slug: row.slug ?? row.id,
     oldRiyal: row.old_riyal == null ? null : Number(row.old_riyal),
+    beforeDiscountPrice: row.before_discount_price ?? null,
+    beforeDiscountOldRiyal: row.before_discount_old_riyal == null ? null : Number(row.before_discount_old_riyal),
     sizes,
     descriptionAr: row.description_ar ?? null,
     ingredientsAr: row.ingredients_ar ?? null,

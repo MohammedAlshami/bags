@@ -7,7 +7,7 @@ import { ConfirmModal } from "@/app/components/ConfirmModal";
 import { SafeImage } from "@/app/components/SafeImage";
 import { adminIconClassName, sans } from "@/lib/page-theme";
 import { parseStoredPriceToInputValue } from "@/lib/format-sar";
-import { formatDualPrice } from "@/lib/price-format";
+import { formatDualDiscountPrice } from "@/lib/price-format";
 
 type ProductRow = {
   _id: string;
@@ -24,6 +24,8 @@ type PackageRow = {
   productIds: string[];
   price: string;
   oldRiyal?: number | null;
+  beforeDiscountPrice?: string | null;
+  beforeDiscountOldRiyal?: number | null;
 };
 
 const API_ERROR_AR: Record<string, string> = {
@@ -55,6 +57,8 @@ export default function AdminPackagesPage() {
   const [image, setImage] = useState("");
   const [price, setPrice] = useState("");
   const [oldRiyal, setOldRiyal] = useState("");
+  const [beforeDiscountPrice, setBeforeDiscountPrice] = useState("");
+  const [beforeDiscountOldRiyal, setBeforeDiscountOldRiyal] = useState("");
   const [productIds, setProductIds] = useState<string[]>([]);
   const [productPickerOpen, setProductPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -127,6 +131,8 @@ export default function AdminPackagesPage() {
     setImage("");
     setPrice("");
     setOldRiyal("");
+    setBeforeDiscountPrice("");
+    setBeforeDiscountOldRiyal("");
     setProductIds([]);
     setProductPickerOpen(false);
     setShowForm(true);
@@ -141,6 +147,8 @@ export default function AdminPackagesPage() {
     setImage(row.image);
     setPrice(parseStoredPriceToInputValue(row.price));
     setOldRiyal(row.oldRiyal == null ? "" : String(row.oldRiyal));
+    setBeforeDiscountPrice(row.beforeDiscountPrice ? parseStoredPriceToInputValue(row.beforeDiscountPrice) : "");
+    setBeforeDiscountOldRiyal(row.beforeDiscountOldRiyal == null ? "" : String(row.beforeDiscountOldRiyal));
     setProductIds(row.productIds);
     setProductPickerOpen(false);
     setShowForm(true);
@@ -189,6 +197,8 @@ export default function AdminPackagesPage() {
         return;
       }
       const oldRiyalValue = oldRiyal.trim() ? Number(oldRiyal) : null;
+      const beforeDiscountPriceValue = beforeDiscountPrice.trim() ? Number(beforeDiscountPrice) : null;
+      const beforeDiscountOldRiyalValue = beforeDiscountOldRiyal.trim() ? Number(beforeDiscountOldRiyal) : null;
       if (oldRiyalValue !== null && (!Number.isFinite(oldRiyalValue) || oldRiyalValue < 0)) {
         setError("أدخل سعراً صالحاً بالريال اليمني القديم.");
         return;
@@ -204,6 +214,8 @@ export default function AdminPackagesPage() {
           image,
           price: priceValue,
           oldRiyal: oldRiyalValue,
+          beforeDiscountPrice: beforeDiscountPriceValue,
+          beforeDiscountOldRiyal: beforeDiscountOldRiyalValue,
           productIds,
         }),
       });
@@ -351,7 +363,14 @@ export default function AdminPackagesPage() {
                   ) : null}
                 </div>
                 <div className="mt-4 text-center">
-                  <p className="text-xs text-neutral-500">{formatDualPrice(item.price, item.oldRiyal)}</p>
+                  <p className="text-xs text-neutral-500">
+                    {formatDualDiscountPrice({
+                      price: item.price,
+                      oldRiyal: item.oldRiyal,
+                      beforeDiscountPrice: item.beforeDiscountPrice,
+                      beforeDiscountOldRiyal: item.beforeDiscountOldRiyal,
+                    }).current}
+                  </p>
                   <h3 className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-neutral-900">{item.name}</h3>
                   <p className="mt-2 line-clamp-2 text-xs leading-5 text-neutral-500">{item.description || "بدون وصف"}</p>
                 </div>
@@ -426,6 +445,16 @@ export default function AdminPackagesPage() {
                 <div>
                   <label className="mb-1 block text-xs text-neutral-500">سعر الباقة بالريال اليمني القديم</label>
                   <input type="number" inputMode="decimal" min={0} step="1" value={oldRiyal} onChange={(e) => setOldRiyal(e.target.value)} className="w-full rounded-sm border border-neutral-200 px-3 py-2 text-sm" dir="ltr" />
+                </div>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs text-neutral-500">قبل الخصم - ريال سعودي</label>
+                  <input type="number" inputMode="decimal" min={0} step="0.01" value={beforeDiscountPrice} onChange={(e) => setBeforeDiscountPrice(e.target.value)} className="w-full rounded-sm border border-neutral-200 px-3 py-2 text-sm" dir="ltr" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-neutral-500">قبل الخصم - العملة القديمة</label>
+                  <input type="number" inputMode="decimal" min={0} step="1" value={beforeDiscountOldRiyal} onChange={(e) => setBeforeDiscountOldRiyal(e.target.value)} className="w-full rounded-sm border border-neutral-200 px-3 py-2 text-sm" dir="ltr" />
                 </div>
               </div>
               <section>
@@ -514,7 +543,14 @@ export default function AdminPackagesPage() {
                       </div>
                       <div>
                         <dt className="mb-1 text-xs text-neutral-500">السعر</dt>
-                        <dd className="text-neutral-900">{formatDualPrice(detailPackage.price, detailPackage.oldRiyal)}</dd>
+                        <dd className="text-neutral-900">
+                          {formatDualDiscountPrice({
+                            price: detailPackage.price,
+                            oldRiyal: detailPackage.oldRiyal,
+                            beforeDiscountPrice: detailPackage.beforeDiscountPrice,
+                            beforeDiscountOldRiyal: detailPackage.beforeDiscountOldRiyal,
+                          }).current}
+                        </dd>
                       </div>
                       <div>
                         <dt className="mb-1 text-xs text-neutral-500">الوصف</dt>

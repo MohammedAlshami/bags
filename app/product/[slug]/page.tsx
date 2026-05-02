@@ -7,12 +7,14 @@ import Link from "next/link";
 import { useCart } from "@/app/context/CartContext";
 import { RecommendedProductsSection } from "@/app/components/RecommendedProductsSection";
 import { sans } from "@/lib/page-theme";
-import { formatDualPrice, formatSizePrice, type ProductSizePrice } from "@/lib/price-format";
+import { formatDualDiscountPrice, formatSizePrice, type ProductSizePrice } from "@/lib/price-format";
 
 type ProductItem = {
   name: string;
   price: string;
   oldRiyal?: number | null;
+  beforeDiscountPrice?: string | null;
+  beforeDiscountOldRiyal?: number | null;
   sizes?: ProductSizePrice[] | null;
   category: string;
   image: string;
@@ -53,7 +55,14 @@ function ProductMainSection({ product }: { product: ProductItem }) {
   const contents = splitBullets(product.contentsAr);
   const sizes = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : null;
   const selectedSize = sizes ? sizes[Math.min(selectedSizeIndex, sizes.length - 1)] : null;
-  const displayPrice = selectedSize ? formatSizePrice(selectedSize) : formatDualPrice(product.price, product.oldRiyal);
+  const displayPrice = selectedSize
+    ? { current: formatSizePrice(selectedSize), before: null }
+    : formatDualDiscountPrice({
+        price: product.price,
+        oldRiyal: product.oldRiyal,
+        beforeDiscountPrice: product.beforeDiscountPrice,
+        beforeDiscountOldRiyal: product.beforeDiscountOldRiyal,
+      });
 
   return (
     <div className="mx-auto max-w-[1920px] px-4 py-10 pt-20 sm:px-6 md:px-14 md:pt-28 lg:px-24">
@@ -82,8 +91,13 @@ function ProductMainSection({ product }: { product: ProductItem }) {
             {product.name}
           </h1>
           <div className="mt-5 text-lg font-medium text-neutral-900 md:text-2xl" style={sans}>
-            {displayPrice}
+            {displayPrice.current}
           </div>
+          {displayPrice.before ? (
+            <div className="mt-2 text-base text-neutral-400 line-through md:text-lg" style={sans}>
+              {displayPrice.before}
+            </div>
+          ) : null}
 
           {sizes ? (
             <div className="mt-6">
@@ -202,15 +216,6 @@ function ProductMainSection({ product }: { product: ProductItem }) {
                 الرسائل.
               </p>
             </div>
-            <div>
-              <h3 className="mb-2 text-sm font-semibold text-neutral-900" style={sans}>
-                الإرجاع
-              </h3>
-              <p className="text-sm leading-relaxed text-neutral-600 md:text-base" style={sans}>
-                يمكنك طلب الإرجاع خلال 14 يوماً من الاستلام، بشرط أن يبقى المنتج غير مفتوح، وبحالته الأصلية مع
-                التغليف.
-              </p>
-            </div>
           </div>
         </div>
       </div>
@@ -256,26 +261,32 @@ export default function ProductPage() {
           setProduct(null);
           return;
         }
+        const productData = data as Record<string, unknown>;
         setProduct({
-          name: String(data.name),
-          price: String(data.price),
-          category: String(data.category),
-          image: String(data.image),
-          slug: String(data.slug),
+          name: String(productData.name),
+          price: String(productData.price),
+          category: String(productData.category),
+          image: String(productData.image),
+          slug: String(productData.slug),
           oldRiyal:
-            typeof (data as { oldRiyal?: unknown }).oldRiyal === "number"
-              ? Number((data as { oldRiyal: number }).oldRiyal)
-              : typeof (data as { oldRiyal?: unknown }).oldRiyal === "string"
-                ? Number((data as { oldRiyal: string }).oldRiyal)
+            typeof productData.oldRiyal === "number"
+              ? Number(productData.oldRiyal)
+              : typeof productData.oldRiyal === "string"
+                ? Number(productData.oldRiyal)
                 : null,
-          descriptionAr: typeof (data as { descriptionAr?: unknown }).descriptionAr === "string" ? String((data as { descriptionAr: string }).descriptionAr) : null,
-          ingredientsAr: typeof (data as { ingredientsAr?: unknown }).ingredientsAr === "string" ? String((data as { ingredientsAr: string }).ingredientsAr) : null,
-          usageAr: typeof (data as { usageAr?: unknown }).usageAr === "string" ? String((data as { usageAr: string }).usageAr) : null,
-          freeFromAr: typeof (data as { freeFromAr?: unknown }).freeFromAr === "string" ? String((data as { freeFromAr: string }).freeFromAr) : null,
-          warningAr: typeof (data as { warningAr?: unknown }).warningAr === "string" ? String((data as { warningAr: string }).warningAr) : null,
-          contentsAr: typeof (data as { contentsAr?: unknown }).contentsAr === "string" ? String((data as { contentsAr: string }).contentsAr) : null,
-          sizes: Array.isArray((data as { sizes?: unknown }).sizes)
-            ? (data as { sizes: ProductSizePrice[] }).sizes
+          beforeDiscountPrice: typeof productData.beforeDiscountPrice === "string" ? String(productData.beforeDiscountPrice) : null,
+          beforeDiscountOldRiyal:
+            typeof productData.beforeDiscountOldRiyal === "number"
+              ? Number(productData.beforeDiscountOldRiyal)
+              : null,
+          descriptionAr: typeof productData.descriptionAr === "string" ? String(productData.descriptionAr) : null,
+          ingredientsAr: typeof productData.ingredientsAr === "string" ? String(productData.ingredientsAr) : null,
+          usageAr: typeof productData.usageAr === "string" ? String(productData.usageAr) : null,
+          freeFromAr: typeof productData.freeFromAr === "string" ? String(productData.freeFromAr) : null,
+          warningAr: typeof productData.warningAr === "string" ? String(productData.warningAr) : null,
+          contentsAr: typeof productData.contentsAr === "string" ? String(productData.contentsAr) : null,
+          sizes: Array.isArray(productData.sizes)
+            ? (productData.sizes as ProductSizePrice[])
             : null,
         });
       })
