@@ -25,7 +25,8 @@
     "next": "16.2.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.19.4",
@@ -35,6 +36,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "iconv-lite": "^0.7.2",
     "tailwindcss": "^4",
     "typescript": "^5",
     "wrangler": "^4.86.0"

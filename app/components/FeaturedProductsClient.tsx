@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
-import { useCart } from "@/app/context/CartContext";
+import { useAddToCartWithToast } from "@/lib/use-add-to-cart-with-toast";
+import { addToCartCardOutlineButtonClassName } from "@/lib/add-to-cart-ui";
 import { formatDualPrice, formatSizePrice, type ProductSizePrice } from "@/lib/price-format";
 import { sans, pagePaddingX } from "@/lib/page-theme";
 
@@ -28,7 +29,7 @@ function StarIcon({ className }: { className?: string }) {
 }
 
 export function FeaturedProductCard({ item }: { item: FeaturedProductItem }) {
-  const { addToCart } = useCart();
+  const { addToCartWithToast } = useAddToCartWithToast();
   const size = Array.isArray(item.sizes) && item.sizes.length > 0 ? item.sizes[0] : null;
   const priceLine = size ? formatSizePrice(size) : formatDualPrice(item.price, item.oldRiyal);
   const rawRating = item.rating ?? 5;
@@ -38,7 +39,7 @@ export function FeaturedProductCard({ item }: { item: FeaturedProductItem }) {
   const productHref = `/product/${item.slug}`;
 
   const handleAddToCart = () => {
-    addToCart({
+    addToCartWithToast({
       slug: item.slug,
       name: size ? `${item.name} - ${size.label}` : item.name,
       price: size ? `${size.sarPrice} ر.س` : item.price,
@@ -72,7 +73,7 @@ export function FeaturedProductCard({ item }: { item: FeaturedProductItem }) {
           <button
             type="button"
             onClick={handleAddToCart}
-            className="pointer-events-auto inline-flex h-10 min-h-10 w-full cursor-pointer items-center justify-center rounded-full border-[1.5px] border-brand-primary bg-white px-5 text-[13px] font-semibold text-brand-primary transition-colors hover:border-brand-dark hover:bg-brand-dark hover:text-white"
+            className={addToCartCardOutlineButtonClassName}
             style={sans}
           >
             أضف إلى السلة

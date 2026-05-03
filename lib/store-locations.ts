@@ -8,6 +8,29 @@ export type StoreLocation = {
   lon: number;
 };
 
+/**
+ * Shipping offices used at checkout for pickup / governorate orders (سلمي · قدسي).
+ * Full {@link STORE_LOCATIONS} remains for the public locations page and legacy orders.
+ */
+export const CHECKOUT_PICKUP_POINTS: StoreLocation[] = [
+  {
+    id: "shipping-office-salmi",
+    name: "مكتب الشحن — السلمي",
+    city: "",
+    country: "اليمن",
+    lat: 15.3694,
+    lon: 44.191,
+  },
+  {
+    id: "shipping-office-qudsi",
+    name: "مكتب الشحن — القدسي",
+    city: "",
+    country: "اليمن",
+    lat: 15.3789,
+    lon: 44.2138,
+  },
+];
+
 export const STORE_LOCATIONS: StoreLocation[] = [
   { id: "sanaa-al-kumaym", name: "الكميم – الربيع نسمة", city: "صنعاء", country: "اليمن", lat: 15.3694, lon: 44.191 },
   { id: "sanaa-max-city", name: "ماكس سيتي بجانب الستين – تاتشز", city: "صنعاء", country: "اليمن", lat: 15.3789, lon: 44.2138 },
@@ -26,11 +49,11 @@ export const STORE_LOCATIONS: StoreLocation[] = [
 ];
 
 export function getStoreLocationById(id: string): StoreLocation | undefined {
-  return STORE_LOCATIONS.find((b) => b.id === id);
+  return CHECKOUT_PICKUP_POINTS.find((b) => b.id === id) ?? STORE_LOCATIONS.find((b) => b.id === id);
 }
 
 export function isValidBranchKey(id: string): boolean {
-  return STORE_LOCATIONS.some((b) => b.id === id);
+  return CHECKOUT_PICKUP_POINTS.some((b) => b.id === id) || STORE_LOCATIONS.some((b) => b.id === id);
 }
 
 export function buildMapEmbedUrl(lat: number, lon: number) {

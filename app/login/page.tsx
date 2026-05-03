@@ -6,8 +6,9 @@ import { Suspense, useState } from "react";
 import { sans, pagePaddingX } from "@/lib/page-theme";
 
 function mapLoginError(msg: string): string {
-  if (msg.includes("Invalid") || msg.includes("password")) return "اسم المستخدم أو كلمة المرور غير صحيحة.";
-  if (msg.includes("required")) return "يرجى إدخال اسم المستخدم وكلمة المرور.";
+  if (msg.includes("disabled")) return "تم تعطيل هذا الحساب.";
+  if (msg.includes("Invalid") || msg.includes("password")) return "البريد أو اسم المستخدم أو كلمة المرور غير صحيحة.";
+  if (msg.includes("required")) return "يرجى إدخال البريد أو اسم المستخدم وكلمة المرور.";
   return msg || "تعذّر تسجيل الدخول.";
 }
 
@@ -61,7 +62,7 @@ function LoginForm() {
         <form onSubmit={handleSubmit} className="mt-10 space-y-8">
           <div>
             <label htmlFor="login-username" className="mb-2 block text-xs text-neutral-500" style={sans}>
-              اسم المستخدم
+              البريد الإلكتروني أو اسم المستخدم
             </label>
             <input
               id="login-username"

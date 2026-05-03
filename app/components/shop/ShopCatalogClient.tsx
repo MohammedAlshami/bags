@@ -49,19 +49,20 @@ function sortProducts(list: CatalogProduct[], key: SortKey, currency: ShopPriceC
   return out;
 }
 
-function ProductCard({ product }: { product: CatalogProduct }) {
+function ProductCard({ product, priority }: { product: CatalogProduct; priority?: boolean }) {
   const { name, price, oldRiyal, beforeDiscountPrice, beforeDiscountOldRiyal, category, image, slug } = product;
   const size = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes[0] : null;
   const priceLines = size
     ? { current: `${size.oldRiyal.toLocaleString("en-US")} ر ق / ${size.sarPrice} ر س`, before: null }
     : formatDualDiscountPrice({ price, oldRiyal, beforeDiscountPrice, beforeDiscountOldRiyal });
   return (
-    <Link href={`/product/${slug}`} className="group flex flex-col" dir="rtl">
-      <div className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl bg-neutral-50">
+    <Link href={`/product/${slug}`} className="group flex w-full min-w-0 flex-col" dir="rtl">
+      <div className="relative aspect-[3/5] w-full min-h-0 overflow-hidden rounded-2xl bg-neutral-50">
         <SafeImage
           src={image}
           alt={name}
           fill
+          priority={priority}
           className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.03]"
           sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
         />
@@ -133,7 +134,7 @@ function FilterToggle({
 }) {
   return (
     <div className="mb-6 flex items-center justify-between gap-4 lg:hidden" style={sans}>
-      <span className="text-sm font-normal text-neutral-900 md:text-[15px]">Ø¹Ø±Ø¶ Ø§Ù„ÙÙ„Ø§ØªØ±</span>
+      <span className="text-sm font-normal text-neutral-900 md:text-[15px]">عرض الفلاتر</span>
       <button
         type="button"
         role="switch"
@@ -269,6 +270,19 @@ export function ShopCatalogClient({
     [filteredBlocks]
   );
 
+  /** First grid images after filters — eager load for LCP when catalog is above the fold */
+  const catalogPrioritySlugs = useMemo(() => {
+    const set = new Set<string>();
+    let count = 0;
+    for (const b of filteredBlocks) {
+      for (const p of b.products) {
+        if (count++ < 8) set.add(p.slug);
+        else return set;
+      }
+    }
+    return set;
+  }, [filteredBlocks]);
+
   const resetFilters = useCallback(() => {
     setSelectedCategoryIds(new Set(categories.map((c) => c._id)));
     setActiveCollectionSlug(null);
@@ -298,21 +312,21 @@ export function ShopCatalogClient({
       <div className="mb-6 flex flex-col gap-4 border-b border-neutral-200 pb-6 md:flex-row md:items-center md:justify-between">
         <p className="text-sm text-neutral-600 md:text-[15px]" style={sans}>
           <span className="font-bold text-neutral-950">{resultCount.toLocaleString("ar-SA")}</span>{" "}
-          Ù†ØªÙŠØ¬Ø©
+          نتيجة
         </p>
         <div className="flex flex-wrap items-center gap-3 md:gap-4">
           <label className="flex flex-wrap items-center gap-2 text-sm text-neutral-800 md:text-[15px]" style={sans}>
-            <span className="shrink-0">ØªØ±ØªÙŠØ¨ Ø­Ø³Ø¨</span>
+            <span className="shrink-0">ترتيب حسب</span>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortKey)}
               className="min-w-[10rem] rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 md:text-[15px]"
               style={sans}
             >
-              <option value="default">Ø§Ù„Ø§ÙØªØ±Ø§Ø¶ÙŠ</option>
-              <option value="name">Ø§Ù„Ø§Ø³Ù…</option>
-              <option value="price-asc">Ø§Ù„Ø³Ø¹Ø±: Ù…Ù† Ø§Ù„Ø£Ù‚Ù„ Ù„Ù„Ø£Ø¹Ù„Ù‰</option>
-              <option value="price-desc">Ø§Ù„Ø³Ø¹Ø±: Ù…Ù† Ø§Ù„Ø£Ø¹Ù„Ù‰ Ù„Ù„Ø£Ù‚Ù„</option>
+              <option value="default">الافتراضي</option>
+              <option value="name">الاسم</option>
+              <option value="price-asc">السعر: من الأقل للأعلى</option>
+              <option value="price-desc">السعر: من الأعلى للأقل</option>
             </select>
           </label>
         </div>
@@ -323,22 +337,22 @@ export function ShopCatalogClient({
           className={`w-full shrink-0 lg:sticky lg:top-28 lg:w-[min(100%,320px)] lg:self-start ${
             filtersOpen ? "block" : "max-lg:hidden"
           } lg:block`}
-          aria-label="ÙÙ„Ø§ØªØ± Ø§Ù„Ù…ØªØ¬Ø±"
+          aria-label="فلاتر المتجر"
           dir="rtl"
         >
           <div className="px-0 py-0" style={sans}>
             <div className="mb-2 flex items-center justify-between gap-3 pb-4">
-              <h2 className="text-lg font-bold text-neutral-950 md:text-xl">Ø§Ù„ÙÙ„Ø§ØªØ±</h2>
+              <h2 className="text-lg font-bold text-neutral-950 md:text-xl">الفلاتر</h2>
               <Link
                 href="/shop"
                 className="text-sm font-semibold text-neutral-900 underline decoration-neutral-400 underline-offset-4 hover:decoration-neutral-900 md:text-[15px]"
                 onClick={resetFilters}
               >
-                Ø¥Ø¹Ø§Ø¯Ø© Ø§Ù„ØªØ¹ÙŠÙŠÙ†
+                إعادة التعيين
               </Link>
             </div>
 
-            <FilterSection title={priceCurrency === "SAR" ? "Ø§Ù„Ø³Ø¹Ø± (Ø±.Ø³)" : "Ø§Ù„Ø³Ø¹Ø± (Ø±.Ù‚)"}>
+            <FilterSection title={priceCurrency === "SAR" ? "السعر (ر.س)" : "السعر (ر.ق)"}>
               <div className="flex flex-wrap gap-4">
                 <label className="flex cursor-pointer items-center gap-2 text-sm text-neutral-950 md:text-[15px]">
                   <input
@@ -348,7 +362,7 @@ export function ShopCatalogClient({
                     onChange={() => setPriceCurrency("SAR")}
                     className="size-4 shrink-0 border-2 border-neutral-900 accent-neutral-900 md:size-[18px]"
                   />
-                  <span className="min-w-0">Ø±.Ø³ â€” Ø§Ù„Ø±ÙŠØ§Ù„ Ø§Ù„Ø³Ø¹ÙˆØ¯ÙŠ</span>
+                  <span className="min-w-0">ر.س — الريال السعودي</span>
                 </label>
                 <label className="flex cursor-pointer items-center gap-2 text-sm text-neutral-950 md:text-[15px]">
                   <input
@@ -358,12 +372,12 @@ export function ShopCatalogClient({
                     onChange={() => setPriceCurrency("YER")}
                     className="size-4 shrink-0 border-2 border-neutral-900 accent-neutral-900 md:size-[18px]"
                   />
-                  <span className="min-w-0">Ø±.Ù‚ â€” Ø§Ù„Ø±ÙŠØ§Ù„ Ø§Ù„ÙŠÙ…Ù†ÙŠ</span>
+                  <span className="min-w-0">ر.ق — الريال اليمني</span>
                 </label>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-end sm:gap-4">
                 <div className="flex min-w-[8rem] flex-1 flex-col gap-2">
-                  <span className="text-xs font-medium text-neutral-500 md:text-sm">Ù…Ù†</span>
+                  <span className="text-xs font-medium text-neutral-500 md:text-sm">من</span>
                   <div className="flex items-center gap-2 rounded-lg bg-[#f5f5f5] px-3 py-2.5 md:py-3">
                     <input
                       type="number"
@@ -374,12 +388,12 @@ export function ShopCatalogClient({
                       className="min-w-0 flex-1 border-0 bg-transparent text-right text-base font-medium text-neutral-800 outline-none md:text-lg"
                     />
                     <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-300 text-[10px] font-bold text-white md:size-8 md:text-xs">
-                      {priceCurrency === "SAR" ? "Ø³" : "Ù‚"}
+                      {priceCurrency === "SAR" ? "س" : "ق"}
                     </span>
                   </div>
                 </div>
                 <div className="flex min-w-[8rem] flex-1 flex-col gap-2">
-                  <span className="text-xs font-medium text-neutral-500 md:text-sm">Ø¥Ù„Ù‰</span>
+                  <span className="text-xs font-medium text-neutral-500 md:text-sm">إلى</span>
                   <div className="flex items-center gap-2 rounded-lg bg-[#f5f5f5] px-3 py-2.5 md:py-3">
                     <input
                       type="number"
@@ -390,18 +404,18 @@ export function ShopCatalogClient({
                       className="min-w-0 flex-1 border-0 bg-transparent text-right text-base font-medium text-neutral-800 outline-none md:text-lg"
                     />
                     <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-300 text-[10px] font-bold text-white md:size-8 md:text-xs">
-                      {priceCurrency === "SAR" ? "Ø³" : "Ù‚"}
+                      {priceCurrency === "SAR" ? "س" : "ق"}
                     </span>
                   </div>
                 </div>
               </div>
               <p className="mt-3 text-xs text-neutral-500 md:text-sm">
-                Ø¨ÙŠÙ† {minBound.toLocaleString("ar-SA")} Ùˆ {maxBound.toLocaleString("ar-SA")}{" "}
-                {priceCurrency === "SAR" ? "Ø±.Ø³" : "Ø±.Ù‚"}
+                بين {minBound.toLocaleString("ar-SA")} و {maxBound.toLocaleString("ar-SA")}{" "}
+                {priceCurrency === "SAR" ? "ر.س" : "ر.ق"}
               </p>
             </FilterSection>
 
-            <FilterSection title="Ø§Ù„ØªÙˆÙØ±">
+            <FilterSection title="التوفر">
               <div className="flex w-full items-center gap-2.5 text-sm text-neutral-950 md:text-[15px]">
                 <input
                   type="radio"
@@ -409,14 +423,14 @@ export function ShopCatalogClient({
                   checked
                   disabled
                   className="size-4 shrink-0 border-2 border-neutral-900 opacity-100 accent-neutral-900 md:size-[18px]"
-                  aria-label="Ù…ØªÙˆÙØ±"
+                  aria-label="متوفر"
                 />
-                <span className="min-w-0">Ù…ØªÙˆÙØ±</span>
+                <span className="min-w-0">متوفر</span>
               </div>
-              <p className="text-end text-sm text-neutral-400 md:text-[15px]">ØºÙŠØ± Ù…ØªÙˆÙØ± â€” Ù‚Ø±ÙŠØ¨Ù‹Ø§</p>
+              <p className="text-end text-sm text-neutral-400 md:text-[15px]">غير متوفر — قريبًا</p>
             </FilterSection>
 
-            <FilterSection title="Ø§Ù„ÙØ¦Ø©">
+            <FilterSection title="الفئة">
               <div className="max-h-56 space-y-3 overflow-y-auto pe-1 cute-scrollbar">
                 {categories.map((cat) => (
                   <label
@@ -443,7 +457,7 @@ export function ShopCatalogClient({
               className="px-4 py-16 text-center text-lg text-neutral-600 md:text-xl"
               style={sans}
             >
-              Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ù†ØªØ¬Ø§Øª Ù…Ø·Ø§Ø¨Ù‚Ø© Ù„Ù„ÙÙ„Ø§ØªØ±. Ø¬Ø±Ù‘Ø¨ÙŠ ØªØºÙŠÙŠØ± Ø§Ù„Ø³Ø¹Ø± Ø£Ùˆ Ø§Ù„ÙØ¦Ø©.
+              لا توجد منتجات مطابقة للفلاتر. جرّبي تغيير السعر أو الفئة.
             </p>
           ) : (
             filteredBlocks.map((block) => (
@@ -460,7 +474,11 @@ export function ShopCatalogClient({
                 </h2>
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
                   {block.products.map((product) => (
-                    <ProductCard key={product.slug} product={product} />
+                    <ProductCard
+                      key={product.slug}
+                      product={product}
+                      priority={catalogPrioritySlugs.has(product.slug)}
+                    />
                   ))}
                 </div>
               </section>

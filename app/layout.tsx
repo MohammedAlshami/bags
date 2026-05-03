@@ -6,6 +6,7 @@ import ConditionalNavbar from "./components/ConditionalNavbar";
 import ConditionalFooter from "./components/ConditionalFooter";
 import { WhatsAppFloat } from "./components/WhatsAppFloat";
 import { CartProvider } from "./context/CartContext";
+import { CartToaster } from "./components/CartToaster";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,6 +53,7 @@ export default async function RootLayout({
           {children}
           <ConditionalFooter />
           <WhatsAppFloat />
+          <CartToaster />
         </CartProvider>
       </body>
     </html>

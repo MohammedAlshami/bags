@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getSession, requireCustomer } from "@/lib/auth";
+import { getCheckoutProvinceById } from "@/lib/checkout-provinces";
 import { isValidBranchKey } from "@/lib/store-locations";
 import { parsePrice } from "@/lib/cart";
 import { mapOrderAdminDetail, type OrderRow } from "@/lib/db-mappers";
@@ -90,7 +91,12 @@ export async function POST(request: Request) {
   try {
     const session = await requireCustomer();
     const body = (await request.json()) as Record<string, unknown>;
-    const cityScope = body.cityScope === "outside" ? "outside" : "sanaa";
+    const provinceIdRaw = typeof body.provinceId === "string" ? body.provinceId.trim() : "";
+    const province = getCheckoutProvinceById(provinceIdRaw);
+    if (!province) {
+      return NextResponse.json({ error: "اختيار المحافظة مطلوب" }, { status: 400 });
+    }
+    const cityScope = province.cityScope;
     const deliveryMethod = cityScope === "outside" ? "pickup" : body.deliveryMethod === "pickup" ? "pickup" : "direct";
     const needsBranch = cityScope === "outside" || deliveryMethod === "pickup";
     const rawBranchKey = typeof body.branchKey === "string" ? body.branchKey.trim() : "";
@@ -124,18 +130,16 @@ export async function POST(request: Request) {
       SELECT address, full_name, phone FROM users WHERE id = ${session.sub}::uuid AND role = 'customer' LIMIT 1
     `;
     const u = userRows[0] as { address: string; full_name: string; phone: string } | undefined;
-    const directAddress =
-      deliveryMethod === "direct"
-        ? String(submittedAddress?.address ?? u?.address ?? "").trim()
-        : "";
-    if (deliveryMethod === "direct" && !directAddress) {
-      return NextResponse.json({ error: "Address required" }, { status: 400 });
+    const addressLine = String(submittedAddress?.address ?? u?.address ?? "").trim();
+    if (!addressLine) {
+      return NextResponse.json({ error: "العنوان مطلوب" }, { status: 400 });
     }
     const shippingAddress = {
       fullName: String(submittedAddress?.fullName ?? u?.full_name ?? ""),
-      line1: directAddress,
+      line1: addressLine,
       line2: "",
-      city: cityScope === "sanaa" ? "صنعاء" : "خارج صنعاء",
+      city: province.label,
+      provinceId: province.id,
       state: "",
       postCode: "",
       country: "YE",

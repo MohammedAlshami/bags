@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { Package, UserCircle, LogOut, ChevronLeft } from "lucide-react";
+import { ConfirmModal } from "@/app/components/ConfirmModal";
 import { sans } from "@/lib/page-theme";
 
 /** Lucide stroke icons — matches landing accent */
@@ -11,9 +13,20 @@ type NavCurrent = "orders" | "billing";
 
 type ProfileBreadcrumbItem = { label: string; href?: string };
 
-export function ProfileBreadcrumb({ items }: { items: ProfileBreadcrumbItem[] }) {
+export function ProfileBreadcrumb({
+  items,
+  className,
+}: {
+  items: ProfileBreadcrumbItem[];
+  /** Replaces default bottom margin when set (e.g. responsive spacing). */
+  className?: string;
+}) {
   return (
-    <nav className="mb-8 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-500" aria-label="مسار التنقل" style={sans}>
+    <nav
+      className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-500 ${className ?? "mb-8"}`}
+      aria-label="مسار التنقل"
+      style={sans}
+    >
       {items.map((item, i) => (
         <span key={`${item.label}-${i}`} className="inline-flex items-center gap-2">
           {i > 0 ? <span className="text-neutral-300 select-none" aria-hidden>/</span> : null}
@@ -70,36 +83,64 @@ function NavRow({
 
 type ProfileAccountNavProps = {
   current: NavCurrent;
-  onLogout: () => void;
+  onLogout: () => void | Promise<void>;
 };
 
 export function ProfileAccountNav({ current, onLogout }: ProfileAccountNavProps) {
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [logoutBusy, setLogoutBusy] = useState(false);
+
+  const confirmLogout = async () => {
+    setLogoutBusy(true);
+    try {
+      await Promise.resolve(onLogout());
+    } finally {
+      setLogoutBusy(false);
+      setLogoutConfirmOpen(false);
+    }
+  };
+
   return (
-    <nav
-      className="hide-scrollbar flex flex-row gap-1 overflow-x-auto pb-1 md:flex-col md:gap-1 md:overflow-visible md:pb-0"
-      aria-label="قائمة الحساب"
-    >
-      <NavRow
-        active={current === "orders"}
-        href="/profile"
-        label="طلباتي"
-        icon={<Package className="h-5 w-5" strokeWidth={1.35} />}
-      />
-      <NavRow
-        active={current === "billing"}
-        href="/profile?tab=billing"
-        label="بياناتي"
-        icon={<UserCircle className="h-5 w-5" strokeWidth={1.35} />}
-      />
-      <button
-        type="button"
-        onClick={onLogout}
-        className="flex shrink-0 items-center gap-3 whitespace-nowrap rounded-xl px-3 py-2.5 text-start text-sm text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-900 md:mt-3 md:w-full md:shrink md:whitespace-normal md:px-4"
-        style={sans}
+    <>
+      <nav
+        className="hide-scrollbar flex flex-row gap-1 overflow-x-auto pb-1 md:flex-col md:gap-1 md:overflow-visible md:pb-0"
+        aria-label="قائمة الحساب"
       >
-        <LogOut className={`h-5 w-5 ${profileAccentIcon}`} strokeWidth={1.35} />
-        تسجيل الخروج
-      </button>
-    </nav>
+        <NavRow
+          active={current === "orders"}
+          href="/profile"
+          label="طلباتي"
+          icon={<Package className="h-5 w-5" strokeWidth={1.35} />}
+        />
+        <NavRow
+          active={current === "billing"}
+          href="/profile?tab=billing"
+          label="بياناتي"
+          icon={<UserCircle className="h-5 w-5" strokeWidth={1.35} />}
+        />
+        <button
+          type="button"
+          onClick={() => setLogoutConfirmOpen(true)}
+          className="flex shrink-0 items-center gap-3 whitespace-nowrap rounded-xl px-3 py-2.5 text-start text-sm text-neutral-600 transition-colors hover:bg-neutral-50 hover:text-neutral-900 md:mt-3 md:w-full md:shrink md:whitespace-normal md:px-4"
+          style={sans}
+        >
+          <LogOut className={`h-5 w-5 ${profileAccentIcon}`} strokeWidth={1.35} />
+          تسجيل الخروج
+        </button>
+      </nav>
+      <ConfirmModal
+        open={logoutConfirmOpen}
+        title="تأكيد تسجيل الخروج"
+        message="هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟"
+        confirmLabel="تسجيل الخروج"
+        cancelLabel="إلغاء"
+        danger
+        busy={logoutBusy}
+        onConfirm={confirmLogout}
+        onCancel={() => {
+          if (!logoutBusy) setLogoutConfirmOpen(false);
+        }}
+      />
+    </>
   );
 }

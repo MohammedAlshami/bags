@@ -42,10 +42,19 @@ export function ShopPackagesSection({ packages }: { packages: ShopPackage[] }) {
           </p>
         </div>
 
-        <div className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {packages.map((item) => {
+        <div
+          role="region"
+          aria-roledescription={packages.length === 1 ? undefined : "شبكة الباقات"}
+          aria-label={packages.length === 1 ? "باقة واحدة" : "باقات مختارة — صفوف من البطاقات"}
+          className={
+            packages.length === 1
+              ? "w-full"
+              : "grid grid-cols-1 gap-4 pb-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          }
+        >
+          {packages.map((item, pkgIndex) => {
             const heroImage = item.image || item.products[0]?.image || "";
-            const singlePackage = packages.length === 1;
+            const single = packages.length === 1;
             const priceLines = formatDualDiscountPrice({
               price: item.price,
               oldRiyal: item.oldRiyal,
@@ -57,8 +66,9 @@ export function ShopPackagesSection({ packages }: { packages: ShopPackage[] }) {
                 key={item.id}
                 href={`/package/${encodeURIComponent(item.id)}`}
                 className={[
-                  "group relative h-[260px] shrink-0 overflow-hidden rounded-xl bg-neutral-100 outline-none ring-0 transition hover:opacity-[0.98] md:h-[300px]",
-                  singlePackage ? "w-full" : "w-[min(88vw,760px)]",
+                  /* `block`: inline <a> ignores height — without it next/image fill collapses to 0 when not a grid item */
+                  "group relative block h-[220px] w-full shrink-0 overflow-hidden rounded-xl bg-neutral-100 outline-none ring-0 transition hover:opacity-[0.98] sm:h-[240px] md:h-[260px]",
+                  single ? "" : "min-w-0",
                 ].join(" ")}
                 dir="rtl"
                 aria-label={`عرض الباقة ${item.name}`}
@@ -68,16 +78,26 @@ export function ShopPackagesSection({ packages }: { packages: ShopPackage[] }) {
                     src={heroImage}
                     alt={item.name}
                     fill
+                    priority={pkgIndex === 0}
                     className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.05]"
-                    sizes="(max-width: 768px) 88vw, 760px"
+                    sizes={
+                      single
+                        ? "(max-width: 768px) 100vw, (max-width: 1536px) min(92vw, 1200px), 1152px"
+                        : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                    }
                   />
                 ) : null}
                 <div className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/40 to-transparent md:bg-gradient-to-l" aria-hidden />
-                <div className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col justify-end p-4 text-right text-white md:p-6">
-                  <p className="text-xs font-medium text-white/85 md:text-sm" style={sans}>
+                <div
+                  className={[
+                    "absolute inset-y-0 right-0 flex w-full flex-col justify-end p-3 text-right text-white sm:p-4 md:p-5",
+                    single ? "max-w-xl md:max-w-2xl lg:max-w-3xl" : "max-w-[min(100%,18rem)] sm:max-w-[min(100%,20rem)]",
+                  ].join(" ")}
+                >
+                  <p className="text-[11px] font-medium text-white/85 sm:text-xs md:text-sm" style={sans}>
                     ( {item.products.length.toLocaleString("ar-SA")} منتج )
                   </p>
-                  <h3 className="mt-1 line-clamp-2 text-xl font-semibold leading-snug md:text-2xl lg:text-[1.65rem]" style={serif}>
+                  <h3 className="mt-1 line-clamp-2 text-lg font-semibold leading-snug sm:text-xl md:text-[1.35rem]" style={serif}>
                     {item.name}
                   </h3>
                   <p className="mt-2 text-xs font-semibold text-white md:text-sm" style={sans}>

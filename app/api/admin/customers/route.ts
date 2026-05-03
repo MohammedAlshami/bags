@@ -3,6 +3,7 @@ import { hash } from "bcryptjs";
 import { sql } from "@/lib/db";
 import { mapUserPublic, type UserRow } from "@/lib/db-mappers";
 import { requireAdmin } from "@/lib/auth";
+import { isValidCheckoutProvinceId, normalizeCheckoutProvinceId } from "@/lib/checkout-provinces";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
     const search = searchParams.get("search")?.trim() ?? "";
 
     const rows = await sql`
-      SELECT u.id, u.username, u.email, u.full_name, u.address, u.phone, u.disabled, u.role, u.created_at, u.updated_at,
+      SELECT u.id, u.username, u.email, u.full_name, u.address, u.phone, u.province_id, u.disabled, u.role, u.created_at, u.updated_at,
         (SELECT COUNT(*)::int FROM orders o WHERE o.customer_id = u.id) AS order_count
       FROM users u
       WHERE u.role = 'customer'
@@ -61,11 +62,29 @@ export async function POST(request: Request) {
     const phone = typeof body.phone === "string" ? body.phone.trim() : "";
     const disabled = typeof body.disabled === "boolean" ? body.disabled : false;
 
+    let provinceIdIns: string | null = null;
+    if (Object.prototype.hasOwnProperty.call(body, "provinceId")) {
+      const raw = body.provinceId;
+      if (raw === null || raw === undefined) {
+        provinceIdIns = null;
+      } else if (typeof raw === "string") {
+        const t = raw.trim();
+        if (!t) provinceIdIns = null;
+        else if (!isValidCheckoutProvinceId(t)) {
+          return NextResponse.json({ error: "Invalid province" }, { status: 400 });
+        } else {
+          provinceIdIns = normalizeCheckoutProvinceId(t);
+        }
+      } else {
+        return NextResponse.json({ error: "Invalid province" }, { status: 400 });
+      }
+    }
+
     const hashed = await hash(password, 10);
     const inserted = await sql`
-      INSERT INTO users (username, password, role, email, full_name, address, phone, disabled)
-      VALUES (${username}, ${hashed}, 'customer', ${email}, ${fullName}, ${address}, ${phone}, ${disabled})
-      RETURNING id, username, email, full_name, address, phone, disabled, role, created_at, updated_at
+      INSERT INTO users (username, password, role, email, full_name, address, phone, province_id, disabled)
+      VALUES (${username}, ${hashed}, 'customer', ${email}, ${fullName}, ${address}, ${phone}, ${provinceIdIns}, ${disabled})
+      RETURNING id, username, email, full_name, address, phone, province_id, disabled, role, created_at, updated_at
     `;
     const user = inserted[0] as UserRow;
     return NextResponse.json({

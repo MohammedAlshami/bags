@@ -4,9 +4,10 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
 import Link from "next/link";
-import { useCart } from "@/app/context/CartContext";
 import { RecommendedProductsSection } from "@/app/components/RecommendedProductsSection";
 import { sans } from "@/lib/page-theme";
+import { addToCartPrimaryButtonClassName } from "@/lib/add-to-cart-ui";
+import { useAddToCartWithToast } from "@/lib/use-add-to-cart-with-toast";
 import { formatDualDiscountPrice, formatSizePrice, type ProductSizePrice } from "@/lib/price-format";
 
 type ProductItem = {
@@ -45,7 +46,7 @@ const DEFAULT_DETAILS_AR = [
 ];
 
 function ProductMainSection({ product }: { product: ProductItem }) {
-  const { addToCart } = useCart();
+  const { addToCartWithToast } = useAddToCartWithToast();
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
   const description = product.descriptionAr?.trim() || DEFAULT_DESCRIPTION_AR;
   const ingredients = splitBullets(product.ingredientsAr);
@@ -68,13 +69,13 @@ function ProductMainSection({ product }: { product: ProductItem }) {
     <div className="mx-auto max-w-[1920px] px-4 py-10 pt-20 sm:px-6 md:px-14 md:pt-28 lg:px-24">
       <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
         <div className="lg:col-span-7">
-          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl">
+          <div className="relative mx-auto aspect-[3/4] w-full max-w-[min(100%,22rem)] overflow-hidden rounded-2xl sm:max-w-[min(100%,26rem)] md:max-w-[min(100%,30rem)] lg:aspect-[4/5] lg:max-w-none">
             <SafeImage
               src={product.image}
               alt={product.name}
               fill
               className="object-cover object-center"
-              sizes="(max-width: 1024px) 100vw, 58vw"
+              sizes="(max-width: 640px) min(100vw, 22rem), (max-width: 1024px) min(100vw, 30rem), 58vw"
               priority
             />
           </div>
@@ -191,16 +192,17 @@ function ProductMainSection({ product }: { product: ProductItem }) {
 
           <button
             type="button"
-            onClick={() =>
-              addToCart({
+            onClick={() => {
+              const lineName = selectedSize ? `${product.name} - ${selectedSize.label}` : product.name;
+              addToCartWithToast({
                 slug: product.slug,
-                name: selectedSize ? `${product.name} - ${selectedSize.label}` : product.name,
+                name: lineName,
                 price: selectedSize ? `${selectedSize.sarPrice} ر.س` : product.price,
                 image: product.image,
                 oldRiyal: selectedSize ? selectedSize.oldRiyal : product.oldRiyal,
-              })
-            }
-            className="mt-12 w-full rounded-full bg-neutral-900 py-4 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+              });
+            }}
+            className={`mt-12 w-full ${addToCartPrimaryButtonClassName}`}
             style={sans}
           >
             أضف إلى السلة

@@ -9,9 +9,11 @@ import {
   User,
   ShoppingBag,
   ChevronDown,
+  ChevronLeft,
   X,
   Plus,
   Minus,
+  Truck,
 } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
 import { parsePrice, type CartItem } from "@/lib/cart";
@@ -130,6 +132,32 @@ function NavMegaCategoryCard({ c }: { c: NavCategory }) {
   );
 }
 
+function MobileDrawerAccordionTrigger({
+  open,
+  onClick,
+  children,
+}: {
+  open: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={open}
+      className="flex w-full items-center justify-between gap-3 border-b border-gray-100 px-4 py-4 text-start transition-colors hover:bg-neutral-50 active:bg-neutral-50/80"
+    >
+      <span className="text-[17px] font-semibold leading-snug text-gray-900">{children}</span>
+      <ChevronDown
+        className={`h-5 w-5 shrink-0 text-[#B63A6B] transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        strokeWidth={2.25}
+        aria-hidden
+      />
+    </button>
+  );
+}
+
 type NavbarProps = {
   categories: NavCategory[];
 };
@@ -149,6 +177,8 @@ export default function Navbar({ categories }: NavbarProps) {
   const [cartMounted, setCartMounted] = useState(false);
   const [cartDrawerEnter, setCartDrawerEnter] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  /** Single open accordion in mobile nav (shop | about | presets). */
+  const [mobileDrawerSection, setMobileDrawerSection] = useState<string | null>(null);
   const lastScrollY = useRef(0);
   const headerShellRef = useRef<HTMLElement | null>(null);
 
@@ -242,9 +272,14 @@ export default function Navbar({ categories }: NavbarProps) {
   useEffect(() => {
     setActiveMenu(null);
     setMobileMenuOpen(false);
+    setMobileDrawerSection(null);
     setCartOpen(false);
     setHeaderBarVisible(true);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) setMobileDrawerSection(null);
+  }, [mobileMenuOpen]);
 
   const menuItems = getMainNavMenu();
 
@@ -256,6 +291,10 @@ export default function Navbar({ categories }: NavbarProps) {
   const showHeaderBar = headerBarVisible || cartMounted || mobileMenuOpen;
   const isAdmin = user?.role === "admin";
   const mobileNavItems = isAdmin ? MOBILE_NAV_ITEMS.filter((item) => item.href !== "/cart") : MOBILE_NAV_ITEMS;
+
+  const closeMobileNav = () => setMobileMenuOpen(false);
+  const toggleMobileDrawerSection = (id: string) =>
+    setMobileDrawerSection((prev) => (prev === id ? null : id));
 
   return (
     <div
@@ -380,7 +419,7 @@ export default function Navbar({ categories }: NavbarProps) {
                     />
                     {count > 0 ? (
                       <span
-                        className="absolute -end-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-gray-800 text-[8px] text-white"
+                        className="absolute -end-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-primary text-[8px] font-semibold text-white"
                         style={sans}
                       >
                         {count > 99 ? "99+" : count}
@@ -633,7 +672,7 @@ export default function Navbar({ categories }: NavbarProps) {
                   strokeWidth={2.25}
                 />
                 {count > 0 ? (
-                  <span className="absolute -end-1 -top-1 min-h-[0.9rem] min-w-[0.9rem] rounded-full bg-gray-800 px-0.5 text-[8px] leading-4 text-white">
+                  <span className="absolute -end-1 -top-1 min-h-[0.9rem] min-w-[0.9rem] rounded-full bg-brand-primary px-0.5 text-[8px] font-semibold leading-4 text-white">
                     {count > 9 ? "9+" : count}
                   </span>
                 ) : null}
@@ -658,116 +697,193 @@ export default function Navbar({ categories }: NavbarProps) {
             aria-hidden
           />
           <div
-            className="fixed inset-y-0 start-0 z-[101] flex w-full max-w-sm flex-col overflow-y-auto border-e border-gray-100 bg-white shadow-2xl lg:hidden"
+            className="fixed inset-y-0 start-0 z-[101] flex h-[100dvh] w-full max-w-[min(100vw,26rem)] flex-col overflow-hidden border-e border-gray-100 bg-white shadow-2xl lg:hidden"
             style={sans}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mobile-nav-title"
           >
-            <div className="flex items-center justify-between border-b border-gray-100 p-4">
-              <span className="text-sm font-medium text-gray-800">قائمة</span>
+            <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-4">
+              <span id="mobile-nav-title" className="text-lg font-semibold text-gray-900">
+                القائمة الرئيسية
+              </span>
               <button
                 type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-gray-500 hover:text-black"
+                onClick={closeMobileNav}
+                className="rounded-full p-2 text-[#B63A6B] transition-colors hover:bg-[#FCF0F2]"
                 aria-label="إغلاق"
               >
-                <X size={22} />
+                <X size={22} strokeWidth={2} />
               </button>
             </div>
-            <ul className="p-2">
-              {menuItems.map((item) => {
-                if (item.href) {
-                  return (
-                    <li key={item.id} className="border-b border-gray-50 last:border-0">
-                      <Link
-                        href={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block px-4 py-3 text-sm text-gray-800"
-                      >
-                        {item.label}
-                      </Link>
-                    </li>
-                  );
-                }
-                if (item.id === "shop") {
-                  return (
-                    <li key="shop" className="border-b border-gray-50">
-                      <Link
-                        href="/shop"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block px-4 py-3 text-sm text-gray-800"
-                      >
-                        {item.label}
-                      </Link>
-                      <ul className="pr-2 pb-2 text-xs text-gray-500">
-                        {categories.length === 0 ? (
-                          <li className="px-3 py-1.5">—</li>
-                        ) : (
-                          categories.map((c) => (
-                            <li key={c.id} className="px-3 py-1.5">
+
+            <nav
+              className="cute-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain"
+              aria-label="التنقل الرئيسي"
+            >
+              <Link
+                href="/"
+                onClick={closeMobileNav}
+                className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-4 text-[17px] font-semibold text-gray-900 transition-colors hover:bg-neutral-50 active:bg-neutral-50/80"
+              >
+                <span>الرئيسية</span>
+                <ChevronLeft className="h-5 w-5 shrink-0 text-gray-400" strokeWidth={2} aria-hidden />
+              </Link>
+
+              <div className="border-b border-gray-100">
+                <MobileDrawerAccordionTrigger
+                  open={mobileDrawerSection === "shop"}
+                  onClick={() => toggleMobileDrawerSection("shop")}
+                >
+                  {TXT.shop}
+                </MobileDrawerAccordionTrigger>
+                {mobileDrawerSection === "shop" ? (
+                  <div className="border-t border-gray-100 bg-[#FAFAFA] px-3 pb-5 pt-4">
+                    <Link
+                      href="/shop"
+                      onClick={closeMobileNav}
+                      className="block rounded-xl bg-[#B63A6B] px-4 py-3.5 text-center text-base font-bold text-white shadow-sm transition-[filter] hover:brightness-110"
+                    >
+                      تصفّحي كل المنتجات
+                    </Link>
+                    <p className="mt-4 px-2 text-sm leading-relaxed text-gray-600">
+                      الفئات بنفس تجميع سطح المكتب — اختاري القسم ثم التصنيف.
+                    </p>
+                    {([shopMegaColumns[0], shopMegaColumns[1], shopMegaColumns[2]] as const).map((chunk, idx) => (
+                      <div key={MEGA_TITLES[idx]} className="mt-5">
+                        <p
+                          className="border-b border-gray-200/80 px-2 pb-2 text-sm font-bold uppercase tracking-wide text-[#B63A6B]"
+                          style={sans}
+                        >
+                          {MEGA_TITLES[idx]}
+                        </p>
+                        <ul className="mt-1 space-y-0.5">
+                          {chunk.length === 0 && idx === 0 ? (
+                            <li className="px-2 py-2">
                               <Link
-                                href={`/shop#cat-${c.id}`}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className="text-gray-600"
+                                href="/shop"
+                                onClick={closeMobileNav}
+                                className="block rounded-lg px-3 py-3 text-base text-gray-800 hover:bg-white"
                               >
-                                {c.name}
+                                {TXT.shop}
                               </Link>
                             </li>
-                          ))
-                        )}
-                      </ul>
-                    </li>
-                  );
-                }
-                if (item.id === "about" && item.aboutLinks) {
-                  return (
-                    <li key="about" className="border-b border-gray-50">
-                      <span className="block px-4 py-3 text-sm text-gray-400">{item.label}</span>
-                      {item.aboutLinks.map((l) => (
-                        <Link
-                          key={l.label}
-                          href={l.href}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="block py-1.5 pe-4 ps-6 text-sm text-gray-800"
-                        >
-                          {l.label}
-                        </Link>
-                      ))}
-                    </li>
-                  );
-                }
-                if (item.id === "presets" && item.hasMega) {
-                  return (
-                    <li key="presets" className="border-b border-gray-50">
-                      <span className="block px-4 py-3 text-sm text-gray-400">{item.label}</span>
-                      {shopMegaCategories.length === 0 ? (
-                        <Link
-                          href="/shop"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="block py-1.5 pe-4 ps-6 text-sm text-gray-800"
-                        >
-                          {TXT.shop}
-                        </Link>
-                      ) : (
-                        shopMegaCategories.map((c) => (
+                          ) : (
+                            chunk.map((c) => (
+                              <li key={c.id}>
+                                <Link
+                                  href={`/shop#cat-${c.id}`}
+                                  onClick={closeMobileNav}
+                                  className="block rounded-lg px-3 py-3.5 text-base leading-snug text-gray-800 transition-colors hover:bg-white"
+                                >
+                                  {c.name}
+                                </Link>
+                              </li>
+                            ))
+                          )}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="border-b border-gray-100">
+                <MobileDrawerAccordionTrigger
+                  open={mobileDrawerSection === "about"}
+                  onClick={() => toggleMobileDrawerSection("about")}
+                >
+                  {TXT.about}
+                </MobileDrawerAccordionTrigger>
+                {mobileDrawerSection === "about" ? (
+                  <div className="border-t border-gray-100 bg-[#FAFAFA] px-3 pb-4 pt-2">
+                    <ul className="space-y-1">
+                      {ABOUT_LINKS.map((l) => (
+                        <li key={l.href}>
                           <Link
-                            key={c.id}
-                            href={`/shop?category=${encodeURIComponent(c.id)}`}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="block py-1.5 pe-4 ps-6 text-sm text-gray-800"
+                            href={l.href}
+                            onClick={closeMobileNav}
+                            className="flex items-center justify-between gap-3 rounded-lg px-3 py-3.5 text-base font-medium text-gray-900 transition-colors hover:bg-white"
                           >
-                            {c.name}
+                            {l.label}
+                            <ChevronLeft className="h-5 w-5 shrink-0 text-gray-400" strokeWidth={2} aria-hidden />
                           </Link>
-                        ))
-                      )}
-                    </li>
-                  );
-                }
-                return null;
-              })}
-            </ul>
-            <div className="mt-auto border-t border-gray-100 p-4">
-              <div className="mb-2 flex items-center gap-1 text-xs text-gray-500">
-                <MapPin className={adminIconClassName} size={14} />
-                <Link href="/locations" onClick={() => setMobileMenuOpen(false)}>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+
+              <Link
+                href="/blog"
+                onClick={closeMobileNav}
+                className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-4 text-[17px] font-semibold text-gray-900 transition-colors hover:bg-neutral-50 active:bg-neutral-50/80"
+              >
+                <span>{TXT.blog}</span>
+                <ChevronLeft className="h-5 w-5 shrink-0 text-gray-400" strokeWidth={2} aria-hidden />
+              </Link>
+
+              <div className="border-b border-gray-100">
+                <MobileDrawerAccordionTrigger
+                  open={mobileDrawerSection === "presets"}
+                  onClick={() => toggleMobileDrawerSection("presets")}
+                >
+                  {menuItems.find((i) => i.id === "presets")?.label ?? "تشكيلة المجموعات"}
+                </MobileDrawerAccordionTrigger>
+                {mobileDrawerSection === "presets" ? (
+                  <div className="border-t border-gray-100 bg-[#FAFAFA] px-3 pb-5 pt-4">
+                    <p className="px-2 text-sm leading-relaxed text-gray-600">
+                      مجموعات جاهزة مع صفحة منتجات مفلترة كما في سطح المكتب.
+                    </p>
+                    {shopMegaCategories.length === 0 ? (
+                      <Link
+                        href="/shop"
+                        onClick={closeMobileNav}
+                        className="mt-3 block rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-center text-base font-semibold text-gray-900"
+                      >
+                        الانتقال إلى المتجر
+                      </Link>
+                    ) : (
+                      <ul className="mt-3 space-y-2">
+                        {shopMegaCategories.map((c) => (
+                          <li key={c.id}>
+                            <Link
+                              href={`/shop?category=${encodeURIComponent(c.id)}`}
+                              onClick={closeMobileNav}
+                              className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 rounded-xl bg-white px-4 py-3.5 text-base font-medium text-gray-900 shadow-sm ring-1 ring-black/[0.04] transition-colors hover:bg-[#FCF0F2]/40"
+                            >
+                              <span>{c.name}</span>
+                              <span className="text-sm text-gray-500">
+                                ({c.productCount.toLocaleString("ar-SA")} منتج)
+                              </span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            </nav>
+
+            <div className="shrink-0 border-t border-gray-200 bg-neutral-50 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+              <p className="mb-3 text-xs font-bold uppercase tracking-wider text-gray-500">روابط سريعة</p>
+              <div className="flex flex-col gap-3">
+                <Link
+                  href="/track"
+                  onClick={closeMobileNav}
+                  className="flex items-center gap-3 text-base font-semibold text-gray-900 transition-colors hover:text-[#B63A6B]"
+                >
+                  <Truck className={`h-5 w-5 shrink-0 ${adminIconClassName}`} strokeWidth={1.75} aria-hidden />
+                  تتبع الطلب
+                </Link>
+                <Link
+                  href="/locations"
+                  onClick={closeMobileNav}
+                  className="flex items-center gap-3 text-base font-semibold text-gray-900 transition-colors hover:text-[#B63A6B]"
+                >
+                  <MapPin className={`h-5 w-5 shrink-0 ${adminIconClassName}`} strokeWidth={1.75} aria-hidden />
                   {TXT.locations}
                 </Link>
               </div>

@@ -18,7 +18,8 @@ export async function POST(request: Request) {
     const rows = await sql`
       SELECT id, username, password, role, disabled
       FROM users
-      WHERE username = ${username}
+      WHERE LOWER(TRIM(username)) = LOWER(TRIM(${username}))
+         OR LOWER(TRIM(COALESCE(email, ''))) = LOWER(TRIM(${username}))
       LIMIT 1
     `;
     const user = rows[0];

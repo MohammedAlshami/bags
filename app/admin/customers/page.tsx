@@ -6,6 +6,8 @@ import { Download, Loader2, Search, UserPlus, X } from "lucide-react";
 import { adminIconClassName, sans } from "@/lib/page-theme";
 import { adminApiErrorAr } from "@/lib/admin-ar";
 import { AdminSkeletonCustomersPage } from "@/lib/admin-skeleton";
+import { ProvinceSelectDropdown } from "@/app/components/ProvinceSelectDropdown";
+import { getCheckoutProvinceById } from "@/lib/checkout-provinces";
 
 type Customer = {
   _id: string;
@@ -14,6 +16,7 @@ type Customer = {
   fullName?: string;
   address?: string;
   phone?: string;
+  provinceId?: string;
   disabled?: boolean;
   orderCount?: number;
   createdAt?: string;
@@ -36,6 +39,7 @@ export default function AdminCustomersPage() {
   const [editFullName, setEditFullName] = useState("");
   const [editAddress, setEditAddress] = useState("");
   const [editPhone, setEditPhone] = useState("");
+  const [editProvinceId, setEditProvinceId] = useState("");
   const [editDisabled, setEditDisabled] = useState(false);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -81,6 +85,7 @@ export default function AdminCustomersPage() {
     setEditFullName("");
     setEditAddress("");
     setEditPhone("");
+    setEditProvinceId("");
     setEditDisabled(false);
     setPanelError(null);
   };
@@ -97,6 +102,7 @@ export default function AdminCustomersPage() {
     setEditFullName(c.fullName ?? "");
     setEditAddress(c.address ?? "");
     setEditPhone(c.phone ?? "");
+    setEditProvinceId(c.provinceId ?? "");
     setEditDisabled(c.disabled ?? false);
     setPanelError(null);
     setPanel({ mode: "edit", customer: c });
@@ -123,6 +129,7 @@ export default function AdminCustomersPage() {
             fullName: editFullName,
             address: editAddress,
             phone: editPhone,
+            provinceId: editProvinceId.trim() === "" ? null : editProvinceId,
             disabled: editDisabled,
           }),
         });
@@ -144,6 +151,7 @@ export default function AdminCustomersPage() {
           fullName: editFullName,
           address: editAddress,
           phone: editPhone,
+          provinceId: editProvinceId.trim() === "" ? null : editProvinceId,
           disabled: editDisabled,
         }),
       });
@@ -268,6 +276,10 @@ export default function AdminCustomersPage() {
           rows={2}
         />
       </div>
+      <div>
+        <label className="block text-xs text-neutral-500 mb-1">المحافظة</label>
+        <ProvinceSelectDropdown id="admin-customers-province" value={editProvinceId} onChange={setEditProvinceId} />
+      </div>
       <label className="flex items-center gap-2">
         <input type="checkbox" checked={editDisabled} onChange={(e) => setEditDisabled(e.target.checked)} />
         <span className="text-sm">معطّل (لا يمكنه تسجيل الدخول)</span>
@@ -385,6 +397,7 @@ export default function AdminCustomersPage() {
               <th className="p-4 font-medium">البريد</th>
               <th className="p-4 font-medium">الاسم</th>
               <th className="p-4 font-medium">الهاتف</th>
+              <th className="p-4 font-medium">المحافظة</th>
               <th className="p-4 font-medium">العنوان</th>
               <th className="p-4 font-medium">الطلبات</th>
               <th className="p-4 font-medium">الحالة</th>
@@ -405,6 +418,9 @@ export default function AdminCustomersPage() {
                 <td className="p-4 text-neutral-600">{c.fullName || "—"}</td>
                 <td className="p-4 text-neutral-600 text-left" dir="ltr">
                   {c.phone || "—"}
+                </td>
+                <td className="p-4 text-neutral-600">
+                  {c.provinceId ? getCheckoutProvinceById(c.provinceId)?.label ?? c.provinceId : "—"}
                 </td>
                 <td className="p-4 text-neutral-600 max-w-xs truncate">{c.address || "—"}</td>
                 <td className="p-4">{c.orderCount ?? 0}</td>

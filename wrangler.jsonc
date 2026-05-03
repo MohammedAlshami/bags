@@ -19,7 +19,8 @@
       "binding": "DB",
       "database_name": "goldqueen",
       "database_id": "d3098073-2721-4613-a95b-4d5e53fe33f7",
-      "remote": true
+      "remote": true,
+      "migrations_dir": "migrations"
     }
   ],
   "r2_buckets": [

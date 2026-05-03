@@ -20,17 +20,18 @@ export function ShopCategoryCards({ items }: { items: ShopCategoryCardModel[] })
           تصفّحي حسب الفئة
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {items.map((c) => (
+          {items.map((c, i) => (
             <Link
               key={c.id}
               href={`/shop?category=${encodeURIComponent(c.id)}#shop-catalog`}
-              className="group relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-neutral-100 outline-none ring-0 transition hover:opacity-[0.98] focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+              className="group relative block aspect-[4/5] w-full overflow-hidden rounded-xl bg-neutral-100 outline-none ring-0 transition hover:opacity-[0.98] focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
               prefetch
             >
               <SafeImage
                 src={c.image}
                 alt={c.name}
                 fill
+                priority={i < 4}
                 className="object-cover object-center transition duration-700 ease-out group-hover:scale-[1.05]"
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               />

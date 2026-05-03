@@ -36,10 +36,10 @@
     @apply text-lg font-semibold text-brand-primary md:text-[18px];
   }
   .qgb-btn-primary {
-    @apply inline-flex h-10 min-h-10 items-center justify-center rounded-full bg-brand-primary px-5 text-[13px] font-semibold text-white transition-colors hover:bg-brand-dark;
+    @apply inline-flex h-10 min-h-10 cursor-pointer items-center justify-center rounded-full bg-brand-primary px-5 text-[13px] font-semibold text-white transition-[transform,colors,box-shadow] duration-200 hover:bg-brand-dark hover:shadow-sm active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100;
   }
   .qgb-btn-outline {
-    @apply inline-flex h-10 min-h-10 items-center justify-center rounded-full border-[1.5px] border-brand-primary bg-white px-5 text-[13px] font-semibold text-brand-primary transition-colors hover:bg-brand-light;
+    @apply inline-flex h-10 min-h-10 cursor-pointer items-center justify-center rounded-full border-[1.5px] border-brand-primary bg-white px-5 text-[13px] font-semibold text-brand-primary transition-[transform,colors,box-shadow] duration-200 hover:bg-brand-light hover:shadow-sm active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100;
   }
   .qgb-body {
     @apply text-[13px] font-normal leading-relaxed text-body;
@@ -61,6 +61,62 @@
   }
   100% {
     transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@layer base {
+  /* Pointer on common interactive elements (Tailwind utilities win when more specific). */
+  a[href]:not([tabindex="-1"]),
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="link"]:not([aria-disabled="true"]),
+  [role="menuitem"]:not([aria-disabled="true"]),
+  [role="tab"]:not([aria-disabled="true"]),
+  [role="switch"]:not([aria-disabled="true"]),
+  [role="option"]:not([aria-disabled="true"]),
+  summary,
+  label[for],
+  label:has(input:not(:disabled)),
+  label:has(select:not(:disabled)),
+  label:has(textarea:not(:disabled)),
+  select:not(:disabled),
+  input:not(:disabled):is([type="checkbox"], [type="radio"], [type="file"], [type="submit"], [type="reset"], [type="button"], [type="image"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  [aria-disabled="true"],
+  a[href][aria-disabled="true"],
+  label:has(input:disabled),
+  label:has(select:disabled),
+  label:has(textarea:disabled) {
+    cursor: not-allowed;
+  }
+
+  @media (hover: hover) {
+    button:not(:disabled),
+    [role="button"]:not([aria-disabled="true"]),
+    summary {
+      transition-property: transform, filter, box-shadow, background-color, color, border-color, opacity;
+      transition-duration: 0.2s;
+      transition-timing-function: ease;
+    }
+
+    button:not(:disabled):hover,
+    [role="button"]:not([aria-disabled="true"]):hover {
+      filter: brightness(1.03);
+    }
+
+    button:not(:disabled):active,
+    [role="button"]:not([aria-disabled="true"]):active {
+      transform: scale(0.98);
+      filter: brightness(0.98);
+    }
+
+    summary:hover {
+      opacity: 0.92;
+    }
   }
 }
 
@@ -94,5 +150,16 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .qgb-ticker-row {
     animation: none;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary {
+    transition: none !important;
+  }
+
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active {
+    transform: none !important;
   }
 }

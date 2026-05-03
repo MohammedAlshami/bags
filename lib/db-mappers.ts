@@ -7,6 +7,7 @@ export type UserRow = {
   full_name: string;
   address: string;
   phone: string;
+  province_id?: string | null;
   disabled: boolean;
   created_at: string;
   updated_at: string;
@@ -25,6 +26,8 @@ function parseJsonField<T>(value: unknown, fallback: T): T {
 }
 
 export function mapUserPublic(row: UserRow) {
+  const provinceId =
+    row.province_id != null && String(row.province_id).trim() !== "" ? String(row.province_id).trim() : undefined;
   return {
     _id: row.id,
     username: row.username,
@@ -32,6 +35,7 @@ export function mapUserPublic(row: UserRow) {
     fullName: row.full_name,
     address: row.address,
     phone: row.phone,
+    ...(provinceId ? { provinceId } : {}),
     disabled: row.disabled,
     role: row.role,
     createdAt: row.created_at,

@@ -9,6 +9,8 @@ import { adminIconClassName, sans } from "@/lib/page-theme";
 import { adminApiErrorAr, orderStatusAr } from "@/lib/admin-ar";
 import { AdminSkeletonCustomerDetailPage } from "@/lib/admin-skeleton";
 import { formatSar } from "@/lib/format-sar";
+import { ProvinceSelectDropdown } from "@/app/components/ProvinceSelectDropdown";
+import { getCheckoutProvinceById } from "@/lib/checkout-provinces";
 
 type CustomerOrder = { _id: string; status: string; total?: number; createdAt?: string };
 type CustomerDetail = {
@@ -18,6 +20,7 @@ type CustomerDetail = {
   fullName?: string;
   address?: string;
   phone?: string;
+  provinceId?: string;
   disabled?: boolean;
   orderCount?: number;
   orders?: CustomerOrder[];
@@ -38,6 +41,7 @@ export default function AdminCustomerDetailPage() {
   const [editFullName, setEditFullName] = useState("");
   const [editAddress, setEditAddress] = useState("");
   const [editPhone, setEditPhone] = useState("");
+  const [editProvinceId, setEditProvinceId] = useState("");
   const [editDisabled, setEditDisabled] = useState(false);
 
   useEffect(() => {
@@ -75,6 +79,7 @@ export default function AdminCustomerDetailPage() {
     setEditFullName(customer.fullName ?? "");
     setEditAddress(customer.address ?? "");
     setEditPhone(customer.phone ?? "");
+    setEditProvinceId(customer.provinceId ?? "");
     setEditDisabled(customer.disabled ?? false);
     setPanelError(null);
     setSheetOpen(true);
@@ -98,6 +103,7 @@ export default function AdminCustomerDetailPage() {
           fullName: editFullName,
           address: editAddress,
           phone: editPhone,
+          provinceId: editProvinceId.trim() === "" ? null : editProvinceId,
           disabled: editDisabled,
         }),
       });
@@ -187,6 +193,14 @@ export default function AdminCustomerDetailPage() {
               <dt className="mb-0.5 text-[10px] uppercase tracking-widest text-neutral-500">الهاتف</dt>
               <dd className="text-neutral-700" dir="ltr">
                 {customer.phone || "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="mb-0.5 text-[10px] uppercase tracking-widest text-neutral-500">المحافظة</dt>
+              <dd className="text-neutral-700">
+                {customer.provinceId
+                  ? getCheckoutProvinceById(customer.provinceId)?.label ?? customer.provinceId
+                  : "—"}
               </dd>
             </div>
             <div>
@@ -327,6 +341,10 @@ export default function AdminCustomerDetailPage() {
                     className="w-full border border-neutral-200 px-3 py-2 text-sm"
                     rows={2}
                   />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-neutral-500">المحافظة</label>
+                  <ProvinceSelectDropdown id="admin-customer-detail-province" value={editProvinceId} onChange={setEditProvinceId} />
                 </div>
                 <label className="flex items-center gap-2">
                   <input

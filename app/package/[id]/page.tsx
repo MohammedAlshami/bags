@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
-import { useCart } from "@/app/context/CartContext";
 import { RecommendedProductsSection } from "@/app/components/RecommendedProductsSection";
 import { formatDualDiscountPrice, formatDualPrice, type ProductSizePrice } from "@/lib/price-format";
 import { sans } from "@/lib/page-theme";
+import { addToCartPrimaryButtonClassName } from "@/lib/add-to-cart-ui";
+import { addToCartToastTitlePackage, useAddToCartWithToast } from "@/lib/use-add-to-cart-with-toast";
 
 type PackageProduct = {
   _id: string;
@@ -41,7 +42,7 @@ const FALLBACK_DESCRIPTION =
   "مجموعة مختارة بعناية لتمنحك روتين عناية متكامل بسعر خاص، مع منتجات متناسقة يمكن استخدامها معاً للحصول على تجربة كاملة من الملكة جولد.";
 
 function PackageMainSection({ packageDeal }: { packageDeal: PackageDeal }) {
-  const { addToCart } = useCart();
+  const { addToCartWithToast } = useAddToCartWithToast();
   const heroImage = packageDeal.image || packageDeal.products[0]?.image || "";
   const description = packageDeal.introAr?.trim() || packageDeal.description?.trim() || FALLBACK_DESCRIPTION;
   const displayPrice = formatDualDiscountPrice({
@@ -166,16 +167,19 @@ function PackageMainSection({ packageDeal }: { packageDeal: PackageDeal }) {
 
           <button
             type="button"
-            onClick={() =>
-              addToCart({
-                slug: `package:${packageDeal._id}`,
-                name: packageDeal.name,
-                price: packageDeal.price,
-                oldRiyal: packageDeal.oldRiyal ?? null,
-                image: heroImage,
-              })
-            }
-            className="mt-12 w-full rounded-full bg-neutral-900 py-4 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+            onClick={() => {
+              addToCartWithToast(
+                {
+                  slug: `package:${packageDeal._id}`,
+                  name: packageDeal.name,
+                  price: packageDeal.price,
+                  oldRiyal: packageDeal.oldRiyal ?? null,
+                  image: heroImage,
+                },
+                { title: addToCartToastTitlePackage }
+              );
+            }}
+            className={`mt-12 w-full ${addToCartPrimaryButtonClassName}`}
             style={sans}
           >
             أضف الباقة إلى السلة

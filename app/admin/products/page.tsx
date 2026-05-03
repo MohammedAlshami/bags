@@ -14,16 +14,16 @@ import {
 } from "@/lib/admin-skeleton";
 
 const API_ERROR_AR: Record<string, string> = {
-  Forbidden: "ØºÙŠØ± Ù…Ø³Ù…ÙˆØ­",
-  "Failed to fetch products": "ØªØ¹Ø°Ø± ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª",
-  "Failed to load products": "ØªØ¹Ø°Ø± ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª",
-  "Failed to create product": "ØªØ¹Ø°Ø± Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ù…Ù†ØªØ¬",
-  "Failed to update product": "ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ø§Ù„Ù…Ù†ØªØ¬",
-  "Failed to delete product": "ØªØ¹Ø°Ø± Ø­Ø°Ù Ø§Ù„Ù…Ù†ØªØ¬",
-  "Name, price, category, and image required": "Ø§Ù„Ø§Ø³Ù… ÙˆØ§Ù„Ø³Ø¹Ø± ÙˆØ§Ù„ØªØµÙ†ÙŠÙ ÙˆØ§Ù„ØµÙˆØ±Ø© Ù…Ø·Ù„ÙˆØ¨Ø©",
-  "Upload failed": "ÙØ´Ù„ Ø±ÙØ¹ Ø§Ù„Ù…Ù„Ù",
-  "Invalid id": "Ù…Ø¹Ø±Ù‘Ù ØºÙŠØ± ØµØ§Ù„Ø­",
-  "Not found": "ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯",
+  Forbidden: "غير مسموح",
+  "Failed to fetch products": "تعذر تحميل المنتجات",
+  "Failed to load products": "تعذر تحميل المنتجات",
+  "Failed to create product": "تعذر إنشاء المنتج",
+  "Failed to update product": "تعذر تحديث المنتج",
+  "Failed to delete product": "تعذر حذف المنتج",
+  "Name, price, category, and image required": "الاسم والسعر والتصنيف والصورة مطلوبة",
+  "Upload failed": "فشل رفع الملف",
+  "Invalid id": "معرّف غير صالح",
+  "Not found": "غير موجود",
 };
 
 function arApiError(msg: string) {
@@ -31,7 +31,7 @@ function arApiError(msg: string) {
 }
 
 function emptyFallback(value?: string | null) {
-  return value?.trim() ? value : "â€”";
+  return value?.trim() ? value : "—";
 }
 
 type ProductSizeRow = { label: string; sarPrice: number; oldRiyal: number };
@@ -114,13 +114,13 @@ function CategoryPicker({
         onClick={() => setOpen((prev) => !prev)}
         className="flex w-full items-center justify-between gap-3 rounded-sm border border-neutral-200 bg-white px-3 py-2 text-right text-sm"
       >
-        <span className={selected ? "text-neutral-900" : "text-neutral-400"}>{selected?.name ?? "Ø§Ø®ØªØ± Ø§Ù„ØªØµÙ†ÙŠÙ"}</span>
-        <span className="text-neutral-400" aria-hidden>â–¾</span>
+        <span className={selected ? "text-neutral-900" : "text-neutral-400"}>{selected?.name ?? "اختر التصنيف"}</span>
+        <span className="text-neutral-400" aria-hidden>▼</span>
       </button>
       {open ? (
         <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-black/10 bg-white shadow-2xl">
           <div className="flex items-center justify-between border-b border-black/5 px-3 py-2">
-            <span className="text-xs font-medium text-neutral-500">Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª</span>
+            <span className="text-xs font-medium text-neutral-500">التصنيفات</span>
             <button
               type="button"
               onClick={() => {
@@ -129,7 +129,7 @@ function CategoryPicker({
               }}
               className="rounded-full bg-[#B63A6B] px-3 py-1 text-xs text-white"
             >
-              Ø¥Ø¶Ø§ÙØ©
+              إضافة
             </button>
           </div>
           <div className="max-h-72 overflow-y-auto">
@@ -161,7 +161,7 @@ function CategoryPicker({
                       onEdit(category);
                     }}
                   >
-                    ØªØ¹Ø¯ÙŠÙ„
+                    تعديل
                   </button>
                   <button
                     type="button"
@@ -171,7 +171,7 @@ function CategoryPicker({
                       onDelete(category);
                     }}
                   >
-                    Ø­Ø°Ù
+                    حذف
                   </button>
                 </div>
               </div>
@@ -249,7 +249,7 @@ export default function AdminProductsPage() {
       })
       .catch((e) => {
         if (cancelled) return;
-        setError(e instanceof Error ? arApiError(e.message) : "Ø®Ø·Ø£");
+        setError(e instanceof Error ? arApiError(e.message) : "خطأ");
       })
       .finally(() => {
         if (!cancelled) setInitialLoading(false);
@@ -270,7 +270,7 @@ export default function AdminProductsPage() {
       setProducts((prev) => [...prev, ...page.items]);
       setNextOffset(page.nextOffset);
     } catch (e) {
-      setError(e instanceof Error ? arApiError(e.message) : "Ø®Ø·Ø£");
+      setError(e instanceof Error ? arApiError(e.message) : "خطأ");
     } finally {
       loadMoreInFlightRef.current = false;
       setLoadingMore(false);
@@ -433,7 +433,7 @@ export default function AdminProductsPage() {
     try {
       const name = categoryEditorName.trim();
       if (!name) {
-        setError("Ø§Ø³Ù… Ø§Ù„ØªØµÙ†ÙŠÙ Ù…Ø·Ù„ÙˆØ¨.");
+        setError("اسم التصنيف مطلوب.");
         return;
       }
       const url = categoryEditorId ? '/api/admin/categories/' + categoryEditorId : '/api/admin/categories';
@@ -455,7 +455,7 @@ export default function AdminProductsPage() {
       setCategoryEditorOpen(false);
       setError(null);
     } catch (e) {
-      setError(arApiError(e instanceof Error ? e.message : "Ø®Ø·Ø£"));
+      setError(arApiError(e instanceof Error ? e.message : "خطأ"));
     } finally {
       setCategoryEditorBusy(false);
     }
@@ -476,7 +476,7 @@ export default function AdminProductsPage() {
       setCategoryDeleteConfirm(null);
       setError(null);
     } catch (e) {
-      setError(arApiError(e instanceof Error ? e.message : "Ø®Ø·Ø£"));
+      setError(arApiError(e instanceof Error ? e.message : "خطأ"));
     } finally {
       setCategoryDeleteBusy(false);
     }
@@ -492,18 +492,18 @@ export default function AdminProductsPage() {
       if (sizeMode === "single") {
         const priceTrim = price.trim();
         if (!priceTrim) {
-          setError("Ø§Ù„Ø³Ø¹Ø± Ù…Ø·Ù„ÙˆØ¨.");
+          setError("السعر مطلوب.");
           return;
         }
         priceNum = Number(priceTrim);
         if (!Number.isFinite(priceNum) || priceNum < 0) {
-          setError("Ø£Ø¯Ø®Ù„ Ø³Ø¹Ø±Ø§Ù‹ ØµØ§Ù„Ø­Ø§Ù‹ Ø¨Ø§Ù„Ø±ÙŠØ§Ù„ Ø§Ù„Ø³Ø¹ÙˆØ¯ÙŠ.");
+          setError("أدخل سعراً صالحاً بالريال السعودي.");
           return;
         }
         const oldRiyalTrim = oldRiyal.trim();
         const parsedOldRiyal = oldRiyalTrim ? Number(oldRiyalTrim) : null;
         if (parsedOldRiyal !== null && (!Number.isFinite(parsedOldRiyal) || parsedOldRiyal < 0)) {
-          setError("Ø£Ø¯Ø®Ù„ Ø³Ø¹Ø±Ø§Ù‹ ØµØ§Ù„Ø­Ø§Ù‹ Ø¨Ø§Ù„Ø±ÙŠØ§Ù„ Ø§Ù„ÙŠÙ…Ù†ÙŠ Ø§Ù„Ù‚Ø¯ÙŠÙ….");
+          setError("أدخل سعراً صالحاً بالريال اليمني القديم.");
           return;
         }
         oldRiyalNum = parsedOldRiyal;
@@ -514,17 +514,17 @@ export default function AdminProductsPage() {
           const sarPrice = Number(row.sarPrice.trim());
           const oldPrice = Number(row.oldRiyal.trim());
           if (!label || !row.sarPrice.trim() || !row.oldRiyal.trim()) {
-            setError("Ø£ÙƒÙ…Ù„ Ø§Ø³Ù… Ø§Ù„Ù…Ù‚Ø§Ø³ ÙˆØ§Ù„Ø³Ø¹Ø±ÙŠÙ† Ù„ÙƒÙ„ Ù…Ù‚Ø§Ø³.");
+            setError("أكمل اسم المقاس والسعرين لكل مقاس.");
             return;
           }
           if (!Number.isFinite(sarPrice) || sarPrice < 0 || !Number.isFinite(oldPrice) || oldPrice < 0) {
-            setError("Ø£Ø¯Ø®Ù„ Ø£Ø³Ø¹Ø§Ø±Ø§Ù‹ ØµØ§Ù„Ø­Ø© Ù„ÙƒÙ„ Ù…Ù‚Ø§Ø³.");
+            setError("أدخل أسعاراً صالحة لكل مقاس.");
             return;
           }
           normalized.push({ label, sarPrice, oldRiyal: oldPrice });
         }
         if (normalized.length === 0) {
-          setError("Ø£Ø¶Ù Ù…Ù‚Ø§Ø³Ø§Ù‹ ÙˆØ§Ø­Ø¯Ø§Ù‹ Ø¹Ù„Ù‰ Ø§Ù„Ø£Ù‚Ù„.");
+          setError("أضف مقاساً واحداً على الأقل.");
           return;
         }
         sizes = normalized;
@@ -536,11 +536,11 @@ export default function AdminProductsPage() {
       const beforeDiscountPriceValue = beforeDiscountPrice.trim() ? formatSar(Number(beforeDiscountPrice)) : null;
       const beforeDiscountOldRiyalValue = beforeDiscountOldRiyal.trim() ? Number(beforeDiscountOldRiyal) : null;
       if (beforeDiscountPrice.trim() && !Number.isFinite(Number(beforeDiscountPrice))) {
-        setError("Ø£Ø¯Ø®Ù„ Ø³Ø¹Ø± Ù…Ø§ Ù‚Ø¨Ù„ Ø§Ù„Ø®ØµÙ… Ø¨Ø§Ù„Ø±ÙŠØ§Ù„ Ø§Ù„Ø³Ø¹ÙˆØ¯ÙŠ Ø¨Ø´ÙƒÙ„ ØµØ­ÙŠØ­.");
+        setError("أدخل سعر ما قبل الخصم بالريال السعودي بشكل صحيح.");
         return;
       }
       if (beforeDiscountOldRiyal.trim() && !Number.isFinite(beforeDiscountOldRiyalValue)) {
-        setError("Ø£Ø¯Ø®Ù„ Ø³Ø¹Ø± Ù…Ø§ Ù‚Ø¨Ù„ Ø§Ù„Ø®ØµÙ… Ø¨Ø§Ù„Ø¹Ù…Ù„Ø© Ø§Ù„Ù‚Ø¯ÙŠÙ…Ø© Ø¨Ø´ÙƒÙ„ ØµØ­ÙŠØ­.");
+        setError("أدخل سعر ما قبل الخصم بالعملة القديمة بشكل صحيح.");
         return;
       }
       const url = editing ? `/api/admin/products/${editing._id}` : "/api/admin/products";
@@ -569,7 +569,7 @@ export default function AdminProductsPage() {
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         const raw = typeof d.error === "string" ? d.error : "";
-        throw new Error(raw || "ØªØ¹Ø°Ø± Ø§Ù„Ø­ÙØ¸");
+        throw new Error(raw || "تعذر الحفظ");
       }
       setShowForm(false);
       setError(null);
@@ -577,7 +577,7 @@ export default function AdminProductsPage() {
       setProducts(page.items);
       setNextOffset(page.nextOffset);
     } catch (e) {
-      setError(arApiError(e instanceof Error ? e.message : "Ø®Ø·Ø£"));
+      setError(arApiError(e instanceof Error ? e.message : "خطأ"));
     } finally {
       setSaving(false);
     }
@@ -593,12 +593,12 @@ export default function AdminProductsPage() {
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         const raw = typeof d.error === "string" ? d.error : "";
-        throw new Error(raw || "ÙØ´Ù„ Ø§Ù„Ø±ÙØ¹");
+        throw new Error(raw || "فشل الرفع");
       }
       const { url } = await res.json();
       setImage(url);
     } catch (e) {
-      setError(arApiError(e instanceof Error ? e.message : "ÙØ´Ù„ Ø§Ù„Ø±ÙØ¹"));
+      setError(arApiError(e instanceof Error ? e.message : "فشل الرفع"));
     } finally {
       setUploading(false);
     }
@@ -626,7 +626,7 @@ export default function AdminProductsPage() {
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         const raw = typeof d.error === "string" ? d.error : "";
-        throw new Error(raw || "ØªØ¹Ø°Ø± Ø§Ù„Ø­Ø°Ù");
+        throw new Error(raw || "تعذر الحذف");
       }
       const page = await loadFirstProductPage();
       setProducts(page.items);
@@ -634,7 +634,7 @@ export default function AdminProductsPage() {
       setDeleteConfirmId(null);
       if (detailProduct?._id === id) setDetailProduct(null);
     } catch (e) {
-      setError(arApiError(e instanceof Error ? e.message : "Ø®Ø·Ø£"));
+      setError(arApiError(e instanceof Error ? e.message : "خطأ"));
     } finally {
       setDeleteBusy(false);
     }
@@ -643,7 +643,7 @@ export default function AdminProductsPage() {
   const formFields = (
     <div className="grid gap-6">
       <div>
-        <label className="block text-xs text-neutral-500 mb-1">Ø§Ù„Ø§Ø³Ù…</label>
+        <label className="block text-xs text-neutral-500 mb-1">الاسم</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -651,7 +651,7 @@ export default function AdminProductsPage() {
         />
       </div>
       <div>
-        <label className="block text-xs text-neutral-500 mb-1">Ø§Ù„ØªØµÙ†ÙŠÙ</label>
+        <label className="block text-xs text-neutral-500 mb-1">التصنيف</label>
         <CategoryPicker
           categories={categories}
           value={categoryId}
@@ -664,11 +664,13 @@ export default function AdminProductsPage() {
 
       <section className="grid gap-4 rounded-xl border border-black/5 bg-white p-4">
         <div>
-          <h4 className="text-sm font-semibold text-neutral-900">Ù…Ø­ØªÙˆÙ‰ Ø§Ù„Ù…Ù†ØªØ¬</h4>
-          <p className="mt-1 text-xs text-neutral-500">Ø§Ù„ÙˆØµÙ ÙˆØ§Ù„Ù…ÙƒÙˆÙ†Ø§Øª ÙˆØ·Ø±ÙŠÙ‚Ø© Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù… ÙˆØ§Ù„ØªÙ†Ø¨ÙŠÙ‡Ø§Øª Ø§Ù„ØªÙŠ ØªØ¸Ù‡Ø± ÙÙŠ ØµÙØ­Ø© Ø§Ù„Ù…Ù†ØªØ¬.</p>
+          <h4 className="text-sm font-semibold text-neutral-900">محتوى المنتج</h4>
+          <p className="mt-1 text-xs text-neutral-500">
+            الوصف والمكونات وطريقة الاستخدام والتنبيهات التي تظهر في صفحة المنتج.
+          </p>
         </div>
         <div>
-          <label className="block text-xs text-neutral-500 mb-1">Ø§Ù„ÙˆØµÙ</label>
+          <label className="block text-xs text-neutral-500 mb-1">الوصف</label>
           <textarea
             value={descriptionAr}
             onChange={(e) => setDescriptionAr(e.target.value)}
@@ -676,7 +678,7 @@ export default function AdminProductsPage() {
           />
         </div>
         <div>
-          <label className="block text-xs text-neutral-500 mb-1">Ø§Ù„Ù…ÙƒÙˆÙ†Ø§Øª</label>
+          <label className="block text-xs text-neutral-500 mb-1">المكونات</label>
           <textarea
             value={ingredientsAr}
             onChange={(e) => setIngredientsAr(e.target.value)}
@@ -684,7 +686,7 @@ export default function AdminProductsPage() {
           />
         </div>
         <div>
-          <label className="block text-xs text-neutral-500 mb-1">Ø·Ø±ÙŠÙ‚Ø© Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù…</label>
+          <label className="block text-xs text-neutral-500 mb-1">طريقة الاستخدام</label>
           <textarea
             value={usageAr}
             onChange={(e) => setUsageAr(e.target.value)}
@@ -693,7 +695,7 @@ export default function AdminProductsPage() {
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="block text-xs text-neutral-500 mb-1">Ø®Ø§Ù„ÙŠ Ù…Ù†</label>
+            <label className="block text-xs text-neutral-500 mb-1">خالي من</label>
             <textarea
               value={freeFromAr}
               onChange={(e) => setFreeFromAr(e.target.value)}
@@ -701,7 +703,7 @@ export default function AdminProductsPage() {
             />
           </div>
           <div>
-            <label className="block text-xs text-neutral-500 mb-1">ØªØ­Ø°ÙŠØ±Ø§Øª</label>
+            <label className="block text-xs text-neutral-500 mb-1">تحذيرات</label>
             <textarea
               value={warningAr}
               onChange={(e) => setWarningAr(e.target.value)}
@@ -710,7 +712,7 @@ export default function AdminProductsPage() {
           </div>
         </div>
         <div>
-          <label className="block text-xs text-neutral-500 mb-1">Ø§Ù„Ù…Ø­ØªÙˆÙŠØ§Øª</label>
+          <label className="block text-xs text-neutral-500 mb-1">المحتويات</label>
           <textarea
             value={contentsAr}
             onChange={(e) => setContentsAr(e.target.value)}
@@ -722,8 +724,10 @@ export default function AdminProductsPage() {
       <section className="grid gap-4 rounded-xl border border-black/5 bg-neutral-50/60 p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h4 className="text-sm font-semibold text-neutral-900">Ø§Ù„Ù…Ù‚Ø§Ø³Ø§Øª ÙˆØ§Ù„Ø£Ø³Ø¹Ø§Ø±</h4>
-            <p className="mt-1 text-xs text-neutral-500">Ø§Ù„ØªØ³Ø¹ÙŠØ± ÙŠÙƒÙˆÙ† Ù‡Ù†Ø§ ÙÙ‚Ø·ØŒ Ø¥Ù…Ø§ Ù„Ù…Ù‚Ø§Ø³ ÙˆØ§Ø­Ø¯ Ø£Ùˆ Ù„Ø¹Ø¯Ø© Ù…Ù‚Ø§Ø³Ø§Øª.</p>
+            <h4 className="text-sm font-semibold text-neutral-900">المقاسات والأسعار</h4>
+            <p className="mt-1 text-xs text-neutral-500">
+              التسعير يكون هنا فقط، إما لمقاس واحد أو لعدة مقاسات.
+            </p>
           </div>
           <div className="inline-flex overflow-hidden rounded-full border border-neutral-200 bg-white p-1 text-xs">
             <button
@@ -734,7 +738,7 @@ export default function AdminProductsPage() {
                 sizeMode === "single" ? "bg-[#B63A6B] text-white" : "text-neutral-600 hover:bg-neutral-100",
               ].join(" ")}
             >
-              Ù…Ù‚Ø§Ø³ ÙˆØ§Ø­Ø¯
+              مقاس واحد
             </button>
             <button
               type="button"
@@ -744,7 +748,7 @@ export default function AdminProductsPage() {
                 sizeMode === "multiple" ? "bg-[#B63A6B] text-white" : "text-neutral-600 hover:bg-neutral-100",
               ].join(" ")}
             >
-              Ù…Ù‚Ø§Ø³Ø§Øª Ù…ØªØ¹Ø¯Ø¯Ø©
+              مقاسات متعددة
             </button>
           </div>
         </div>
@@ -752,7 +756,7 @@ export default function AdminProductsPage() {
         {sizeMode === "single" ? (
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-xs text-neutral-500 mb-1">Ø§Ù„Ø³Ø¹Ø± Ø¨Ø§Ù„Ø±ÙŠØ§Ù„ Ø§Ù„Ø³Ø¹ÙˆØ¯ÙŠ</label>
+              <label className="block text-xs text-neutral-500 mb-1">السعر بالريال السعودي</label>
               <input
                 type="number"
                 inputMode="decimal"
@@ -766,7 +770,7 @@ export default function AdminProductsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs text-neutral-500 mb-1">Ø§Ù„Ø³Ø¹Ø± Ø¨Ø§Ù„Ø±ÙŠØ§Ù„ Ø§Ù„ÙŠÙ…Ù†ÙŠ Ø§Ù„Ù‚Ø¯ÙŠÙ…</label>
+              <label className="block text-xs text-neutral-500 mb-1">السعر بالريال اليمني القديم</label>
               <input
                 type="number"
                 inputMode="decimal"
@@ -813,19 +817,19 @@ export default function AdminProductsPage() {
             {sizeRows.map((row, index) => (
               <div key={index} className="rounded-xl border border-neutral-200 bg-white p-4">
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium text-neutral-900">Ù…Ù‚Ø§Ø³ {index + 1}</p>
+                  <p className="text-sm font-medium text-neutral-900">مقاس {index + 1}</p>
                   <button
                     type="button"
                     onClick={() => removeSizeRow(index)}
                     className="text-xs text-red-600 hover:text-red-700 disabled:opacity-40"
                     disabled={sizeRows.length === 1}
                   >
-                    Ø­Ø°Ù
+                    حذف
                   </button>
                 </div>
                 <div className="grid gap-3 md:grid-cols-3">
                   <div>
-                    <label className="block text-xs text-neutral-500 mb-1">Ø§Ù„Ø§Ø³Ù…</label>
+                    <label className="block text-xs text-neutral-500 mb-1">الاسم</label>
                     <input
                       value={row.label}
                       onChange={(e) => updateSizeRow(index, { label: e.target.value })}
@@ -835,7 +839,7 @@ export default function AdminProductsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-neutral-500 mb-1">Ø§Ù„Ø³Ø¹Ø± Ø¨Ø§Ù„Ø±ÙŠØ§Ù„ Ø§Ù„Ø³Ø¹ÙˆØ¯ÙŠ</label>
+                    <label className="block text-xs text-neutral-500 mb-1">السعر بالريال السعودي</label>
                     <input
                       type="number"
                       inputMode="decimal"
@@ -849,7 +853,7 @@ export default function AdminProductsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-neutral-500 mb-1">Ø§Ù„Ø³Ø¹Ø± Ø¨Ø§Ù„Ø±ÙŠØ§Ù„ Ø§Ù„ÙŠÙ…Ù†ÙŠ Ø§Ù„Ù‚Ø¯ÙŠÙ…</label>
+                    <label className="block text-xs text-neutral-500 mb-1">السعر بالريال اليمني القديم</label>
                     <input
                       type="number"
                       inputMode="decimal"
@@ -870,14 +874,14 @@ export default function AdminProductsPage() {
               onClick={addSizeRow}
               className="w-fit rounded-full border border-[#B63A6B] px-4 py-2 text-sm text-[#B63A6B] hover:bg-[#B63A6B] hover:text-white"
             >
-              + Ø¥Ø¶Ø§ÙØ© Ù…Ù‚Ø§Ø³
+              + إضافة مقاس
             </button>
           </div>
         )}
       </section>
 
       <div>
-        <label className="block text-xs text-neutral-500 mb-1">Ø§Ù„ØµÙˆØ±Ø©</label>
+        <label className="block text-xs text-neutral-500 mb-1">الصورة</label>
         <input
           ref={imageFileInputRef}
           type="file"
@@ -917,7 +921,7 @@ export default function AdminProductsPage() {
         >
           {uploading ? (
             <p className="text-sm text-neutral-600" style={sans}>
-              Ø¬Ø§Ø±ÙŠ Ø§Ù„Ø±ÙØ¹â€¦
+              جاري الرفع…
             </p>
           ) : image ? (
             <div className="relative w-full max-w-[240px] mx-auto">
@@ -933,7 +937,7 @@ export default function AdminProductsPage() {
                     imageFileInputRef.current?.click();
                   }}
                 >
-                  ØªØºÙŠÙŠØ± Ø§Ù„ØµÙˆØ±Ø©
+                  تغيير الصورة
                 </button>
                 <span className="text-neutral-300" aria-hidden>|</span>
                 <button
@@ -944,7 +948,7 @@ export default function AdminProductsPage() {
                     setImage("");
                   }}
                 >
-                  Ø¥Ø²Ø§Ù„Ø©
+                  إزالة
                 </button>
               </div>
             </div>
@@ -952,10 +956,10 @@ export default function AdminProductsPage() {
             <>
               <ImagePlus className={`w-11 h-11 mb-3 ${adminIconClassName}`} strokeWidth={1.25} aria-hidden />
               <p className="text-sm font-medium text-neutral-800" style={sans}>
-                Ø§Ø³Ø­Ø¨ Ø§Ù„ØµÙˆØ±Ø© Ù‡Ù†Ø§
+                اسحب الصورة هنا
               </p>
-              <p className="text-xs text-neutral-500 mt-1">Ø£Ùˆ Ø§Ø¶ØºØ· Ù„Ø§Ø®ØªÙŠØ§Ø± Ù…Ù„Ù Ù…Ù† Ø¬Ù‡Ø§Ø²Ùƒ</p>
-              <p className="text-[11px] text-neutral-400 mt-2">PNGØŒ JPGØŒ WebP</p>
+              <p className="text-xs text-neutral-500 mt-1">أو اضغط لاختيار ملف من جهازك</p>
+              <p className="text-[11px] text-neutral-400 mt-2">PNG، JPG، WebP</p>
             </>
           )}
         </div>
@@ -967,14 +971,14 @@ export default function AdminProductsPage() {
           disabled={saving}
           className="px-4 py-2 bg-[#B63A6B] text-white text-sm rounded-sm hover:brightness-110 transition-[filter] disabled:opacity-50 disabled:hover:brightness-100"
         >
-          {saving ? "Ø¬Ø§Ø±ÙŠ Ø§Ù„Ø­ÙØ¸â€¦" : "Ø­ÙØ¸"}
+          {saving ? "جاري الحفظ…" : "حفظ"}
         </button>
         <button
           type="button"
           onClick={() => setShowForm(false)}
           className="px-4 py-2 border border-black text-sm rounded-sm"
         >
-          Ø¥Ù„ØºØ§Ø¡
+          إلغاء
         </button>
       </div>
     </div>
@@ -1004,14 +1008,14 @@ export default function AdminProductsPage() {
         </p>
       ) : null}
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-        <h2 className="text-xl font-medium text-neutral-900">Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª</h2>
+        <h2 className="text-xl font-medium text-neutral-900">المنتجات</h2>
         <button
           type="button"
           onClick={openCreate}
           className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#B63A6B] text-white text-sm rounded-sm hover:brightness-110 transition-[filter]"
         >
           <PackagePlus className="w-4 h-4 shrink-0" strokeWidth={1.75} aria-hidden />
-          Ø¥Ø¶Ø§ÙØ© Ù…Ù†ØªØ¬
+          إضافة منتج
         </button>
       </div>
 
@@ -1020,7 +1024,7 @@ export default function AdminProductsPage() {
           <button
             type="button"
             className="fixed inset-0 z-[60] cursor-pointer bg-black/40 transition-colors hover:bg-black/50"
-            aria-label="Ø¥ØºÙ„Ø§Ù‚"
+            aria-label="إغلاق"
             onClick={() => setShowForm(false)}
           />
           <aside
@@ -1031,12 +1035,12 @@ export default function AdminProductsPage() {
             "
           >
             <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3">
-              <h3 className="text-lg font-medium">{editing ? "ØªØ¹Ø¯ÙŠÙ„ Ù…Ù†ØªØ¬" : "Ù…Ù†ØªØ¬ Ø¬Ø¯ÙŠØ¯"}</h3>
+              <h3 className="text-lg font-medium">{editing ? "تعديل منتج" : "منتج جديد"}</h3>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
                 className="p-2 rounded-sm hover:opacity-70 text-neutral-600"
-                aria-label="Ø¥ØºÙ„Ø§Ù‚"
+                aria-label="إغلاق"
               >
                 <X className={`w-5 h-5 ${adminIconClassName}`} strokeWidth={1.5} />
               </button>
@@ -1052,7 +1056,7 @@ export default function AdminProductsPage() {
           <button
             type="button"
             className="fixed inset-0 z-[60] cursor-pointer bg-black/40 transition-colors hover:bg-black/50"
-            aria-label="Ø¥ØºÙ„Ø§Ù‚"
+            aria-label="إغلاق"
             onClick={() => setDetailProduct(null)}
           />
           <aside
@@ -1063,12 +1067,12 @@ export default function AdminProductsPage() {
             "
           >
             <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3">
-              <h3 className="text-lg font-medium">ØªÙØ§ØµÙŠÙ„ Ø§Ù„Ù…Ù†ØªØ¬</h3>
+              <h3 className="text-lg font-medium">تفاصيل المنتج</h3>
               <button
                 type="button"
                 onClick={() => setDetailProduct(null)}
                 className="p-2 rounded-sm hover:opacity-70 text-neutral-600"
-                aria-label="Ø¥ØºÙ„Ø§Ù‚"
+                aria-label="إغلاق"
               >
                 <X className={`w-5 h-5 ${adminIconClassName}`} strokeWidth={1.5} />
               </button>
@@ -1087,44 +1091,44 @@ export default function AdminProductsPage() {
               </div>
               <dl className="mt-6 space-y-4 text-sm">
                 <div>
-                  <dt className="text-xs text-neutral-500 mb-1">Ø§Ù„Ø§Ø³Ù…</dt>
+                  <dt className="text-xs text-neutral-500 mb-1">الاسم</dt>
                   <dd className="font-medium text-neutral-900">{detailProduct.name}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-neutral-500 mb-1">Ø§Ù„Ø³Ø¹Ø±</dt>
+                  <dt className="text-xs text-neutral-500 mb-1">السعر</dt>
                   <dd className="text-neutral-900">{detailProduct.price}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-neutral-500 mb-1">Ø§Ù„ØªØµÙ†ÙŠÙ</dt>
+                  <dt className="text-xs text-neutral-500 mb-1">التصنيف</dt>
                   <dd className="text-neutral-900">{detailProduct.category}</dd>
                 </div>
                 
                 <div>
-                  <dt className="text-xs text-neutral-500 mb-1">Ø§Ù„ÙˆØµÙ</dt>
+                  <dt className="text-xs text-neutral-500 mb-1">الوصف</dt>
                   <dd className="whitespace-pre-wrap text-neutral-900">{emptyFallback(detailProduct.descriptionAr)}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-neutral-500 mb-1">Ø§Ù„Ù…ÙƒÙˆÙ†Ø§Øª</dt>
+                  <dt className="text-xs text-neutral-500 mb-1">المكونات</dt>
                   <dd className="whitespace-pre-wrap text-neutral-900">{emptyFallback(detailProduct.ingredientsAr)}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-neutral-500 mb-1">Ø·Ø±ÙŠÙ‚Ø© Ø§Ù„Ø§Ø³ØªØ®Ø¯Ø§Ù…</dt>
+                  <dt className="text-xs text-neutral-500 mb-1">طريقة الاستخدام</dt>
                   <dd className="whitespace-pre-wrap text-neutral-900">{emptyFallback(detailProduct.usageAr)}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-neutral-500 mb-1">Ø®Ø§Ù„ÙŠ Ù…Ù†</dt>
+                  <dt className="text-xs text-neutral-500 mb-1">خالي من</dt>
                   <dd className="whitespace-pre-wrap text-neutral-900">{emptyFallback(detailProduct.freeFromAr)}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-neutral-500 mb-1">ØªØ­Ø°ÙŠØ±Ø§Øª</dt>
+                  <dt className="text-xs text-neutral-500 mb-1">تحذيرات</dt>
                   <dd className="whitespace-pre-wrap text-neutral-900">{emptyFallback(detailProduct.warningAr)}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-neutral-500 mb-1">Ø§Ù„Ù…Ø­ØªÙˆÙŠØ§Øª</dt>
+                  <dt className="text-xs text-neutral-500 mb-1">المحتويات</dt>
                   <dd className="whitespace-pre-wrap text-neutral-900">{emptyFallback(detailProduct.contentsAr)}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-neutral-500 mb-1">Ø§Ù„Ù…Ø¹Ø±Ù‘Ù</dt>
+                  <dt className="text-xs text-neutral-500 mb-1">المعرّف</dt>
                   <dd className="font-mono text-xs text-neutral-800 break-all" dir="ltr">
                     {detailProduct._id}
                   </dd>
@@ -1137,14 +1141,14 @@ export default function AdminProductsPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Ø¹Ø±Ø¶ ÙÙŠ Ø§Ù„Ù…ØªØ¬Ø±
+                  عرض في المتجر
                 </Link>
                 <button
                   type="button"
                   onClick={() => openEdit(detailProduct)}
                   className="px-4 py-2 bg-[#B63A6B] text-white text-sm rounded-sm hover:brightness-110 transition-[filter]"
                 >
-                  ØªØ¹Ø¯ÙŠÙ„
+                  تعديل
                 </button>
               </div>
             </div>
@@ -1154,7 +1158,7 @@ export default function AdminProductsPage() {
       )}
 
       {products.length === 0 ? (
-        <p className="py-12 text-neutral-500 text-center border border-black/10 rounded-sm bg-white">Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ù†ØªØ¬Ø§Øª Ø¨Ø¹Ø¯.</p>
+        <p className="py-12 text-neutral-500 text-center border border-black/10 rounded-sm bg-white">لا توجد منتجات بعد.</p>
       ) : (
         <>
           <ul className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6 list-none p-0 m-0">
@@ -1196,7 +1200,7 @@ export default function AdminProductsPage() {
                         className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-black/10 bg-white/95 text-neutral-700 shadow-sm transition-shadow hover:border-black/20 hover:bg-white hover:shadow-md"
                         aria-expanded={menuOpenId === p._id}
                         aria-haspopup="menu"
-                        aria-label="Ø¥Ø¬Ø±Ø§Ø¡Ø§Øª Ø§Ù„Ù…Ù†ØªØ¬"
+                        aria-label="إجراءات المنتج"
                       >
                         <MoreVertical className={`w-5 h-5 ${adminIconClassName}`} strokeWidth={1.5} />
                       </button>
@@ -1212,7 +1216,7 @@ export default function AdminProductsPage() {
                             className="block w-full cursor-pointer text-right px-3 py-2 text-sm transition-colors hover:bg-neutral-50"
                             onClick={() => openEdit(p)}
                           >
-                            ØªØ¹Ø¯ÙŠÙ„
+                            تعديل
                           </button>
                           <button
                             type="button"
@@ -1223,7 +1227,7 @@ export default function AdminProductsPage() {
                               setDeleteConfirmId(p._id);
                             }}
                           >
-                            Ø­Ø°Ù
+                            حذف
                           </button>
                         </div>
                       )}
@@ -1250,25 +1254,25 @@ export default function AdminProductsPage() {
           <button
             type="button"
             className="fixed inset-0 z-[80] cursor-pointer bg-black/40 transition-colors hover:bg-black/50"
-            aria-label="Ø¥ØºÙ„Ø§Ù‚"
+            aria-label="إغلاق"
             onClick={() => setCategoryEditorOpen(false)}
           />
           <aside
             className="fixed z-[90] flex flex-col bg-white shadow-2xl inset-x-0 bottom-0 max-h-[50vh] rounded-t-2xl border-t border-black/10 md:inset-x-auto md:left-0 md:top-0 md:bottom-0 md:right-auto md:h-full md:max-h-none md:w-full md:max-w-lg md:rounded-none md:border-t-0 md:border-l md:border-black/10"
           >
             <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3">
-              <h3 className="text-lg font-medium">{categoryEditorId ? "ØªØ¹Ø¯ÙŠÙ„ ØªØµÙ†ÙŠÙ" : "ØªØµÙ†ÙŠÙ Ø¬Ø¯ÙŠØ¯"}</h3>
+              <h3 className="text-lg font-medium">{categoryEditorId ? "تعديل تصنيف" : "تصنيف جديد"}</h3>
               <button
                 type="button"
                 onClick={() => setCategoryEditorOpen(false)}
                 className="p-2 rounded-sm hover:opacity-70 text-neutral-600"
-                aria-label="Ø¥ØºÙ„Ø§Ù‚"
+                aria-label="إغلاق"
               >
                 <X className={`w-5 h-5 ${adminIconClassName}`} strokeWidth={1.5} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
-              <label className="mb-1 block text-xs text-neutral-500">Ø§Ù„Ø§Ø³Ù…</label>
+              <label className="mb-1 block text-xs text-neutral-500">الاسم</label>
               <input
                 value={categoryEditorName}
                 onChange={(e) => setCategoryEditorName(e.target.value)}
@@ -1281,14 +1285,14 @@ export default function AdminProductsPage() {
                   disabled={categoryEditorBusy}
                   className="rounded-sm bg-[#B63A6B] px-4 py-2 text-sm text-white transition-[filter] hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100"
                 >
-                  {categoryEditorBusy ? "Ø¬Ø§Ø±Ù Ø§Ù„Ø­ÙØ¸..." : "Ø­ÙØ¸"}
+                  {categoryEditorBusy ? "جاري الحفظ..." : "حفظ"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setCategoryEditorOpen(false)}
                   className="rounded-sm border border-black px-4 py-2 text-sm"
                 >
-                  Ø¥Ù„ØºØ§Ø¡
+                  إلغاء
                 </button>
               </div>
             </div>
@@ -1298,10 +1302,10 @@ export default function AdminProductsPage() {
 
       <ConfirmModal
         open={categoryDeleteConfirm !== null}
-        title="Ø­Ø°Ù Ø§Ù„ØªØµÙ†ÙŠÙ"
-        message="Ø³ÙŠØªÙ… Ù†Ù‚Ù„ Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª Ø§Ù„Ù…Ø±ØªØ¨Ø·Ø© Ø¨Ù‡Ø°Ø§ Ø§Ù„ØªØµÙ†ÙŠÙ Ø¥Ù„Ù‰ ØªØµÙ†ÙŠÙ Ø¢Ø®Ø± ØªÙ„Ù‚Ø§Ø¦ÙŠØ§Ù‹ Ù‚Ø¨Ù„ Ø§Ù„Ø­Ø°Ù."
-        confirmLabel="Ø­Ø°Ù"
-        cancelLabel="Ø¥Ù„ØºØ§Ø¡"
+        title="حذف التصنيف"
+        message="سيتم نقل المنتجات المرتبطة بهذا التصنيف إلى تصنيف آخر تلقائياً قبل الحذف."
+        confirmLabel="حذف"
+        cancelLabel="إلغاء"
         onConfirm={() => {
           void deleteCategory();
         }}
@@ -1313,10 +1317,10 @@ export default function AdminProductsPage() {
 
       <ConfirmModal
         open={deleteConfirmId !== null}
-        title="Ø­Ø°Ù Ø§Ù„Ù…Ù†ØªØ¬"
-        message="Ù‡Ù„ Ø£Ù†Øª Ù…ØªØ£ÙƒØ¯ Ù…Ù† Ø­Ø°Ù Ù‡Ø°Ø§ Ø§Ù„Ù…Ù†ØªØ¬ØŸ Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø§Ù„ØªØ±Ø§Ø¬Ø¹ Ø¹Ù† Ù‡Ø°Ø§ Ø§Ù„Ø¥Ø¬Ø±Ø§Ø¡."
-        confirmLabel="Ø­Ø°Ù"
-        cancelLabel="Ø¥Ù„ØºØ§Ø¡"
+        title="حذف المنتج"
+        message="هل أنت متأكد من حذف هذا المنتج؟ لا يمكن التراجع عن هذا الإجراء."
+        confirmLabel="حذف"
+        cancelLabel="إلغاء"
         onConfirm={() => {
           if (deleteConfirmId) void performRemove(deleteConfirmId);
         }}

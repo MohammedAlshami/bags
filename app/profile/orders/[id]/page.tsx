@@ -5,7 +5,7 @@ import { SafeImage } from "@/app/components/SafeImage";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Package, Banknote, MapPin } from "lucide-react";
-import { sans, pagePaddingX } from "@/lib/page-theme";
+import { sans } from "@/lib/page-theme";
 import { ProfileBreadcrumb, ProfileAccountNav, profileAccentIcon } from "@/app/components/profile/ProfileAccountChrome";
 import { getStoreLocationById } from "@/lib/store-locations";
 import { formatSar } from "@/lib/format-sar";
@@ -127,8 +127,11 @@ export default function ProfileOrderDetailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-white pb-24 pt-24 md:pb-32 md:pt-32" dir="rtl">
-        <div className={`mx-auto w-full max-w-[1920px] ${pagePaddingX}`}>
+      <main
+        className="min-h-screen bg-white pb-[calc(6rem+env(safe-area-inset-bottom,0px))] pt-4 sm:pt-6 md:pt-14 lg:pt-20 md:pb-32"
+        dir="rtl"
+      >
+        <div className="mx-auto w-full max-w-[1920px] px-3 sm:px-8 md:px-14 lg:px-24">
           <p className="text-neutral-500" style={sans}>
             جاري التحميل…
           </p>
@@ -141,9 +144,13 @@ export default function ProfileOrderDetailPage() {
 
   if (error || !order) {
     return (
-      <main className="min-h-screen bg-white pb-24 pt-24 md:pb-32 md:pt-32" dir="rtl">
-        <div className={`mx-auto w-full max-w-[1920px] ${pagePaddingX}`}>
+      <main
+        className="min-h-screen bg-white pb-[calc(6rem+env(safe-area-inset-bottom,0px))] pt-4 sm:pt-6 md:pt-14 lg:pt-20 md:pb-32"
+        dir="rtl"
+      >
+        <div className="mx-auto w-full max-w-[1920px] px-3 sm:px-8 md:px-14 lg:px-24">
           <ProfileBreadcrumb
+            className="mb-4 sm:mb-6 md:mb-8"
             items={[
               { label: "الرئيسية", href: "/" },
               { label: "حسابي", href: "/profile" },
@@ -166,9 +173,13 @@ export default function ProfileOrderDetailPage() {
   const shortId = String(order._id).slice(-8);
 
   return (
-    <main className="min-h-screen bg-white pb-24 pt-24 md:pb-32 md:pt-32" dir="rtl">
-      <div className={`mx-auto w-full max-w-[1920px] ${pagePaddingX}`}>
+    <main
+      className="min-h-screen bg-white pb-[calc(6rem+env(safe-area-inset-bottom,0px))] pt-4 sm:pt-6 md:pt-14 lg:pt-20 md:pb-32"
+      dir="rtl"
+    >
+      <div className="mx-auto w-full max-w-[1920px] px-3 sm:px-8 md:px-14 lg:px-24">
         <ProfileBreadcrumb
+          className="mb-4 sm:mb-6 md:mb-8"
           items={[
             { label: "الرئيسية", href: "/" },
             { label: "حسابي", href: "/profile" },
@@ -177,14 +188,14 @@ export default function ProfileOrderDetailPage() {
           ]}
         />
 
-        <div className="flex flex-col gap-10 lg:flex-row lg:gap-12">
+        <div className="flex flex-col gap-5 sm:gap-8 lg:flex-row lg:gap-12">
           <aside className="w-full shrink-0 lg:w-56">
             <ProfileAccountNav current="orders" onLogout={handleLogout} />
           </aside>
 
-          <div className="min-w-0 flex-1 space-y-6">
+          <div className="min-w-0 flex-1 space-y-4 sm:space-y-6">
             <div>
-              <h1 className="text-2xl font-medium text-neutral-900 md:text-3xl" style={sans}>
+              <h1 className="text-xl font-medium text-neutral-900 sm:text-2xl md:text-3xl" style={sans}>
                 تفاصيل الطلب
               </h1>
               <p className="mt-1 text-sm text-neutral-500" style={sans}>
@@ -192,7 +203,7 @@ export default function ProfileOrderDetailPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
+            <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/[0.04] sm:rounded-2xl sm:p-6 md:p-8">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                   <p className="font-mono text-xs text-neutral-400" dir="ltr">
@@ -241,7 +252,7 @@ export default function ProfileOrderDetailPage() {
                 <div className="mt-6">
                   <Link
                     href={`/cart?payment=${order._id}`}
-                    className="inline-flex rounded-full bg-[#B63A6B] px-6 py-3 text-sm font-semibold text-white transition-[filter] hover:brightness-110"
+                    className="inline-flex w-full items-center justify-center rounded-full bg-[#B63A6B] px-6 py-3 text-sm font-semibold text-white transition-[filter] hover:brightness-110 sm:w-auto"
                     style={sans}
                   >
                     إتمام الدفع ورفع إثبات التحويل
@@ -251,8 +262,8 @@ export default function ProfileOrderDetailPage() {
             </div>
 
             {(order.trackingNumber || order.carrier || order.shippedAt) && order.status !== "cancelled" ? (
-              <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
-                <h2 className="flex items-center gap-2 text-lg font-medium text-neutral-900" style={sans}>
+              <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/[0.04] sm:rounded-2xl sm:p-6 md:p-8">
+                <h2 className="flex items-center gap-2 text-base font-medium text-neutral-900 sm:text-lg" style={sans}>
                   <Package className={profileAccentIcon} strokeWidth={1.35} />
                   الشحن والتتبع
                 </h2>
@@ -291,13 +302,13 @@ export default function ProfileOrderDetailPage() {
               </div>
             ) : null}
 
-            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
-              <h2 className="flex items-center gap-2 text-lg font-medium text-neutral-900" style={sans}>
+            <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/[0.04] sm:rounded-2xl sm:p-6 md:p-8">
+              <h2 className="flex items-center gap-2 text-base font-medium text-neutral-900 sm:text-lg" style={sans}>
                 <Package className={profileAccentIcon} strokeWidth={1.35} />
                 المنتجات
               </h2>
               {order.items?.length ? (
-                <ul className="mt-6 space-y-4">
+                <ul className="mt-4 space-y-3 sm:mt-6 sm:space-y-4">
                   {order.items.map((it, i) => {
                     const meta = it.slug ? linePriceMetaBySlug[it.slug] : undefined;
                     const priceLine = it.price ? formatDualPrice(it.price, meta?.oldRiyal) : "";
@@ -328,8 +339,8 @@ export default function ProfileOrderDetailPage() {
             </div>
 
             {order.paymentProofUrl ? (
-              <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/[0.04] md:p-8">
-                <h2 className="flex items-center gap-2 text-lg font-medium text-neutral-900" style={sans}>
+              <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/[0.04] sm:rounded-2xl sm:p-6 md:p-8">
+                <h2 className="flex items-center gap-2 text-base font-medium text-neutral-900 sm:text-lg" style={sans}>
                   <Banknote className={profileAccentIcon} strokeWidth={1.35} />
                   إثبات الدفع
                 </h2>
