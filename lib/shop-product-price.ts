@@ -1,19 +1,17 @@
-import { parsePrice } from "@/lib/cart";
-
 export type PricedLike = {
-  price: string;
+  saudiRiyal: number;
   sizes?: { label: string; sarPrice: number; oldRiyal: number }[] | null;
 };
 
 export type ShopPriceCurrency = "SAR" | "YER";
 
-/** Prefer first variant SAR; otherwise parse `price` string. */
+/** Prefer first variant SAR; otherwise product-level `saudiRiyal`. */
 export function getProductSarPrice(p: PricedLike): number {
   const first = Array.isArray(p.sizes) && p.sizes.length > 0 ? p.sizes[0] : null;
   if (first && typeof first.sarPrice === "number" && !Number.isNaN(first.sarPrice)) {
     return first.sarPrice;
   }
-  return parsePrice(p.price);
+  return typeof p.saudiRiyal === "number" && Number.isFinite(p.saudiRiyal) ? p.saudiRiyal : 0;
 }
 
 type PricedWithOld = PricedLike & { oldRiyal?: number | null };

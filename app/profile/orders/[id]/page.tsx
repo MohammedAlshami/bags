@@ -8,10 +8,11 @@ import { Package, Banknote, MapPin } from "lucide-react";
 import { sans } from "@/lib/page-theme";
 import { ProfileBreadcrumb, ProfileAccountNav, profileAccentIcon } from "@/app/components/profile/ProfileAccountChrome";
 import { getStoreLocationById } from "@/lib/store-locations";
-import { formatSar } from "@/lib/format-sar";
-import { formatDualPrice } from "@/lib/price-format";
+import { useDisplayCurrency } from "@/app/context/CurrencyContext";
+import { formatPriceForDisplay } from "@/lib/price-format";
+import { getOrderLineSar, type OrderLineItem } from "@/lib/order-line-items";
 
-type OrderItem = { slug?: string; name?: string; price?: string; quantity?: number; image?: string };
+type OrderItem = { slug?: string; name?: string; saudiRiyal?: number; price?: string; oldRiyal?: number | null; quantity?: number; image?: string };
 type ShippingAddress = Record<string, unknown>;
 type LinePriceMeta = { oldRiyal: number | null };
 
@@ -48,6 +49,7 @@ export default function ProfileOrderDetailPage() {
   const [linePriceMetaBySlug, setLinePriceMetaBySlug] = useState<Record<string, LinePriceMeta>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const displayMode = useDisplayCurrency();
 
   useEffect(() => {
     fetch("/api/auth/me", { credentials: "include" })
@@ -189,7 +191,7 @@ export default function ProfileOrderDetailPage() {
         />
 
         <div className="flex flex-col gap-5 sm:gap-8 lg:flex-row lg:gap-12">
-          <aside className="w-full shrink-0 lg:w-56">
+          <aside className="hidden w-full shrink-0 lg:block lg:w-56">
             <ProfileAccountNav current="orders" onLogout={handleLogout} />
           </aside>
 
@@ -231,7 +233,7 @@ export default function ProfileOrderDetailPage() {
                 </span>
               </div>
               <p className="mt-6 text-lg font-medium text-neutral-900" style={sans}>
-                الإجمالي: {formatSar(Number(order.total))}
+                الإجمالي: {formatPriceForDisplay(displayMode, Number(order.total), null)}
               </p>
 
               {branch ? (
@@ -311,7 +313,12 @@ export default function ProfileOrderDetailPage() {
                 <ul className="mt-4 space-y-3 sm:mt-6 sm:space-y-4">
                   {order.items.map((it, i) => {
                     const meta = it.slug ? linePriceMetaBySlug[it.slug] : undefined;
-                    const priceLine = it.price ? formatDualPrice(it.price, meta?.oldRiyal) : "";
+                    const priceLine = (() => {
+                      const sar = getOrderLineSar(it as OrderLineItem);
+                      if (!Number.isFinite(sar) || sar <= 0) return "";
+                      const oldR = it.oldRiyal ?? meta?.oldRiyal ?? null;
+                      return formatPriceForDisplay(displayMode, sar, oldR != null && oldR > 0 ? oldR : null);
+                    })();
                     return (
                       <li key={i} className="flex gap-4">
                         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-[#FCF0F2]">

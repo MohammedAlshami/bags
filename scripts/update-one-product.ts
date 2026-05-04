@@ -17,8 +17,10 @@
  *   },
  *   "payload": {
  *     "name": "...",
- *     "price": "45 ر.س",
+ *     "saudiRiyal": 45,
  *     "oldRiyal": 6000,
+ *     "saudiRiyalBeforeDiscount": 50 | null,
+ *     "oldRiyalBeforeDiscount": 7000 | null,
  *     "categoryId": "category-uuid",
  *     "image": "/product_Images/....jpeg",
  *     "descriptionAr": "..." | null,
@@ -58,8 +60,10 @@ type Verify = {
 
 type Payload = {
   name: string;
-  price: string;
+  saudiRiyal: number;
   oldRiyal: number | null;
+  saudiRiyalBeforeDiscount: number | null;
+  oldRiyalBeforeDiscount: number | null;
   categoryId: string;
   image: string;
   descriptionAr: string | null;
@@ -114,8 +118,9 @@ async function main() {
 
   const id = raw.id.trim();
   const rows = await sql`
-    SELECT p.id, p.name, p.price, p.category, p.category_id, p.image,
-           p.old_riyal, p.sizes, p.description_ar, p.ingredients_ar, p.usage_ar, p.free_from_ar, p.warning_ar, p.contents_ar,
+    SELECT p.id, p.name, p.saudi_riyal, p.category, p.category_id, p.image,
+           p.old_riyal, p.saudi_riyal_before_discount, p.old_riyal_before_discount,
+           p.sizes, p.description_ar, p.ingredients_ar, p.usage_ar, p.free_from_ar, p.warning_ar, p.contents_ar,
            p.collection_id AS collection_id,
            p.created_at, p.updated_at,
            cat.id AS cat_id, cat.name AS cat_name,
@@ -161,7 +166,11 @@ async function main() {
 
   const body = raw.payload;
   const name = String(body.name ?? "").trim();
-  const price = String(body.price ?? "").trim();
+  const saudiRiyal = Number(body.saudiRiyal);
+  if (!Number.isFinite(saudiRiyal) || saudiRiyal < 0) {
+    console.error("Invalid saudiRiyal in payload.");
+    process.exit(1);
+  }
   const category = await resolveCategorySelection({ categoryId: body.categoryId });
   if (!category) {
     console.error("Invalid categoryId: category not found.");
@@ -169,6 +178,8 @@ async function main() {
   }
   const image = String(body.image ?? "").trim();
   const oldRiyal = normalizeNullableNumber(body.oldRiyal);
+  const saudiRiyalBeforeDiscount = normalizeNullableNumber(body.saudiRiyalBeforeDiscount);
+  const oldRiyalBeforeDiscount = normalizeNullableNumber(body.oldRiyalBeforeDiscount);
   const descriptionAr = normalizeNullableText(body.descriptionAr);
   const ingredientsAr = normalizeNullableText(body.ingredientsAr);
   const usageAr = normalizeNullableText(body.usageAr);
@@ -181,11 +192,13 @@ async function main() {
   await sql`
     UPDATE products SET
       name = ${name},
-      price = ${price},
+      saudi_riyal = ${saudiRiyal},
       category = ${category.name},
       category_id = ${category.id}::uuid,
       image = ${image},
       old_riyal = ${oldRiyal},
+      saudi_riyal_before_discount = ${saudiRiyalBeforeDiscount},
+      old_riyal_before_discount = ${oldRiyalBeforeDiscount},
       sizes = ${sizesJson}::jsonb,
       description_ar = ${descriptionAr},
       ingredients_ar = ${ingredientsAr},

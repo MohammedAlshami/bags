@@ -21,6 +21,11 @@ function normalizeNullableNumber(value: unknown): number | null {
   return Number.isFinite(num) ? num : null;
 }
 
+function normalizeRequiredFiniteNumber(value: unknown): number | null {
+  const num = Number(value);
+  return Number.isFinite(num) && num >= 0 ? num : null;
+}
+
 export async function GET(request: Request) {
   try {
     await requireAdmin();
@@ -32,8 +37,8 @@ export async function GET(request: Request) {
 
     if (all) {
       const rows = await sql`
-        SELECT p.id, p.name, p.price, p.old_riyal,
-               p.before_discount_price, p.before_discount_old_riyal,
+        SELECT p.id, p.name, p.saudi_riyal, p.old_riyal,
+               p.saudi_riyal_before_discount, p.old_riyal_before_discount,
                p.sizes, p.category, p.category_id, p.image,
                p.description_ar, p.ingredients_ar, p.usage_ar, p.free_from_ar, p.warning_ar, p.contents_ar,
                p.collection_id,
@@ -59,8 +64,8 @@ export async function GET(request: Request) {
     const fetchLimit = limit + 1;
 
     const rows = await sql`
-      SELECT p.id, p.name, p.price, p.old_riyal,
-             p.before_discount_price, p.before_discount_old_riyal,
+      SELECT p.id, p.name, p.saudi_riyal, p.old_riyal,
+             p.saudi_riyal_before_discount, p.old_riyal_before_discount,
              p.sizes, p.category, p.category_id, p.image,
              p.description_ar, p.ingredients_ar, p.usage_ar, p.free_from_ar, p.warning_ar, p.contents_ar,
              p.collection_id,
@@ -91,11 +96,11 @@ export async function POST(request: Request) {
     await requireAdmin();
     const body = (await request.json()) as Record<string, unknown>;
     const name = String(body.name ?? "").trim();
-    const price = String(body.price ?? "").trim();
+    const saudiRiyal = normalizeRequiredFiniteNumber(body.saudiRiyal);
     const image = String(body.image ?? "").trim();
     const oldRiyal = normalizeNullableNumber(body.oldRiyal);
-    const beforeDiscountPrice = normalizeNullableText(body.beforeDiscountPrice);
-    const beforeDiscountOldRiyal = normalizeNullableNumber(body.beforeDiscountOldRiyal);
+    const saudiRiyalBeforeDiscount = normalizeNullableNumber(body.saudiRiyalBeforeDiscount);
+    const oldRiyalBeforeDiscount = normalizeNullableNumber(body.oldRiyalBeforeDiscount);
     const descriptionAr = normalizeNullableText(body.descriptionAr);
     const ingredientsAr = normalizeNullableText(body.ingredientsAr);
     const usageAr = normalizeNullableText(body.usageAr);
@@ -107,17 +112,17 @@ export async function POST(request: Request) {
       categoryId: body.categoryId,
       category: body.category,
     });
-    if (!name || !price || !category || !image) {
-      return NextResponse.json({ error: "Name, price, category, and image required" }, { status: 400 });
+    if (!name || saudiRiyal == null || !category || !image) {
+      return NextResponse.json({ error: "Name, saudiRiyal, category, and image required" }, { status: 400 });
     }
     const inserted = await sql`
       INSERT INTO products (
-        name, price, old_riyal, before_discount_price, before_discount_old_riyal,
+        name, saudi_riyal, old_riyal, saudi_riyal_before_discount, old_riyal_before_discount,
         category, category_id, image, collection_id, sizes,
         description_ar, ingredients_ar, usage_ar, free_from_ar, warning_ar, contents_ar
       )
       VALUES (
-        ${name}, ${price}, ${oldRiyal}, ${beforeDiscountPrice}, ${beforeDiscountOldRiyal},
+        ${name}, ${saudiRiyal}, ${oldRiyal}, ${saudiRiyalBeforeDiscount}, ${oldRiyalBeforeDiscount},
         ${category.name}, ${category.id}::uuid, ${image}, NULL, ${sizes}::jsonb,
         ${descriptionAr}, ${ingredientsAr}, ${usageAr}, ${freeFromAr}, ${warningAr}, ${contentsAr}
       )
@@ -125,8 +130,8 @@ export async function POST(request: Request) {
     `;
     const newId = inserted[0].id as string;
     const full = await sql`
-      SELECT p.id, p.name, p.price, p.old_riyal,
-             p.before_discount_price, p.before_discount_old_riyal,
+      SELECT p.id, p.name, p.saudi_riyal, p.old_riyal,
+             p.saudi_riyal_before_discount, p.old_riyal_before_discount,
              p.sizes, p.category, p.category_id, p.image,
              p.description_ar, p.ingredients_ar, p.usage_ar, p.free_from_ar, p.warning_ar, p.contents_ar,
              p.collection_id,

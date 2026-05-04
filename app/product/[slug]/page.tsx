@@ -8,14 +8,15 @@ import { RecommendedProductsSection } from "@/app/components/RecommendedProducts
 import { sans } from "@/lib/page-theme";
 import { addToCartPrimaryButtonClassName } from "@/lib/add-to-cart-ui";
 import { useAddToCartWithToast } from "@/lib/use-add-to-cart-with-toast";
-import { formatDualDiscountPrice, formatSizePrice, type ProductSizePrice } from "@/lib/price-format";
+import { useDisplayCurrency } from "@/app/context/CurrencyContext";
+import { formatDualDiscountPriceForDisplay, formatSizePriceForDisplay, type ProductSizePrice } from "@/lib/price-format";
 
 type ProductItem = {
   name: string;
-  price: string;
+  saudiRiyal: number;
   oldRiyal?: number | null;
-  beforeDiscountPrice?: string | null;
-  beforeDiscountOldRiyal?: number | null;
+  saudiRiyalBeforeDiscount?: number | null;
+  oldRiyalBeforeDiscount?: number | null;
   sizes?: ProductSizePrice[] | null;
   category: string;
   image: string;
@@ -47,6 +48,7 @@ const DEFAULT_DETAILS_AR = [
 
 function ProductMainSection({ product }: { product: ProductItem }) {
   const { addToCartWithToast } = useAddToCartWithToast();
+  const displayMode = useDisplayCurrency();
   const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
   const description = product.descriptionAr?.trim() || DEFAULT_DESCRIPTION_AR;
   const ingredients = splitBullets(product.ingredientsAr);
@@ -57,12 +59,12 @@ function ProductMainSection({ product }: { product: ProductItem }) {
   const sizes = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : null;
   const selectedSize = sizes ? sizes[Math.min(selectedSizeIndex, sizes.length - 1)] : null;
   const displayPrice = selectedSize
-    ? { current: formatSizePrice(selectedSize), before: null }
-    : formatDualDiscountPrice({
-        price: product.price,
+    ? { current: formatSizePriceForDisplay(displayMode, selectedSize), before: null }
+    : formatDualDiscountPriceForDisplay(displayMode, {
+        saudiRiyal: product.saudiRiyal,
         oldRiyal: product.oldRiyal,
-        beforeDiscountPrice: product.beforeDiscountPrice,
-        beforeDiscountOldRiyal: product.beforeDiscountOldRiyal,
+        saudiRiyalBeforeDiscount: product.saudiRiyalBeforeDiscount,
+        oldRiyalBeforeDiscount: product.oldRiyalBeforeDiscount,
       });
 
   return (
@@ -197,7 +199,7 @@ function ProductMainSection({ product }: { product: ProductItem }) {
               addToCartWithToast({
                 slug: product.slug,
                 name: lineName,
-                price: selectedSize ? `${selectedSize.sarPrice} ر.س` : product.price,
+                saudiRiyal: selectedSize ? selectedSize.sarPrice : product.saudiRiyal,
                 image: product.image,
                 oldRiyal: selectedSize ? selectedSize.oldRiyal : product.oldRiyal,
               });
@@ -264,9 +266,14 @@ export default function ProductPage() {
           return;
         }
         const productData = data as Record<string, unknown>;
+        const sar = Number(productData.saudiRiyal);
+        if (!Number.isFinite(sar)) {
+          setProduct(null);
+          return;
+        }
         setProduct({
           name: String(productData.name),
-          price: String(productData.price),
+          saudiRiyal: sar,
           category: String(productData.category),
           image: String(productData.image),
           slug: String(productData.slug),
@@ -276,10 +283,13 @@ export default function ProductPage() {
               : typeof productData.oldRiyal === "string"
                 ? Number(productData.oldRiyal)
                 : null,
-          beforeDiscountPrice: typeof productData.beforeDiscountPrice === "string" ? String(productData.beforeDiscountPrice) : null,
-          beforeDiscountOldRiyal:
-            typeof productData.beforeDiscountOldRiyal === "number"
-              ? Number(productData.beforeDiscountOldRiyal)
+          saudiRiyalBeforeDiscount:
+            typeof productData.saudiRiyalBeforeDiscount === "number"
+              ? Number(productData.saudiRiyalBeforeDiscount)
+              : null,
+          oldRiyalBeforeDiscount:
+            typeof productData.oldRiyalBeforeDiscount === "number"
+              ? Number(productData.oldRiyalBeforeDiscount)
               : null,
           descriptionAr: typeof productData.descriptionAr === "string" ? String(productData.descriptionAr) : null,
           ingredientsAr: typeof productData.ingredientsAr === "string" ? String(productData.ingredientsAr) : null,

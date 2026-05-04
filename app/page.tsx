@@ -1,12 +1,12 @@
 import { HomePageClient } from "./components/HomePageClient";
 import { sql } from "@/lib/db";
 import { mapProduct, type ProductRow } from "@/lib/db-mappers";
-import { formatDualPrice, formatSizePrice } from "@/lib/price-format";
 import type { SocialReelProduct } from "./components/SocialMediaSection";
 import type { ReviewProductRef } from "./components/HomeReviewsSection";
 import type { FeaturedProductItem } from "./components/FeaturedProductsClient";
 import type { HomeCategorySectionData } from "./components/HomeCategoryProductSections";
-import type { ShopByCategoryStripItem } from "./components/ShopByCategorySection";
+import { mapBlogPost, type BlogPostRow } from "@/lib/blog";
+import type { HomeBlogPostItem } from "./components/HomeBlogSection";
 
 type RankedProductRow = ProductRow & { rn: number };
 
@@ -17,7 +17,7 @@ function rowToFeaturedItem(row: ProductRow): FeaturedProductItem {
     image: mapped.image,
     category: mapped.category,
     name: mapped.name,
-    price: mapped.price,
+    saudiRiyal: mapped.saudiRiyal,
     oldRiyal: mapped.oldRiyal,
     sizes: mapped.sizes as FeaturedProductItem["sizes"],
   };
@@ -35,7 +35,7 @@ export default async function Home() {
   const rankedRows = (await sql`
     WITH ranked AS (
       SELECT
-        p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.category_id, p.image,
+        p.id, p.name, p.saudi_riyal, p.old_riyal, p.sizes, p.category, p.category_id, p.image,
         p.created_at, p.updated_at,
         cat.id AS cat_id, cat.name AS cat_name,
         c.id AS col_id, c.name AS col_name, c.slug AS col_slug,
@@ -71,7 +71,7 @@ export default async function Home() {
   }));
 
   const recentRows = (await sql`
-    SELECT p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.category_id, p.image,
+    SELECT p.id, p.name, p.saudi_riyal, p.old_riyal, p.sizes, p.category, p.category_id, p.image,
            p.created_at, p.updated_at,
            cat.id AS cat_id, cat.name AS cat_name,
            c.id AS col_id, c.name AS col_name, c.slug AS col_slug
@@ -87,13 +87,14 @@ export default async function Home() {
   const socialReelProducts: SocialReelProduct[] = productRows.slice(0, 4).map((row) => {
     const mapped = mapProduct(row, true);
     const size =
-      Array.isArray(mapped.sizes) && mapped.sizes.length > 0 ? mapped.sizes[0] : null;
-    const priceLine = size ? formatSizePrice(size) : formatDualPrice(mapped.price, mapped.oldRiyal);
+      Array.isArray(mapped.sizes) && mapped.sizes.length > 0 ? mapped.sizes[0]! : null;
     return {
       slug: mapped._id,
       name: mapped.name,
       image: mapped.image,
-      priceLine,
+      saudiRiyal: mapped.saudiRiyal,
+      oldRiyal: mapped.oldRiyal ?? null,
+      size,
     };
   });
 
@@ -106,12 +107,35 @@ export default async function Home() {
     };
   });
 
+  const blogRows = (await sql`
+    SELECT id, title, slug, excerpt, cover_image, author_name, status, content, seo_title,
+           seo_description, tags, published_at, created_at, updated_at
+    FROM blog_posts
+    WHERE status = 'published'
+    ORDER BY COALESCE(published_at, created_at) DESC, created_at DESC
+    LIMIT 3
+  `) as BlogPostRow[];
+
+  const homeBlogPosts: HomeBlogPostItem[] = blogRows.map((row) => {
+    const p = mapBlogPost(row);
+    return {
+      _id: p._id,
+      title: p.title,
+      excerpt: p.excerpt,
+      coverImage: p.coverImage,
+      publishedAt: p.publishedAt,
+      createdAt: p.createdAt,
+      tags: p.tags,
+    };
+  });
+
   return (
     <HomePageClient
       shopByCategoryItems={shopByCategoryItems}
       categorySections={categorySections}
       socialReelProducts={socialReelProducts}
       reviewProducts={reviewProducts}
+      homeBlogPosts={homeBlogPosts}
     />
   );
 }

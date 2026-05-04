@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronUp } from "lucide-react";
+import { ChevronUp, SlidersHorizontal, X } from "lucide-react";
 import { SafeImage } from "@/app/components/SafeImage";
 import { sans } from "@/lib/page-theme";
-import { formatDualDiscountPrice } from "@/lib/price-format";
+import { useDisplayCurrency } from "@/app/context/CurrencyContext";
+import { formatDualDiscountPriceForDisplay, formatSizePriceForDisplay } from "@/lib/price-format";
 import {
   getProductPriceForFilter,
   type ShopPriceCurrency,
@@ -13,10 +14,10 @@ import {
 
 export type CatalogProduct = {
   name: string;
-  price: string;
+  saudiRiyal: number;
   oldRiyal?: number | null;
-  beforeDiscountPrice?: string | null;
-  beforeDiscountOldRiyal?: number | null;
+  saudiRiyalBeforeDiscount?: number | null;
+  oldRiyalBeforeDiscount?: number | null;
   sizes?: { label: string; sarPrice: number; oldRiyal: number }[] | null;
   category: string;
   categoryId: string | null;
@@ -50,11 +51,26 @@ function sortProducts(list: CatalogProduct[], key: SortKey, currency: ShopPriceC
 }
 
 function ProductCard({ product, priority }: { product: CatalogProduct; priority?: boolean }) {
-  const { name, price, oldRiyal, beforeDiscountPrice, beforeDiscountOldRiyal, category, image, slug } = product;
+  const displayMode = useDisplayCurrency();
+  const {
+    name,
+    saudiRiyal,
+    oldRiyal,
+    saudiRiyalBeforeDiscount,
+    oldRiyalBeforeDiscount,
+    category,
+    image,
+    slug,
+  } = product;
   const size = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes[0] : null;
   const priceLines = size
-    ? { current: `${size.oldRiyal.toLocaleString("en-US")} ر ق / ${size.sarPrice} ر س`, before: null }
-    : formatDualDiscountPrice({ price, oldRiyal, beforeDiscountPrice, beforeDiscountOldRiyal });
+    ? { current: formatSizePriceForDisplay(displayMode, size), before: null }
+    : formatDualDiscountPriceForDisplay(displayMode, {
+        saudiRiyal,
+        oldRiyal,
+        saudiRiyalBeforeDiscount,
+        oldRiyalBeforeDiscount,
+      });
   return (
     <Link href={`/product/${slug}`} className="group flex w-full min-w-0 flex-col" dir="rtl">
       <div className="relative aspect-[3/5] w-full min-h-0 overflow-hidden rounded-2xl bg-neutral-50">
@@ -125,31 +141,16 @@ function FilterSection({
   );
 }
 
-function FilterToggle({
-  open,
-  onToggle,
-}: {
-  open: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div className="mb-6 flex items-center justify-between gap-4 lg:hidden" style={sans}>
-      <span className="text-sm font-normal text-neutral-900 md:text-[15px]">عرض الفلاتر</span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={open}
-        onClick={onToggle}
-        className="relative h-8 w-[52px] shrink-0 rounded-full bg-neutral-900 transition-colors"
-      >
-        <span
-          className={`absolute top-1 size-6 rounded-full bg-white shadow-sm transition-[inset-inline-start] ${
-            open ? "start-1" : "end-1"
-          }`}
-        />
-      </button>
-    </div>
-  );
+function useMinWidthLg() {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const apply = () => setMatches(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+  return matches;
 }
 
 export function ShopCatalogClient({
@@ -168,18 +169,19 @@ export function ShopCatalogClient({
     [categories]
   );
 
-  const [priceCurrency, setPriceCurrency] = useState<ShopPriceCurrency>("SAR");
+  const displayMode = useDisplayCurrency();
+  const filterCurrency: ShopPriceCurrency = displayMode === "YER" ? "YER" : "SAR";
 
   const { minBound, maxBound } = useMemo(() => {
     if (flatProducts.length === 0) return { minBound: 0, maxBound: 500 };
-    const vals = flatProducts.map((p) => getProductPriceForFilter(p, priceCurrency));
+    const vals = flatProducts.map((p) => getProductPriceForFilter(p, filterCurrency));
     const min = Math.min(...vals);
     const max = Math.max(...vals);
     if (min === max) return { minBound: Math.max(0, min - 1), maxBound: max + 1 };
     return { minBound: min, maxBound: max };
-  }, [flatProducts, priceCurrency]);
+  }, [flatProducts, filterCurrency]);
 
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(() => {
     const all = new Set(categories.map((c) => c._id));
     if (initialCategoryId && all.has(initialCategoryId)) return new Set([initialCategoryId]);
@@ -224,6 +226,20 @@ export function ShopCatalogClient({
     setPriceMax(maxBound);
   }, [minBound, maxBound]);
 
+  useEffect(() => {
+    if (!mobileFiltersOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileFiltersOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [mobileFiltersOpen]);
+
   const toggleCategory = useCallback(
     (id: string) => {
       setSelectedCategoryIds((prev) => {
@@ -244,14 +260,14 @@ export function ShopCatalogClient({
       .filter((cat) => selectedCategoryIds.has(cat._id))
       .map((cat) => {
         let list = cat.products.filter((p) => {
-          const v = getProductPriceForFilter(p, priceCurrency);
+          const v = getProductPriceForFilter(p, filterCurrency);
           if (v < lo || v > hi) return false;
           if (activeCollectionSlug) {
             if (!p.collectionSlug || p.collectionSlug !== activeCollectionSlug) return false;
           }
           return true;
         });
-        list = sortProducts(list, sort, priceCurrency);
+        list = sortProducts(list, sort, filterCurrency);
         return { ...cat, products: list };
       })
       .filter((b) => b.products.length > 0);
@@ -260,7 +276,7 @@ export function ShopCatalogClient({
     selectedCategoryIds,
     priceMin,
     priceMax,
-    priceCurrency,
+    filterCurrency,
     sort,
     activeCollectionSlug,
   ]);
@@ -286,14 +302,13 @@ export function ShopCatalogClient({
   const resetFilters = useCallback(() => {
     setSelectedCategoryIds(new Set(categories.map((c) => c._id)));
     setActiveCollectionSlug(null);
-    setPriceCurrency("SAR");
     setSort("default");
     if (flatProducts.length === 0) {
       setPriceMin(0);
       setPriceMax(500);
       return;
     }
-    const vals = flatProducts.map((p) => getProductPriceForFilter(p, "SAR"));
+    const vals = flatProducts.map((p) => getProductPriceForFilter(p, filterCurrency));
     const min = Math.min(...vals);
     const max = Math.max(...vals);
     if (min === max) {
@@ -303,19 +318,117 @@ export function ShopCatalogClient({
       setPriceMin(min);
       setPriceMax(max);
     }
-  }, [categories, flatProducts]);
+  }, [categories, flatProducts, filterCurrency]);
+
+  const isDesktopFilters = useMinWidthLg();
+
+  useEffect(() => {
+    if (isDesktopFilters) setMobileFiltersOpen(false);
+  }, [isDesktopFilters]);
+
+  const filtersPanelInner = (
+    <>
+      <FilterSection title={filterCurrency === "SAR" ? "السعر (ر.س)" : "السعر (ر.ق)"}>
+        <p className="mb-3 text-xs leading-relaxed text-neutral-600 md:text-sm">
+          يتم ضبط نطاق السعر حسب عملة العرض المختارة من شريط التنقل أعلى الصفحة (الريال اليمني أو السعودي أو عرض
+          السعرين).
+        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-end sm:gap-4">
+          <div className="flex min-w-[8rem] flex-1 flex-col gap-2">
+            <span className="text-xs font-medium text-neutral-500 md:text-sm">من</span>
+            <div className="flex items-center gap-2 rounded-lg bg-[#f5f5f5] px-3 py-2.5 md:py-3">
+              <input
+                type="number"
+                min={minBound}
+                max={maxBound}
+                value={Math.round(priceMin)}
+                onChange={(e) => setPriceMin(Number(e.target.value) || minBound)}
+                className="min-w-0 flex-1 border-0 bg-transparent text-right text-base font-medium text-neutral-800 outline-none md:text-lg"
+              />
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-300 text-[10px] font-bold text-white md:size-8 md:text-xs">
+                {filterCurrency === "SAR" ? "س" : "ق"}
+              </span>
+            </div>
+          </div>
+          <div className="flex min-w-[8rem] flex-1 flex-col gap-2">
+            <span className="text-xs font-medium text-neutral-500 md:text-sm">إلى</span>
+            <div className="flex items-center gap-2 rounded-lg bg-[#f5f5f5] px-3 py-2.5 md:py-3">
+              <input
+                type="number"
+                min={minBound}
+                max={maxBound}
+                value={Math.round(priceMax)}
+                onChange={(e) => setPriceMax(Number(e.target.value) || maxBound)}
+                className="min-w-0 flex-1 border-0 bg-transparent text-right text-base font-medium text-neutral-800 outline-none md:text-lg"
+              />
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-300 text-[10px] font-bold text-white md:size-8 md:text-xs">
+                {filterCurrency === "SAR" ? "س" : "ق"}
+              </span>
+            </div>
+          </div>
+        </div>
+        <p className="mt-3 text-xs text-neutral-500 md:text-sm">
+          بين {minBound.toLocaleString("ar-SA")} و {maxBound.toLocaleString("ar-SA")}{" "}
+          {filterCurrency === "SAR" ? "ر.س" : "ر.ق"}
+        </p>
+      </FilterSection>
+
+      <FilterSection title="التوفر">
+        <div className="flex w-full items-center gap-2.5 text-sm text-neutral-950 md:text-[15px]">
+          <input
+            type="radio"
+            name="availability"
+            checked
+            disabled
+            className="size-4 shrink-0 border-2 border-neutral-900 opacity-100 accent-neutral-900 md:size-[18px]"
+            aria-label="متوفر"
+          />
+          <span className="min-w-0">متوفر</span>
+        </div>
+        <p className="text-end text-sm text-neutral-400 md:text-[15px]">غير متوفر — قريبًا</p>
+      </FilterSection>
+
+      <FilterSection title="الفئة">
+        <div className="max-h-[min(50vh,280px)] space-y-3 overflow-y-auto pe-1 cute-scrollbar lg:max-h-56">
+          {categories.map((cat) => (
+            <label
+              key={cat._id}
+              className="flex w-full cursor-pointer items-center gap-2.5 text-sm text-neutral-950 md:text-[15px]"
+            >
+              <input
+                type="checkbox"
+                checked={selectedCategoryIds.has(cat._id)}
+                onChange={() => toggleCategory(cat._id)}
+                className="size-4 shrink-0 accent-neutral-900 md:size-[18px]"
+              />
+              <span className="min-w-0 truncate">{cat.name}</span>
+            </label>
+          ))}
+        </div>
+      </FilterSection>
+    </>
+  );
 
   return (
     <div id="shop-catalog" className={`scroll-mt-28 mx-auto max-w-[1920px] px-4 pt-8 sm:px-8 md:px-14 md:pt-10 lg:px-24`}>
-      <FilterToggle open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
-
-      <div className="mb-6 flex flex-col gap-4 border-b border-neutral-200 pb-6 md:flex-row md:items-center md:justify-between">
-        <p className="text-sm text-neutral-600 md:text-[15px]" style={sans}>
-          <span className="font-bold text-neutral-950">{resultCount.toLocaleString("ar-SA")}</span>{" "}
-          نتيجة
-        </p>
-        <div className="flex flex-wrap items-center gap-3 md:gap-4">
-          <label className="flex flex-wrap items-center gap-2 text-sm text-neutral-800 md:text-[15px]" style={sans}>
+      <div className="mb-6 flex flex-col gap-4 border-b border-neutral-200 pb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-neutral-600 md:text-[15px]" style={sans}>
+            <span className="font-bold text-neutral-950">{resultCount.toLocaleString("ar-SA")}</span> نتيجة
+          </p>
+          <div className="flex flex-wrap items-center gap-3 md:gap-4">
+            {!isDesktopFilters ? (
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(true)}
+                className="inline-flex h-10 min-h-10 shrink-0 items-center justify-center gap-2 rounded-full border-[1.5px] border-brand-primary bg-white px-5 text-[13px] font-semibold text-brand-primary shadow-sm transition-[transform,colors,box-shadow] hover:bg-brand-light hover:shadow-md active:scale-[0.98]"
+                style={sans}
+              >
+                <SlidersHorizontal className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                الفلاتر
+              </button>
+            ) : null}
+            <label className="flex flex-wrap items-center gap-2 text-sm text-neutral-800 md:text-[15px]" style={sans}>
             <span className="shrink-0">ترتيب حسب</span>
             <select
               value={sort}
@@ -329,129 +442,78 @@ export function ShopCatalogClient({
               <option value="price-desc">السعر: من الأعلى للأقل</option>
             </select>
           </label>
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-12">
-        <aside
-          className={`w-full shrink-0 lg:sticky lg:top-28 lg:w-[min(100%,320px)] lg:self-start ${
-            filtersOpen ? "block" : "max-lg:hidden"
-          } lg:block`}
-          aria-label="فلاتر المتجر"
-          dir="rtl"
-        >
-          <div className="px-0 py-0" style={sans}>
-            <div className="mb-2 flex items-center justify-between gap-3 pb-4">
-              <h2 className="text-lg font-bold text-neutral-950 md:text-xl">الفلاتر</h2>
-              <Link
-                href="/shop"
-                className="text-sm font-semibold text-neutral-900 underline decoration-neutral-400 underline-offset-4 hover:decoration-neutral-900 md:text-[15px]"
-                onClick={resetFilters}
-              >
-                إعادة التعيين
-              </Link>
-            </div>
-
-            <FilterSection title={priceCurrency === "SAR" ? "السعر (ر.س)" : "السعر (ر.ق)"}>
-              <div className="flex flex-wrap gap-4">
-                <label className="flex cursor-pointer items-center gap-2 text-sm text-neutral-950 md:text-[15px]">
-                  <input
-                    type="radio"
-                    name="shop-filter-currency"
-                    checked={priceCurrency === "SAR"}
-                    onChange={() => setPriceCurrency("SAR")}
-                    className="size-4 shrink-0 border-2 border-neutral-900 accent-neutral-900 md:size-[18px]"
-                  />
-                  <span className="min-w-0">ر.س — الريال السعودي</span>
-                </label>
-                <label className="flex cursor-pointer items-center gap-2 text-sm text-neutral-950 md:text-[15px]">
-                  <input
-                    type="radio"
-                    name="shop-filter-currency"
-                    checked={priceCurrency === "YER"}
-                    onChange={() => setPriceCurrency("YER")}
-                    className="size-4 shrink-0 border-2 border-neutral-900 accent-neutral-900 md:size-[18px]"
-                  />
-                  <span className="min-w-0">ر.ق — الريال اليمني</span>
-                </label>
-              </div>
-              <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-end sm:gap-4">
-                <div className="flex min-w-[8rem] flex-1 flex-col gap-2">
-                  <span className="text-xs font-medium text-neutral-500 md:text-sm">من</span>
-                  <div className="flex items-center gap-2 rounded-lg bg-[#f5f5f5] px-3 py-2.5 md:py-3">
-                    <input
-                      type="number"
-                      min={minBound}
-                      max={maxBound}
-                      value={Math.round(priceMin)}
-                      onChange={(e) => setPriceMin(Number(e.target.value) || minBound)}
-                      className="min-w-0 flex-1 border-0 bg-transparent text-right text-base font-medium text-neutral-800 outline-none md:text-lg"
-                    />
-                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-300 text-[10px] font-bold text-white md:size-8 md:text-xs">
-                      {priceCurrency === "SAR" ? "س" : "ق"}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex min-w-[8rem] flex-1 flex-col gap-2">
-                  <span className="text-xs font-medium text-neutral-500 md:text-sm">إلى</span>
-                  <div className="flex items-center gap-2 rounded-lg bg-[#f5f5f5] px-3 py-2.5 md:py-3">
-                    <input
-                      type="number"
-                      min={minBound}
-                      max={maxBound}
-                      value={Math.round(priceMax)}
-                      onChange={(e) => setPriceMax(Number(e.target.value) || maxBound)}
-                      className="min-w-0 flex-1 border-0 bg-transparent text-right text-base font-medium text-neutral-800 outline-none md:text-lg"
-                    />
-                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-neutral-300 text-[10px] font-bold text-white md:size-8 md:text-xs">
-                      {priceCurrency === "SAR" ? "س" : "ق"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-3 text-xs text-neutral-500 md:text-sm">
-                بين {minBound.toLocaleString("ar-SA")} و {maxBound.toLocaleString("ar-SA")}{" "}
-                {priceCurrency === "SAR" ? "ر.س" : "ر.ق"}
-              </p>
-            </FilterSection>
-
-            <FilterSection title="التوفر">
-              <div className="flex w-full items-center gap-2.5 text-sm text-neutral-950 md:text-[15px]">
-                <input
-                  type="radio"
-                  name="availability"
-                  checked
-                  disabled
-                  className="size-4 shrink-0 border-2 border-neutral-900 opacity-100 accent-neutral-900 md:size-[18px]"
-                  aria-label="متوفر"
-                />
-                <span className="min-w-0">متوفر</span>
-              </div>
-              <p className="text-end text-sm text-neutral-400 md:text-[15px]">غير متوفر — قريبًا</p>
-            </FilterSection>
-
-            <FilterSection title="الفئة">
-              <div className="max-h-56 space-y-3 overflow-y-auto pe-1 cute-scrollbar">
-                {categories.map((cat) => (
-                  <label
-                    key={cat._id}
-                    className="flex w-full cursor-pointer items-center gap-2.5 text-sm text-neutral-950 md:text-[15px]"
+      {!isDesktopFilters && mobileFiltersOpen ? (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-[105] bg-black/45 backdrop-blur-[1px] lg:hidden"
+            aria-label="إغلاق الفلاتر"
+            onClick={() => setMobileFiltersOpen(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="shop-filters-sheet-title"
+            className="fixed inset-x-0 bottom-0 z-[106] flex max-h-[min(88dvh,720px)] flex-col rounded-t-2xl border border-neutral-200/90 bg-white shadow-[0_-12px_48px_-12px_rgba(0,0,0,0.15)] lg:hidden"
+          >
+            <div className="flex shrink-0 flex-col border-b border-neutral-100 px-4 pt-3 pb-3">
+              <div className="mx-auto mb-3 h-1 w-9 shrink-0 rounded-full bg-neutral-300" aria-hidden />
+              <div className="flex items-center justify-between gap-2">
+                <h2 id="shop-filters-sheet-title" className="text-lg font-bold text-neutral-950">
+                  الفلاتر
+                </h2>
+                <div className="flex items-center gap-1">
+                  <Link
+                    href="/shop"
+                    className="text-sm font-semibold text-neutral-900 underline decoration-neutral-400 underline-offset-4 hover:decoration-neutral-900"
+                    style={sans}
+                    onClick={() => {
+                      resetFilters();
+                      setMobileFiltersOpen(false);
+                    }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={selectedCategoryIds.has(cat._id)}
-                      onChange={() => toggleCategory(cat._id)}
-                      className="size-4 shrink-0 accent-neutral-900 md:size-[18px]"
-                    />
-                    <span className="min-w-0 truncate">{cat.name}</span>
-                  </label>
-                ))}
+                    إعادة التعيين
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setMobileFiltersOpen(false)}
+                    className="rounded-full p-2 text-neutral-600 hover:bg-neutral-100"
+                    aria-label="إغلاق"
+                  >
+                    <X className="size-5" strokeWidth={2} />
+                  </button>
+                </div>
               </div>
-            </FilterSection>
+            </div>
+            <div
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-2 cute-scrollbar"
+              dir="rtl"
+              style={sans}
+            >
+              {filtersPanelInner}
+            </div>
+            <div
+              className="shrink-0 border-t border-neutral-100 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+              style={sans}
+            >
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(false)}
+                className="w-full rounded-full bg-brand-primary py-3.5 text-sm font-semibold text-white shadow-sm transition-[filter,transform] hover:bg-brand-dark active:scale-[0.98]"
+              >
+                عرض النتائج ({resultCount.toLocaleString("ar-SA")})
+              </button>
+            </div>
           </div>
-        </aside>
+        </>
+      ) : null}
 
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-12">
+        <div className="min-w-0 flex-1 lg:order-2">
           {filteredBlocks.length === 0 ? (
             <p
               className="px-4 py-16 text-center text-lg text-neutral-600 md:text-xl"
@@ -485,6 +547,28 @@ export function ShopCatalogClient({
             ))
           )}
         </div>
+
+        {isDesktopFilters ? (
+          <aside
+            className="w-full shrink-0 lg:sticky lg:top-28 lg:w-[min(100%,320px)] lg:self-start lg:order-1"
+            aria-label="فلاتر المتجر"
+            dir="rtl"
+          >
+            <div className="px-0 py-0" style={sans}>
+              <div className="mb-2 flex items-center justify-between gap-3 pb-4">
+                <h2 className="text-lg font-bold text-neutral-950 md:text-xl">الفلاتر</h2>
+                <Link
+                  href="/shop"
+                  className="text-sm font-semibold text-neutral-900 underline decoration-neutral-400 underline-offset-4 hover:decoration-neutral-900 md:text-[15px]"
+                  onClick={resetFilters}
+                >
+                  إعادة التعيين
+                </Link>
+              </div>
+              {filtersPanelInner}
+            </div>
+          </aside>
+        ) : null}
       </div>
     </div>
   );

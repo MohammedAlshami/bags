@@ -7,7 +7,6 @@ import { adminIconClassName, sans } from "@/lib/page-theme";
 import { formatSar } from "@/lib/format-sar";
 import { adminApiErrorAr, orderStatusAr } from "@/lib/admin-ar";
 import { AdminSkeletonFormFields, AdminSkeletonOrdersPage } from "@/lib/admin-skeleton";
-import { parsePrice } from "@/lib/cart";
 
 type CustomerRef = { _id: string; username?: string; email?: string; fullName?: string };
 type OrderRow = {
@@ -16,14 +15,14 @@ type OrderRow = {
   total: number;
   status: string;
   createdAt: string;
-  items?: { name?: string; quantity?: number; price?: string }[];
+  items?: { name?: string; quantity?: number; saudiRiyal?: number; price?: string }[];
 };
 
 type ProductOption = {
   _id: string;
   name: string;
   slug: string;
-  price: string;
+  saudiRiyal: number;
   image: string;
 };
 
@@ -87,7 +86,7 @@ function ProductLinePicker({
                 <div className="h-9 w-9 shrink-0 rounded-sm bg-neutral-100" aria-hidden />
               )}
               <span className="truncate">
-                {selected.name} — {selected.price}
+                {selected.name} — {formatSar(selected.saudiRiyal)}
               </span>
             </>
           ) : (
@@ -129,7 +128,7 @@ function ProductLinePicker({
                   )}
                   <span className="min-w-0 flex-1 leading-snug">
                     {p.name}
-                    <span className="block text-xs text-neutral-500">{p.price}</span>
+                    <span className="block text-xs text-neutral-500">{formatSar(p.saudiRiyal)}</span>
                   </span>
                 </button>
               </li>
@@ -230,11 +229,11 @@ export default function AdminOrdersPage() {
       setCustomers(Array.isArray(custData) ? custData : []);
       setProducts(
         Array.isArray(prodData)
-          ? prodData.map((p: ProductOption) => ({
-              _id: p._id,
-              name: p.name,
-              slug: p.slug,
-              price: p.price,
+          ? prodData.map((p: Record<string, unknown>) => ({
+              _id: String(p._id ?? ""),
+              name: String(p.name ?? ""),
+              slug: String(p.slug ?? p._id ?? ""),
+              saudiRiyal: typeof p.saudiRiyal === "number" ? p.saudiRiyal : Number(p.saudiRiyal) || 0,
               image: typeof p.image === "string" ? p.image : "",
             }))
           : []
@@ -262,7 +261,7 @@ export default function AdminOrdersPage() {
     for (const line of lines) {
       const p = line.productSlug ? productBySlug.get(line.productSlug) : undefined;
       const q = Math.max(1, parseInt(line.quantity, 10) || 1);
-      if (p) t += parsePrice(p.price) * q;
+      if (p) t += p.saudiRiyal * q;
     }
     return t;
   }, [lines, productBySlug]);
@@ -284,26 +283,26 @@ export default function AdminOrdersPage() {
       setPanelError(adminApiErrorAr("Customer required"));
       return;
     }
-    const items: { slug: string; name: string; price: string; quantity: number }[] = [];
-    for (const line of lines) {
-      if (!line.productSlug) {
+    const items: { slug: string; name: string; saudiRiyal: number; quantity: number; image?: string }[] = [];
+    for (const row of lines) {
+      if (!row.productSlug) {
         setPanelError(adminApiErrorAr("Invalid items"));
         return;
       }
-      const p = productBySlug.get(line.productSlug);
+      const p = productBySlug.get(row.productSlug);
       if (!p) {
         setPanelError(adminApiErrorAr("Invalid items"));
         return;
       }
-      const quantity = Math.max(1, parseInt(line.quantity, 10) || 1);
-      const line: { slug: string; name: string; price: string; quantity: number; image?: string } = {
+      const quantity = Math.max(1, parseInt(row.quantity, 10) || 1);
+      const entry: { slug: string; name: string; saudiRiyal: number; quantity: number; image?: string } = {
         slug: p.slug,
         name: p.name,
-        price: p.price,
+        saudiRiyal: p.saudiRiyal,
         quantity,
       };
-      if (p.image) line.image = p.image;
-      items.push(line);
+      if (p.image) entry.image = p.image;
+      items.push(entry);
     }
     if (items.length === 0) {
       setPanelError(adminApiErrorAr("Items required"));

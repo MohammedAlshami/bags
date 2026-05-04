@@ -6,13 +6,13 @@ import { ImagePlus, MoreVertical, PackagePlus, X } from "lucide-react";
 import { ConfirmModal } from "@/app/components/ConfirmModal";
 import { SafeImage } from "@/app/components/SafeImage";
 import { adminIconClassName, sans } from "@/lib/page-theme";
-import { parseStoredPriceToInputValue } from "@/lib/format-sar";
+import { formatSar } from "@/lib/format-sar";
 import { formatDualDiscountPrice } from "@/lib/price-format";
 
 type ProductRow = {
   _id: string;
   name: string;
-  price: string;
+  saudiRiyal: number;
   image: string;
 };
 
@@ -22,10 +22,10 @@ type PackageRow = {
   description: string;
   image: string;
   productIds: string[];
-  price: string;
+  saudiRiyal: number;
   oldRiyal?: number | null;
-  beforeDiscountPrice?: string | null;
-  beforeDiscountOldRiyal?: number | null;
+  saudiRiyalBeforeDiscount?: number | null;
+  oldRiyalBeforeDiscount?: number | null;
 };
 
 const API_ERROR_AR: Record<string, string> = {
@@ -34,7 +34,7 @@ const API_ERROR_AR: Record<string, string> = {
   "Failed to create package": "تعذر إنشاء الباقة",
   "Failed to update package": "تعذر تحديث الباقة",
   "Failed to delete package": "تعذر حذف الباقة",
-  "Name, price, and products required": "الاسم والسعر والمنتجات مطلوبة",
+  "Name, saudiRiyal, and products required": "الاسم والسعر والمنتجات مطلوبة",
   "Some products were not found": "بعض المنتجات غير موجودة",
   "Invalid id": "معرّف غير صالح",
   "Not found": "غير موجود",
@@ -145,10 +145,10 @@ export default function AdminPackagesPage() {
     setName(row.name);
     setDescription(row.description);
     setImage(row.image);
-    setPrice(parseStoredPriceToInputValue(row.price));
+    setPrice(String(row.saudiRiyal));
     setOldRiyal(row.oldRiyal == null ? "" : String(row.oldRiyal));
-    setBeforeDiscountPrice(row.beforeDiscountPrice ? parseStoredPriceToInputValue(row.beforeDiscountPrice) : "");
-    setBeforeDiscountOldRiyal(row.beforeDiscountOldRiyal == null ? "" : String(row.beforeDiscountOldRiyal));
+    setBeforeDiscountPrice(row.saudiRiyalBeforeDiscount != null ? String(row.saudiRiyalBeforeDiscount) : "");
+    setBeforeDiscountOldRiyal(row.oldRiyalBeforeDiscount == null ? "" : String(row.oldRiyalBeforeDiscount));
     setProductIds(row.productIds);
     setProductPickerOpen(false);
     setShowForm(true);
@@ -212,10 +212,10 @@ export default function AdminPackagesPage() {
           name,
           description,
           image,
-          price: priceValue,
+          saudiRiyal: priceValue,
           oldRiyal: oldRiyalValue,
-          beforeDiscountPrice: beforeDiscountPriceValue,
-          beforeDiscountOldRiyal: beforeDiscountOldRiyalValue,
+          saudiRiyalBeforeDiscount: beforeDiscountPriceValue,
+          oldRiyalBeforeDiscount: beforeDiscountOldRiyalValue,
           productIds,
         }),
       });
@@ -321,7 +321,7 @@ export default function AdminPackagesPage() {
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-[11px] font-semibold leading-4 text-neutral-900">{product.name}</p>
-                              <p className="mt-0.5 truncate text-[10px] font-medium text-brand-primary">{product.price}</p>
+                              <p className="mt-0.5 truncate text-[10px] font-medium text-brand-primary">{formatSar(product.saudiRiyal)}</p>
                             </div>
                           </div>
                         ))}
@@ -365,10 +365,10 @@ export default function AdminPackagesPage() {
                 <div className="mt-4 text-center">
                   <p className="text-xs text-neutral-500">
                     {formatDualDiscountPrice({
-                      price: item.price,
+                      saudiRiyal: item.saudiRiyal,
                       oldRiyal: item.oldRiyal,
-                      beforeDiscountPrice: item.beforeDiscountPrice,
-                      beforeDiscountOldRiyal: item.beforeDiscountOldRiyal,
+                      saudiRiyalBeforeDiscount: item.saudiRiyalBeforeDiscount,
+                      oldRiyalBeforeDiscount: item.oldRiyalBeforeDiscount,
                     }).current}
                   </p>
                   <h3 className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-neutral-900">{item.name}</h3>
@@ -487,7 +487,7 @@ export default function AdminPackagesPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-neutral-900">{product.name}</p>
-                          <p className="mt-0.5 text-xs text-neutral-500">{product.price}</p>
+                          <p className="mt-0.5 text-xs text-neutral-500">{formatSar(product.saudiRiyal)}</p>
                         </div>
                         <button
                           type="button"
@@ -545,10 +545,10 @@ export default function AdminPackagesPage() {
                         <dt className="mb-1 text-xs text-neutral-500">السعر</dt>
                         <dd className="text-neutral-900">
                           {formatDualDiscountPrice({
-                            price: detailPackage.price,
+                            saudiRiyal: detailPackage.saudiRiyal,
                             oldRiyal: detailPackage.oldRiyal,
-                            beforeDiscountPrice: detailPackage.beforeDiscountPrice,
-                            beforeDiscountOldRiyal: detailPackage.beforeDiscountOldRiyal,
+                            saudiRiyalBeforeDiscount: detailPackage.saudiRiyalBeforeDiscount,
+                            oldRiyalBeforeDiscount: detailPackage.oldRiyalBeforeDiscount,
                           }).current}
                         </dd>
                       </div>
@@ -569,7 +569,7 @@ export default function AdminPackagesPage() {
                                 </div>
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-sm font-medium text-neutral-900">{product.name}</p>
-                                  <p className="mt-0.5 text-xs text-neutral-500">{product.price}</p>
+                                  <p className="mt-0.5 text-xs text-neutral-500">{formatSar(product.saudiRiyal)}</p>
                                 </div>
                               </div>
                             ))
@@ -656,7 +656,7 @@ export default function AdminPackagesPage() {
                           </span>
                         </span>
                         <span className="mt-3 line-clamp-2 text-sm font-semibold leading-snug">{product.name}</span>
-                        <span className="mt-1 text-sm text-neutral-600">{product.price}</span>
+                        <span className="mt-1 text-sm text-neutral-600">{formatSar(product.saudiRiyal)}</span>
                       </button>
                     </li>
                   );

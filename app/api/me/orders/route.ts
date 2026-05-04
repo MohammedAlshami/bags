@@ -3,37 +3,70 @@ import { sql } from "@/lib/db";
 import { getSession, requireCustomer } from "@/lib/auth";
 import { getCheckoutProvinceById } from "@/lib/checkout-provinces";
 import { isValidBranchKey } from "@/lib/store-locations";
-import { parsePrice } from "@/lib/cart";
+import {
+  collectSlugsFromOrderItemsJson,
+  enrichOrderItemsWithCatalog,
+  getOrderLineSar,
+  normalizeOrderLineItems,
+  orderItemsToProductSummaries,
+  type CatalogLineMeta,
+  type OrderLineItem,
+} from "@/lib/order-line-items";
 import { mapOrderAdminDetail, type OrderRow } from "@/lib/db-mappers";
 import { applyCheckoutDiscount } from "@/lib/order-discount";
 
 export const dynamic = "force-dynamic";
 
-type LineItem = { slug: string; name: string; price: string; quantity: number; image?: string };
-
-function normalizeLineItems(raw: unknown): LineItem[] {
-  if (!Array.isArray(raw) || raw.length === 0) {
-    throw new Error("Items required");
-  }
-  const out: LineItem[] = [];
-  for (const entry of raw) {
-    if (!entry || typeof entry !== "object") continue;
-    const o = entry as Record<string, unknown>;
-    const slug = typeof o.slug === "string" ? o.slug.trim() : "";
-    const name = typeof o.name === "string" ? o.name.trim() : "";
-    const price = typeof o.price === "string" ? o.price.trim() : "";
-    const image = typeof o.image === "string" ? o.image.trim() : "";
-    const q = typeof o.quantity === "number" ? o.quantity : parseInt(String(o.quantity ?? ""), 10);
-    const quantity = Number.isFinite(q) && q >= 1 ? Math.floor(q) : 0;
-    if (!slug || !name || !price || quantity < 1) {
-      throw new Error("Invalid items");
+/** D1 may return `items` as an array or a JSON string. */
+function coerceOrderItemsArray(items: unknown): unknown {
+  if (Array.isArray(items)) return items;
+  if (typeof items === "string" && items.trim()) {
+    try {
+      const parsed = JSON.parse(items) as unknown;
+      return Array.isArray(parsed) ? parsed : items;
+    } catch {
+      return items;
     }
-    const line: LineItem = { slug, name, price, quantity };
-    if (image) line.image = image;
-    out.push(line);
   }
-  if (out.length === 0) throw new Error("Invalid items");
-  return out;
+  return items;
+}
+
+function toOrderLineArray(items: unknown): unknown[] {
+  const c = coerceOrderItemsArray(items);
+  return Array.isArray(c) ? c : [];
+}
+
+async function fetchCatalogLineMetaByIds(ids: string[]): Promise<Map<string, CatalogLineMeta>> {
+  const map = new Map<string, CatalogLineMeta>();
+  if (ids.length === 0) return map;
+  const idJson = JSON.stringify(ids);
+  const productRows = await sql`
+    SELECT id, name, image FROM products
+    WHERE id IN (SELECT value FROM json_each(${idJson}))
+  `;
+  for (const row of productRows) {
+    const r = row as { id: unknown; name: unknown; image: unknown };
+    const id = String(r.id ?? "").trim();
+    if (!id) continue;
+    map.set(id, {
+      name: String(r.name ?? "").trim(),
+      image: String(r.image ?? "").trim(),
+    });
+  }
+  const packageRows = await sql`
+    SELECT id, name, image FROM packages
+    WHERE id IN (SELECT value FROM json_each(${idJson}))
+  `;
+  for (const row of packageRows) {
+    const r = row as { id: unknown; name: unknown; image: unknown };
+    const id = String(r.id ?? "").trim();
+    if (!id || map.has(id)) continue;
+    map.set(id, {
+      name: String(r.name ?? "").trim(),
+      image: String(r.image ?? "").trim(),
+    });
+  }
+  return map;
 }
 
 export async function GET() {
@@ -51,6 +84,11 @@ export async function GET() {
       WHERE customer_id = ${session.sub}::uuid
       ORDER BY created_at DESC
     `;
+    const idSet = new Set<string>();
+    for (const o of orders) {
+      for (const id of collectSlugsFromOrderItemsJson(toOrderLineArray(o.items))) idSet.add(id);
+    }
+    const catalog = await fetchCatalogLineMetaByIds([...idSet]);
     return NextResponse.json(
       orders.map((o) => {
         const sa =
@@ -68,6 +106,7 @@ export async function GET() {
           (typeof sa.paymentProofUrl === "string" && sa.paymentProofUrl.trim()
             ? sa.paymentProofUrl.trim()
             : null);
+        const enrichedItems = enrichOrderItemsWithCatalog(toOrderLineArray(o.items), catalog);
         return {
           _id: o.id,
           status: o.status,
@@ -76,7 +115,8 @@ export async function GET() {
           trackingNumber: o.tracking_number,
           carrier: o.carrier,
           shippedAt: o.shipped_at,
-          items: o.items,
+          items: enrichedItems,
+          products: orderItemsToProductSummaries(enrichedItems),
           paymentProofUrl,
           branchKey,
         };
@@ -105,14 +145,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Branch required" }, { status: 400 });
     }
 
-    let items: LineItem[];
+    let items: OrderLineItem[];
     try {
-      items = normalizeLineItems(body.items);
+      items = normalizeOrderLineItems(body.items);
     } catch {
       return NextResponse.json({ error: "Invalid items" }, { status: 400 });
     }
 
-    const subtotal = items.reduce((sum, it) => sum + parsePrice(it.price) * it.quantity, 0);
+    const subtotal = items.reduce((sum, it) => sum + getOrderLineSar(it) * it.quantity, 0);
     const rawDiscountCode = typeof body.discountCode === "string" ? body.discountCode.trim() : "";
     const discountOutcome = applyCheckoutDiscount(subtotal, rawDiscountCode || undefined);
     if (rawDiscountCode && !discountOutcome.appliedCode) {

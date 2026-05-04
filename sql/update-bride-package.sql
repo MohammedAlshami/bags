@@ -27,9 +27,4 @@ SET
   updated_at = CURRENT_TIMESTAMP
 WHERE id = '075bc85d-b7e4-4cc0-b52a-5ae69f09a06d';
 
-UPDATE products
-SET
-  before_discount_price = '300 ر.س',
-  before_discount_old_riyal = 41000,
-  updated_at = CURRENT_TIMESTAMP
-WHERE id = '47e7bf3f-7d7d-48a1-8167-d803f014a009';
+-- Obsolete: بوكس العروس was duplicated as a `products` row (47e7bf3f…); removed — use `packages` only.

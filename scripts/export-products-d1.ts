@@ -32,7 +32,7 @@ async function main() {
   type ProductRow = import("../lib/db-mappers").ProductRow;
 
   const rows = await sql`
-    SELECT p.id, p.name, p.price, p.old_riyal, p.sizes, p.category, p.category_id, p.image,
+    SELECT p.id, p.name, p.saudi_riyal, p.old_riyal, p.saudi_riyal_before_discount, p.old_riyal_before_discount, p.sizes, p.category, p.category_id, p.image,
            p.description_ar, p.ingredients_ar, p.usage_ar, p.free_from_ar, p.warning_ar, p.contents_ar,
            p.collection_id,
            p.created_at, p.updated_at,

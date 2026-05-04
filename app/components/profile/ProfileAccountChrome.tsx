@@ -23,7 +23,7 @@ export function ProfileBreadcrumb({
 }) {
   return (
     <nav
-      className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-500 ${className ?? "mb-8"}`}
+      className={`hidden flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-500 lg:flex ${className ?? "mb-8"}`}
       aria-label="مسار التنقل"
       style={sans}
     >

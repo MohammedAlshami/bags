@@ -74,14 +74,14 @@ export function mapCollection(row: CollectionRow) {
 export type ProductRow = {
   id: string;
   name: string;
-  price: string;
+  saudi_riyal: number | null;
   category?: string | null;
   category_id?: string | null;
   image: string;
   slug?: string | null;
   old_riyal?: number | null;
-  before_discount_price?: string | null;
-  before_discount_old_riyal?: number | null;
+  saudi_riyal_before_discount?: number | null;
+  old_riyal_before_discount?: number | null;
   sizes?: unknown;
   description_ar?: string | null;
   ingredients_ar?: string | null;
@@ -114,17 +114,23 @@ export function mapProduct(row: ProductRow, populated = false) {
         })
         .filter(Boolean)
     : null;
+  const saudiRiyal = Number(row.saudi_riyal);
+  if (!Number.isFinite(saudiRiyal)) {
+    throw new Error(`Product ${row.id} has invalid saudi_riyal`);
+  }
   const base = {
     _id: row.id,
     name: row.name,
-    price: row.price,
+    saudiRiyal,
     category: row.cat_name ?? row.category ?? "",
     categoryId: row.cat_id ?? row.category_id ?? null,
     image: row.image,
     slug: row.slug ?? row.id,
     oldRiyal: row.old_riyal == null ? null : Number(row.old_riyal),
-    beforeDiscountPrice: row.before_discount_price ?? null,
-    beforeDiscountOldRiyal: row.before_discount_old_riyal == null ? null : Number(row.before_discount_old_riyal),
+    saudiRiyalBeforeDiscount:
+      row.saudi_riyal_before_discount == null ? null : Number(row.saudi_riyal_before_discount),
+    oldRiyalBeforeDiscount:
+      row.old_riyal_before_discount == null ? null : Number(row.old_riyal_before_discount),
     sizes,
     descriptionAr: row.description_ar ?? null,
     ingredientsAr: row.ingredients_ar ?? null,

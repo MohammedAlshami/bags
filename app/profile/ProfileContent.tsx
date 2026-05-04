@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ChevronLeft, Pencil } from "lucide-react";
 import { sans } from "@/lib/page-theme";
+import { SafeImage } from "@/app/components/SafeImage";
 import { ProfileBreadcrumb, ProfileAccountNav } from "@/app/components/profile/ProfileAccountChrome";
+import { parseOrderLineItemsLenient } from "@/lib/order-line-items";
 import { ProvinceSelectDropdown } from "@/app/components/ProvinceSelectDropdown";
 import { formatSar } from "@/lib/format-sar";
 import { getCheckoutProvinceById } from "@/lib/checkout-provinces";
@@ -19,7 +21,9 @@ type Order = {
   trackingNumber?: string;
   carrier?: string;
   shippedAt?: string | null;
-  items?: { name?: string; quantity?: number; price?: string }[];
+  items?: unknown;
+  /** Populated by GET /api/me/orders — same lines as `items`, normalized for list UIs. */
+  products?: unknown;
 };
 type Profile = {
   username: string;
@@ -43,6 +47,8 @@ function statusAr(s: string) {
   };
   return m[s] ?? s;
 }
+
+const ORDER_CARD_PREVIEW_MAX = 5;
 
 export default function ProfileContent() {
   const router = useRouter();
@@ -217,7 +223,7 @@ export default function ProfileContent() {
         />
 
         <div className="flex flex-col gap-5 sm:gap-8 lg:flex-row lg:gap-12">
-          <aside className="w-full shrink-0 lg:w-56">
+          <aside className="hidden w-full shrink-0 lg:block lg:w-56">
             <ProfileAccountNav current={navCurrent} onLogout={handleLogout} />
           </aside>
 
@@ -236,44 +242,79 @@ export default function ProfileContent() {
                   </p>
                 ) : (
                   <ul className="mt-5 space-y-3 sm:mt-8 sm:space-y-4">
-                    {orders.map((o) => (
-                      <li key={o._id}>
-                        <Link
-                          href={`/profile/orders/${o._id}`}
-                          className="group flex flex-col justify-between gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/[0.04] transition-[box-shadow] hover:shadow-md sm:gap-4 sm:rounded-2xl sm:p-6 sm:flex-row sm:items-center"
-                        >
-                          <div>
-                            <p className="text-sm font-medium text-neutral-900" style={sans}>
-                              طلب {String(o._id).slice(-8)}
-                            </p>
-                            <p className="mt-0.5 text-xs text-neutral-500" style={sans}>
-                              {new Date(o.createdAt ?? "").toLocaleDateString("ar-SA", { dateStyle: "medium" })}
-                            </p>
-                            <p className="mt-1 text-xs text-neutral-600" style={sans}>
-                              {statusAr(o.status)}
-                            </p>
-                            {o.trackingNumber ? (
-                              <p className="mt-2 text-xs text-neutral-500" style={sans}>
-                                {o.carrier ? `${o.carrier} · ` : ""}
-                                {o.trackingNumber}
+                    {orders.map((o) => {
+                      const previewLines = parseOrderLineItemsLenient(o.products ?? o.items);
+                      const extraCount = Math.max(0, previewLines.length - ORDER_CARD_PREVIEW_MAX);
+                      const shownLines = previewLines.slice(0, ORDER_CARD_PREVIEW_MAX);
+                      return (
+                        <li key={o._id}>
+                          <Link
+                            href={`/profile/orders/${o._id}`}
+                            className="group flex flex-col justify-between gap-3 rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/[0.04] transition-[box-shadow] hover:shadow-md sm:gap-4 sm:rounded-2xl sm:p-6 sm:flex-row sm:items-stretch"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-neutral-900" style={sans}>
+                                طلب {String(o._id).slice(-8)}
                               </p>
-                            ) : null}
-                          </div>
-                          <div className="flex flex-wrap items-center gap-4 sm:flex-col sm:items-end">
-                            <p className="text-sm font-medium text-neutral-900" style={sans}>
-                              {o.total != null ? formatSar(Number(o.total)) : "—"}
-                            </p>
-                            <span
-                              className="inline-flex items-center gap-1 text-sm font-medium text-[#B63A6B] group-hover:underline"
-                              style={sans}
-                            >
-                              عرض التفاصيل
-                              <ChevronLeft className="h-4 w-4" strokeWidth={2} />
-                            </span>
-                          </div>
-                        </Link>
-                      </li>
-                    ))}
+                              <p className="mt-0.5 text-xs text-neutral-500" style={sans}>
+                                {new Date(o.createdAt ?? "").toLocaleDateString("ar-SA", { dateStyle: "medium" })}
+                              </p>
+                              <p className="mt-1 text-xs text-neutral-600" style={sans}>
+                                {statusAr(o.status)}
+                              </p>
+                              {o.trackingNumber ? (
+                                <p className="mt-2 text-xs text-neutral-500" style={sans}>
+                                  {o.carrier ? `${o.carrier} · ` : ""}
+                                  {o.trackingNumber}
+                                </p>
+                              ) : null}
+                              {shownLines.length > 0 ? (
+                                <ul className="mt-3 space-y-2 border-t border-neutral-100 pt-3" style={sans}>
+                                  {shownLines.map((it, idx) => (
+                                    <li key={`${o._id}-${idx}`} className="flex items-center gap-3">
+                                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#FCF0F2]">
+                                        {it.image ? (
+                                          <SafeImage
+                                            src={it.image}
+                                            alt=""
+                                            fill
+                                            className="object-contain p-0.5"
+                                            sizes="48px"
+                                          />
+                                        ) : null}
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-medium text-neutral-900">{it.name}</p>
+                                        <p className="text-xs text-neutral-500">× {it.quantity.toLocaleString("ar-SA")}</p>
+                                      </div>
+                                    </li>
+                                  ))}
+                                  {extraCount > 0 ? (
+                                    <li className="text-xs text-neutral-500">
+                                      {extraCount === 1
+                                        ? "ومنتجاً آخر"
+                                        : `و${extraCount.toLocaleString("ar-SA")} منتجات أخرى`}
+                                    </li>
+                                  ) : null}
+                                </ul>
+                              ) : null}
+                            </div>
+                            <div className="flex shrink-0 flex-row flex-wrap items-center justify-between gap-4 border-t border-neutral-100 pt-3 sm:flex-col sm:items-end sm:border-t-0 sm:pt-0 sm:ps-6 sm:border-s sm:border-neutral-100">
+                              <p className="text-sm font-medium text-neutral-900" style={sans}>
+                                {o.total != null ? formatSar(Number(o.total)) : "—"}
+                              </p>
+                              <span
+                                className="inline-flex items-center gap-1 text-sm font-medium text-[#B63A6B] group-hover:underline"
+                                style={sans}
+                              >
+                                عرض التفاصيل
+                                <ChevronLeft className="h-4 w-4" strokeWidth={2} />
+                              </span>
+                            </div>
+                          </Link>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </>
@@ -287,7 +328,7 @@ export default function ProfileContent() {
                       بياناتي
                     </h1>
                     <p className="mt-1 text-sm text-neutral-600" style={sans}>
-                      اسم المستخدم وبيانات التواصل والعنوان المرتبطة بحسابك.
+                      بيانات التواصل والعنوان المرتبطة بحسابك.
                     </p>
                   </div>
                   {!billingEditing ? (
@@ -307,12 +348,8 @@ export default function ProfileContent() {
                   {!billingEditing ? (
                     <dl className="space-y-5 text-sm" style={sans}>
                       <div>
-                        <dt className="text-xs text-neutral-500">اسم المستخدم</dt>
-                        <dd className="mt-1 font-medium text-neutral-900">{displayOrDash(profile.username)}</dd>
-                      </div>
-                      <div>
                         <dt className="text-xs text-neutral-500">البريد الإلكتروني</dt>
-                        <dd className="mt-1 text-neutral-900" dir="ltr">
+                        <dd className="mt-1 text-end text-neutral-900" dir="ltr">
                           {displayOrDash(profile.email)}
                         </dd>
                       </div>
@@ -322,7 +359,7 @@ export default function ProfileContent() {
                       </div>
                       <div>
                         <dt className="text-xs text-neutral-500">الجوال</dt>
-                        <dd className="mt-1 text-neutral-900" dir="ltr">
+                        <dd className="mt-1 text-end text-neutral-900" dir="ltr">
                           {displayOrDash(profile.phone)}
                         </dd>
                       </div>
@@ -342,24 +379,13 @@ export default function ProfileContent() {
                   ) : (
                     <div className="space-y-4">
                       <div>
-                        <p className="mb-1 text-xs text-neutral-500" style={sans}>
-                          اسم المستخدم
-                        </p>
-                        <p className="rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600" style={sans}>
-                          {displayOrDash(profile.username)}
-                        </p>
-                        <p className="mt-1 text-xs text-neutral-400" style={sans}>
-                          لا يمكن تغيير اسم المستخدم من هنا.
-                        </p>
-                      </div>
-                      <div>
                         <label className="mb-1 block text-xs text-neutral-500" style={sans}>
                           البريد الإلكتروني
                         </label>
                         <input
                           value={editEmail}
                           onChange={(e) => setEditEmail(e.target.value)}
-                          className="w-full rounded-xl border-0 bg-[#FCF0F2]/40 px-4 py-3 text-sm ring-1 ring-black/[0.06] focus:outline-none focus:ring-2 focus:ring-[#B63A6B]/30"
+                          className="w-full rounded-xl border-0 bg-[#FCF0F2]/40 px-4 py-3 text-end text-sm ring-1 ring-black/[0.06] focus:outline-none focus:ring-2 focus:ring-[#B63A6B]/30"
                           style={sans}
                           dir="ltr"
                         />
@@ -382,7 +408,7 @@ export default function ProfileContent() {
                         <input
                           value={editPhone}
                           onChange={(e) => setEditPhone(e.target.value)}
-                          className="w-full rounded-xl border-0 bg-[#FCF0F2]/40 px-4 py-3 text-sm ring-1 ring-black/[0.06] focus:outline-none focus:ring-2 focus:ring-[#B63A6B]/30"
+                          className="w-full rounded-xl border-0 bg-[#FCF0F2]/40 px-4 py-3 text-end text-sm ring-1 ring-black/[0.06] focus:outline-none focus:ring-2 focus:ring-[#B63A6B]/30"
                           style={sans}
                           dir="ltr"
                         />

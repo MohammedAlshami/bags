@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ImagePlus, MoreVertical, PackagePlus, X } from "lucide-react";
 import { ConfirmModal } from "@/app/components/ConfirmModal";
 import { adminIconClassName, sans } from "@/lib/page-theme";
-import { formatSar, parseStoredPriceToInputValue } from "@/lib/format-sar";
+import { formatSar } from "@/lib/format-sar";
 import { formatDualPrice } from "@/lib/price-format";
 import {
   AdminSkeletonPageHeader,
@@ -20,7 +20,7 @@ const API_ERROR_AR: Record<string, string> = {
   "Failed to create product": "تعذر إنشاء المنتج",
   "Failed to update product": "تعذر تحديث المنتج",
   "Failed to delete product": "تعذر حذف المنتج",
-  "Name, price, category, and image required": "الاسم والسعر والتصنيف والصورة مطلوبة",
+  "Name, saudiRiyal, category, and image required": "الاسم والسعر والتصنيف والصورة مطلوبة",
   "Upload failed": "فشل رفع الملف",
   "Invalid id": "معرّف غير صالح",
   "Not found": "غير موجود",
@@ -41,13 +41,13 @@ type CategoryRow = { _id: string; name: string; sortOrder: number; productCount?
 type ProductRow = {
   _id: string;
   name: string;
-  price: string;
+  saudiRiyal: number;
   category: string;
   categoryId?: string | null;
   image: string;
   oldRiyal?: number | null;
-  beforeDiscountPrice?: string | null;
-  beforeDiscountOldRiyal?: number | null;
+  saudiRiyalBeforeDiscount?: number | null;
+  oldRiyalBeforeDiscount?: number | null;
   sizes?: ProductSizeRow[] | null;
   descriptionAr?: string | null;
   ingredientsAr?: string | null;
@@ -359,11 +359,11 @@ export default function AdminProductsPage() {
       setSizeMode("single");
       setSizeRows([]);
       const firstSize = existingSizes[0] ?? null;
-      setPrice(firstSize ? String(firstSize.sarPrice) : parseStoredPriceToInputValue(p.price));
+      setPrice(firstSize ? String(firstSize.sarPrice) : String(p.saudiRiyal));
       setOldRiyal(firstSize ? String(firstSize.oldRiyal) : p.oldRiyal == null ? "" : String(p.oldRiyal));
     }
-    setBeforeDiscountPrice(p.beforeDiscountPrice ? parseStoredPriceToInputValue(p.beforeDiscountPrice) : "");
-    setBeforeDiscountOldRiyal(p.beforeDiscountOldRiyal == null ? "" : String(p.beforeDiscountOldRiyal));
+    setBeforeDiscountPrice(p.saudiRiyalBeforeDiscount != null ? String(p.saudiRiyalBeforeDiscount) : "");
+    setBeforeDiscountOldRiyal(p.oldRiyalBeforeDiscount == null ? "" : String(p.oldRiyalBeforeDiscount));
     setCategoryId(p.categoryId ?? categories[0]?._id ?? "");
     setDescriptionAr(p.descriptionAr ?? "");
     setIngredientsAr(p.ingredientsAr ?? "");
@@ -532,14 +532,13 @@ export default function AdminProductsPage() {
         oldRiyalNum = normalized[0].oldRiyal;
       }
 
-      const priceFormatted = formatSar(priceNum);
-      const beforeDiscountPriceValue = beforeDiscountPrice.trim() ? formatSar(Number(beforeDiscountPrice)) : null;
-      const beforeDiscountOldRiyalValue = beforeDiscountOldRiyal.trim() ? Number(beforeDiscountOldRiyal) : null;
-      if (beforeDiscountPrice.trim() && !Number.isFinite(Number(beforeDiscountPrice))) {
+      const saudiRiyalBeforeDiscountValue = beforeDiscountPrice.trim() ? Number(beforeDiscountPrice) : null;
+      const oldRiyalBeforeDiscountValue = beforeDiscountOldRiyal.trim() ? Number(beforeDiscountOldRiyal) : null;
+      if (beforeDiscountPrice.trim() && !Number.isFinite(saudiRiyalBeforeDiscountValue)) {
         setError("أدخل سعر ما قبل الخصم بالريال السعودي بشكل صحيح.");
         return;
       }
-      if (beforeDiscountOldRiyal.trim() && !Number.isFinite(beforeDiscountOldRiyalValue)) {
+      if (beforeDiscountOldRiyal.trim() && !Number.isFinite(oldRiyalBeforeDiscountValue)) {
         setError("أدخل سعر ما قبل الخصم بالعملة القديمة بشكل صحيح.");
         return;
       }
@@ -547,10 +546,10 @@ export default function AdminProductsPage() {
       const method = editing ? "PUT" : "POST";
       const payload = {
         name,
-        price: priceFormatted,
+        saudiRiyal: priceNum,
         oldRiyal: oldRiyalNum,
-        beforeDiscountPrice: beforeDiscountPriceValue,
-        beforeDiscountOldRiyal: beforeDiscountOldRiyalValue,
+        saudiRiyalBeforeDiscount: saudiRiyalBeforeDiscountValue,
+        oldRiyalBeforeDiscount: oldRiyalBeforeDiscountValue,
         categoryId,
         descriptionAr: descriptionAr.trim() || null,
         ingredientsAr: ingredientsAr.trim() || null,
@@ -1096,7 +1095,7 @@ export default function AdminProductsPage() {
                 </div>
                 <div>
                   <dt className="text-xs text-neutral-500 mb-1">السعر</dt>
-                  <dd className="text-neutral-900">{detailProduct.price}</dd>
+                  <dd className="text-neutral-900">{formatSar(detailProduct.saudiRiyal)}</dd>
                 </div>
                 <div>
                   <dt className="text-xs text-neutral-500 mb-1">التصنيف</dt>
@@ -1236,7 +1235,7 @@ export default function AdminProductsPage() {
                   <div className="mt-4 flex flex-col gap-1 text-center">
                     <span className="text-xs text-neutral-500">{p.category}</span>
                     <span className="text-sm font-semibold text-neutral-900 line-clamp-2 leading-snug">{p.name}</span>
-                    <span className="text-sm text-neutral-900">{formatDualPrice(p.price, p.oldRiyal)}</span>
+                    <span className="text-sm text-neutral-900">{formatDualPrice(p.saudiRiyal, p.oldRiyal)}</span>
                     
                   </div>
                 </article>

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Menu,
   Search,
@@ -14,14 +14,25 @@ import {
   Plus,
   Minus,
   Truck,
+  Home,
+  MapPin,
+  UserCircle2,
+  ShoppingCart,
+  Package,
+  LogOut,
+  UserCircle,
 } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
-import { parsePrice, type CartItem } from "@/lib/cart";
+import { useDisplayCurrencyControls } from "@/app/context/CurrencyContext";
 import { pagePaddingX, sans, serif, adminIconClassName } from "@/lib/page-theme";
-import { formatSar } from "@/lib/format-sar";
+import {
+  formatCartLineTotalDisplay,
+  formatCartSubtotalDisplay,
+  formatPriceForDisplay,
+} from "@/lib/price-format";
 import { SafeImage } from "@/app/components/SafeImage";
+import { ConfirmModal } from "@/app/components/ConfirmModal";
 import type { NavCategory } from "@/lib/get-nav-categories";
-import { Home, MapPin, UserCircle2, ShoppingCart } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const TXT = {
@@ -60,11 +71,18 @@ const MEGA_TITLES = ["تسوقي حسب الفئة", "اكتشفي المزيد"
 function getMainNavMenu(): MenuItemConfig[] {
   return [
     { id: "home", label: "الرئيسية", href: "/" },
-    { id: "shop", label: "تسوق", hasMega: true as const },
+    { id: "shop", label: "تسوق", href: "/shop" },
     { id: "about", label: TXT.about, hasDropdown: true as const, aboutLinks: [...ABOUT_LINKS] },
     { id: "blog", label: "المدونة", href: "/blog" },
     { id: "presets", label: "تشكيلة المجموعات", hasMega: true as const },
   ];
+}
+
+function isMainNavSimpleLinkActive(itemId: string, pathname: string | null | undefined): boolean {
+  if (itemId === "home") return pathname === "/";
+  if (itemId === "shop") return pathname === "/shop" || Boolean(pathname?.startsWith("/product/"));
+  if (itemId === "blog") return pathname === "/blog" || Boolean(pathname?.startsWith("/blog/"));
+  return false;
 }
 
 type AboutLink = { label: string; href: string };
@@ -86,8 +104,65 @@ const MOBILE_NAV_ITEMS: MobileNavItem[] = [
   { href: "/profile", label: "حسابي", icon: UserCircle2 },
 ];
 
-function lineTotalString(item: CartItem): string {
-  return formatSar(parsePrice(item.price) * item.quantity);
+function profileMobileQuickNavLinkClass(active: boolean) {
+  return `flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-[10px] font-medium leading-none transition-colors ${
+    active ? "text-black" : "text-neutral-500"
+  }`;
+}
+
+function NavbarProfileMobileQuickNavInner({
+  pathname,
+  tab,
+  onOpenLogoutConfirm,
+}: {
+  pathname: string | null | undefined;
+  tab: string | null;
+  onOpenLogoutConfirm: () => void;
+}) {
+  const billing = tab === "billing" || tab === "details";
+  const ordersActive =
+    (pathname === "/profile" && !billing) || Boolean(pathname?.startsWith("/profile/orders"));
+  const billingActive = pathname === "/profile" && billing;
+  const homeActive = pathname === "/";
+
+  return (
+    <nav
+      aria-label={TXT.quickNav}
+      className="mx-auto grid max-w-sm grid-cols-4 place-items-center rounded-full border border-black/5 bg-white/95 px-1.5 py-2 backdrop-blur-xl"
+    >
+      <Link href="/" className={profileMobileQuickNavLinkClass(homeActive)}>
+        <Home className={`h-5 w-5 ${adminIconClassName}`} aria-hidden />
+        <span className="truncate">الرئيسية</span>
+      </Link>
+      <Link href="/profile" className={profileMobileQuickNavLinkClass(ordersActive)}>
+        <Package className={`h-5 w-5 ${adminIconClassName}`} aria-hidden />
+        <span className="truncate">طلباتي</span>
+      </Link>
+      <Link href="/profile?tab=billing" className={profileMobileQuickNavLinkClass(billingActive)}>
+        <UserCircle className={`h-5 w-5 ${adminIconClassName}`} aria-hidden />
+        <span className="truncate">بياناتي</span>
+      </Link>
+      <button
+        type="button"
+        onClick={onOpenLogoutConfirm}
+        className={`${profileMobileQuickNavLinkClass(false)} cursor-pointer hover:bg-brand-light/35 active:scale-95`}
+      >
+        <LogOut className={`h-5 w-5 ${adminIconClassName}`} aria-hidden />
+        <span className="truncate">تسجيل الخروج</span>
+      </button>
+    </nav>
+  );
+}
+
+function NavbarProfileMobileQuickNavSuspended({
+  pathname,
+  onOpenLogoutConfirm,
+}: {
+  pathname: string | null | undefined;
+  onOpenLogoutConfirm: () => void;
+}) {
+  const tab = useSearchParams().get("tab");
+  return <NavbarProfileMobileQuickNavInner pathname={pathname} tab={tab} onOpenLogoutConfirm={onOpenLogoutConfirm} />;
 }
 
 /** Shop-page-style cards for «تشكيلة المجموعات» mega only (not «تسوق»). */
@@ -163,10 +238,14 @@ type NavbarProps = {
 };
 
 export default function Navbar({ categories }: NavbarProps) {
+  const router = useRouter();
   const [user, setUser] = useState<{ username: string; role: string } | null>(null);
   const [shopBg, setShopBg] = useState<"white" | "pink">("white");
   const pathname = usePathname();
   const { items, count, removeFromCart, updateQuantity, subtotal } = useCart();
+  const { mode: displayCurrencyMode, setMode: setDisplayCurrencyMode } = useDisplayCurrencyControls();
+  const [profileLogoutOpen, setProfileLogoutOpen] = useState(false);
+  const [profileLogoutBusy, setProfileLogoutBusy] = useState(false);
 
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -181,6 +260,7 @@ export default function Navbar({ categories }: NavbarProps) {
   const [mobileDrawerSection, setMobileDrawerSection] = useState<string | null>(null);
   const lastScrollY = useRef(0);
   const headerShellRef = useRef<HTMLElement | null>(null);
+  const currencyDropdownRef = useRef<HTMLDivElement>(null);
 
   const isShopPink = pathname === "/shop" && shopBg === "pink";
 
@@ -261,6 +341,16 @@ export default function Navbar({ categories }: NavbarProps) {
   }, [cartMounted, mobileMenuOpen]);
 
   useEffect(() => {
+    if (!currencyOpen) return;
+    const down = (e: MouseEvent) => {
+      if (currencyDropdownRef.current?.contains(e.target as Node)) return;
+      setCurrencyOpen(false);
+    };
+    document.addEventListener("mousedown", down);
+    return () => document.removeEventListener("mousedown", down);
+  }, [currencyOpen]);
+
+  useEffect(() => {
     if (!cartMounted && !mobileMenuOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -290,7 +380,20 @@ export default function Navbar({ categories }: NavbarProps) {
 
   const showHeaderBar = headerBarVisible || cartMounted || mobileMenuOpen;
   const isAdmin = user?.role === "admin";
+  const isProfileMobileNav = Boolean(user && !isAdmin && pathname?.startsWith("/profile"));
   const mobileNavItems = isAdmin ? MOBILE_NAV_ITEMS.filter((item) => item.href !== "/cart") : MOBILE_NAV_ITEMS;
+
+  const confirmProfileLogout = async () => {
+    setProfileLogoutBusy(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.push("/");
+      router.refresh();
+    } finally {
+      setProfileLogoutBusy(false);
+      setProfileLogoutOpen(false);
+    }
+  };
 
   const closeMobileNav = () => setMobileMenuOpen(false);
   const toggleMobileDrawerSection = (id: string) =>
@@ -315,34 +418,96 @@ export default function Navbar({ categories }: NavbarProps) {
         >
           <div className="mx-auto flex min-h-[4.5rem] max-w-[1920px] items-center justify-between text-[12px] font-medium uppercase tracking-widest">
             <div className="relative z-20 flex min-h-9 items-center self-center">
-              <div className="relative">
+              <div className="relative" ref={currencyDropdownRef}>
                 <button
                   type="button"
                   onClick={() => setCurrencyOpen(!currencyOpen)}
-                  className="inline-flex h-9 cursor-pointer items-center gap-1 transition-colors hover:text-black"
+                  className="inline-flex h-9 cursor-pointer items-center gap-1.5 transition-colors hover:text-black"
+                  aria-expanded={currencyOpen}
+                  aria-haspopup="listbox"
                 >
-                  ريال سعودي
-                  <ChevronDown size={10} strokeWidth={2.25} className="opacity-80" />
+                  <span className="flex items-center gap-1 text-[11px] normal-case tracking-normal" aria-hidden>
+                    {displayCurrencyMode === "SAR" ? (
+                      <>
+                        <span className="text-base leading-none">🇸🇦</span>
+                        <span>ر.س</span>
+                      </>
+                    ) : displayCurrencyMode === "YER" ? (
+                      <>
+                        <span className="text-base leading-none">🇾🇪</span>
+                        <span>ر.ق</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-base leading-none">🇾🇪</span>
+                        <span className="text-neutral-400">/</span>
+                        <span className="text-base leading-none">🇸🇦</span>
+                        <span className="ms-0.5">السعران</span>
+                      </>
+                    )}
+                  </span>
+                  <ChevronDown size={10} strokeWidth={2.25} className="opacity-80" aria-hidden />
                 </button>
                 {currencyOpen ? (
-                  <div className="absolute start-0 top-full z-[100] mt-2 min-w-[180px] border border-gray-100 bg-white p-4 shadow-xl">
-                    <p className="mb-2 border-b pb-1 text-gray-400" style={sans}>
-                      اختر العملة
+                  <div
+                    className="absolute start-0 top-full z-[100] mt-2 min-w-[220px] border border-gray-100 bg-white p-3 shadow-xl"
+                    role="listbox"
+                  >
+                    <p className="mb-2 border-b border-neutral-100 pb-2 text-[10px] text-gray-400" style={sans}>
+                      عرض الأسعار
                     </p>
-                    <div className="flex flex-col gap-3">
-                      {["السعودية", "الإمارات", "الكويت", "مصر"].map((country) => (
-                        <button
-                          key={country}
-                          type="button"
-                          className="flex items-center gap-2 text-start transition-colors hover:text-amber-800"
-                          style={sans}
-                        >
-                          <span className="h-3 w-4 rounded-sm bg-gray-200" aria-hidden />
-                          <span>
-                            {country} (SAR)
-                          </span>
-                        </button>
-                      ))}
+                    <div className="flex flex-col gap-1">
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-start text-xs transition-colors hover:bg-neutral-50"
+                        style={sans}
+                        onClick={() => {
+                          setDisplayCurrencyMode("BOTH");
+                          setCurrencyOpen(false);
+                        }}
+                      >
+                        <span className="text-lg leading-none" aria-hidden>
+                          🇾🇪/🇸🇦
+                        </span>
+                        <span className="flex min-w-0 flex-col">
+                          <span className="font-medium text-neutral-900">السعران</span>
+                          <span className="text-[10px] text-neutral-500">ر.ق و ر.س معاً</span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-start text-xs transition-colors hover:bg-neutral-50"
+                        style={sans}
+                        onClick={() => {
+                          setDisplayCurrencyMode("YER");
+                          setCurrencyOpen(false);
+                        }}
+                      >
+                        <span className="text-lg leading-none" aria-hidden>
+                          🇾🇪
+                        </span>
+                        <span className="flex min-w-0 flex-col">
+                          <span className="font-medium text-neutral-900">الريال اليمني القديم</span>
+                          <span className="text-[10px] text-neutral-500">ر.ق</span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-start text-xs transition-colors hover:bg-neutral-50"
+                        style={sans}
+                        onClick={() => {
+                          setDisplayCurrencyMode("SAR");
+                          setCurrencyOpen(false);
+                        }}
+                      >
+                        <span className="text-lg leading-none" aria-hidden>
+                          🇸🇦
+                        </span>
+                        <span className="flex min-w-0 flex-col">
+                          <span className="font-medium text-neutral-900">الريال السعودي</span>
+                          <span className="text-[10px] text-neutral-500">ر.س</span>
+                        </span>
+                      </button>
                     </div>
                   </div>
                 ) : null}
@@ -392,11 +557,13 @@ export default function Navbar({ categories }: NavbarProps) {
               ) : (
                 <Link
                   href="/login"
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center"
+                  className="inline-flex min-h-9 shrink-0 items-center rounded-full px-2.5 py-1.5 text-neutral-800 transition-colors hover:text-neutral-950"
                   title={TXT.login}
                   aria-label={TXT.login}
                 >
-                  <User size={18} className={`shrink-0 ${iconAccent} transition-colors`} strokeWidth={2.25} />
+                  <span className="text-xs font-semibold text-neutral-700" style={sans}>
+                    {TXT.login}
+                  </span>
                 </Link>
               )}
               {!isAdmin ? (
@@ -448,35 +615,14 @@ export default function Navbar({ categories }: NavbarProps) {
                     if (item.hasMega || item.hasDropdown) setActiveMenu(item.id);
                   }}
                 >
-                  {item.id === "home" || item.id === "blog" ? (
+                  {item.id === "home" || item.id === "blog" || item.id === "shop" ? (
                     <Link
                       href={item.href ?? "/"}
                       className={`inline-flex h-9 items-center border-b-2 border-transparent transition-colors hover:border-amber-800 ${
-                        pathname === (item.href ?? "") ||
-                        (item.id === "blog" && (pathname === "/blog" || pathname?.startsWith("/blog/")))
-                          ? "border-amber-800"
-                          : ""
+                        isMainNavSimpleLinkActive(item.id, pathname) ? "border-amber-800" : ""
                       }`}
                     >
                       {item.label}
-                    </Link>
-                  ) : null}
-                  {item.id === "shop" && item.hasMega ? (
-                    <Link
-                      href="/shop"
-                      className={`inline-flex h-9 min-h-9 items-center gap-1 border-b-2 border-transparent transition-colors hover:border-amber-800 ${
-                        activeMenu === "shop" || pathname === "/shop" || pathname?.startsWith("/product/")
-                          ? "border-amber-800"
-                          : ""
-                      }`}
-                    >
-                      {item.label}
-                      <ChevronDown
-                        size={12}
-                        strokeWidth={2.5}
-                        className={`shrink-0 transition-transform duration-200 ${activeMenu === "shop" ? "rotate-180" : ""}`}
-                        aria-hidden
-                      />
                     </Link>
                   ) : null}
                   {item.id === "about" && item.hasDropdown && item.aboutLinks ? (
@@ -525,61 +671,6 @@ export default function Navbar({ categories }: NavbarProps) {
               ))}
               </ul>
             </div>
-
-            {activeMenu === "shop" ? (
-              <div
-                className="absolute end-0 start-0 top-full z-30 w-full border-t border-gray-100 bg-white shadow-2xl"
-                onMouseEnter={() => setActiveMenu("shop")}
-              >
-                <div className="mx-auto grid max-w-7xl grid-cols-12 gap-8 p-8 xl:p-12" style={sans}>
-                  {([shopMegaColumns[0], shopMegaColumns[1], shopMegaColumns[2]] as const).map((chunk, idx) => (
-                    <div key={MEGA_TITLES[idx]} className="col-span-2">
-                      <h3 className="mb-4 border-b border-gray-100 pb-2 text-lg font-semibold not-italic text-gray-800">
-                        {MEGA_TITLES[idx]}
-                      </h3>
-                      <ul className="space-y-3">
-                        {chunk.length === 0 && idx === 0 ? (
-                          <li>
-                            <Link
-                              href="/shop"
-                              className="text-xs font-medium tracking-widest text-gray-500 transition-colors hover:text-black"
-                              style={sans}
-                            >
-                              {TXT.shop}
-                            </Link>
-                          </li>
-                        ) : (
-                          chunk.map((c) => (
-                            <li key={c.id}>
-                              <Link
-                                href={`/shop#cat-${c.id}`}
-                                className="text-xs font-medium tracking-widest text-gray-500 transition-colors hover:text-black"
-                              >
-                                {c.name}
-                              </Link>
-                            </li>
-                          ))
-                        )}
-                      </ul>
-                    </div>
-                  ))}
-                  <div className="relative col-span-6 h-[min(70vw,240px)] overflow-hidden rounded-sm bg-[#f2f0eb] min-[1200px]:h-[280px]">
-                    <div className="absolute inset-0 z-10 flex flex-col justify-center p-6 sm:p-10" style={sans}>
-                      <span className="mb-1 text-[10px] font-bold uppercase tracking-widest text-red-800">مميز</span>
-                      <h2 className="mb-3 max-w-[200px] text-2xl font-medium leading-tight text-gray-800 min-[1200px]:text-3xl">
-                        تسوقي اختياراتك المفضلة
-                      </h2>
-                      <Link
-                        href="/shop"
-                        className="w-fit border-b-2 border-black pb-0.5 text-[10px] font-bold uppercase tracking-widest transition-colors hover:border-amber-800 hover:text-amber-800"
-                      >
-                        استكشف الآن
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : null}
 
             {activeMenu === "presets" ? (
               <div
@@ -648,13 +739,21 @@ export default function Navbar({ categories }: NavbarProps) {
               <Link
                 href={user.role === "admin" ? "/admin" : "/profile"}
                 className="inline-flex"
+                title={TXT.account}
                 aria-label={TXT.account}
               >
                 <User className="h-5 w-5 text-gray-500" strokeWidth={2.25} />
               </Link>
             ) : (
-              <Link href="/login" className="inline-flex" aria-label={TXT.login}>
-                <User className="h-5 w-5 text-gray-500" strokeWidth={2.25} />
+              <Link
+                href="/login"
+                className="inline-flex max-w-[min(52vw,11rem)] min-w-0 items-center py-0.5 text-neutral-800"
+                title={TXT.login}
+                aria-label={TXT.login}
+              >
+                <span className="truncate text-[10px] font-semibold leading-tight text-neutral-700" style={sans}>
+                  {TXT.login}
+                </span>
               </Link>
             )}
             {!isAdmin ? (
@@ -948,11 +1047,11 @@ export default function Navbar({ categories }: NavbarProps) {
                         {item.name}
                       </h3>
                       <span className="shrink-0 text-sm" style={sans}>
-                        {lineTotalString(item)}
+                        {formatCartLineTotalDisplay(item, displayCurrencyMode)}
                       </span>
                     </div>
-                    <p className="text-[10px] uppercase tracking-widest text-gray-400" style={sans}>
-                      {item.price}
+                    <p className="text-[10px] text-gray-500 normal-case tracking-normal" style={sans}>
+                      {formatPriceForDisplay(displayCurrencyMode, item.saudiRiyal, item.oldRiyal)}
                     </p>
                     <div className="mt-auto flex items-center justify-between gap-2 pt-3">
                       <div
@@ -1013,7 +1112,7 @@ export default function Navbar({ categories }: NavbarProps) {
                 </span>
                 <div className="text-start sm:text-end">
                   <span className="text-2xl font-medium" style={sans}>
-                    {formatSar(subtotal)}
+                    {formatCartSubtotalDisplay(items, displayCurrencyMode)}
                   </span>
                   <p
                     className="mt-0.5 text-[9px] leading-relaxed text-gray-400 [text-transform:none]"
@@ -1048,52 +1147,93 @@ export default function Navbar({ categories }: NavbarProps) {
 
       {/* Mobile bottom bar */}
       <div className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden">
-        <nav
-          aria-label={TXT.quickNav}
-          className={`mx-auto grid max-w-sm ${isAdmin ? "grid-cols-3" : "grid-cols-4"} place-items-center rounded-full border border-black/5 bg-white/95 px-1.5 py-2 backdrop-blur-xl`}
-        >
-          {mobileNavItems.map(({ href, label, icon: Icon }) => {
-            const targetHref =
-              href === "/profile" ? (user ? (user.role === "admin" ? "/admin" : "/profile") : "/login") : href;
-            const isActive =
-              targetHref === "/"
-                ? pathname === "/"
-                : href === "/cart"
-                  ? pathname === "/cart" || cartMounted
-                  : pathname === targetHref || (targetHref ? pathname?.startsWith(`${targetHref}/`) : false);
-            if (href === "/cart") {
+        {isProfileMobileNav ? (
+          <Suspense
+            fallback={
+              <NavbarProfileMobileQuickNavInner
+                pathname={pathname}
+                tab={null}
+                onOpenLogoutConfirm={() => setProfileLogoutOpen(true)}
+              />
+            }
+          >
+            <NavbarProfileMobileQuickNavSuspended
+              pathname={pathname}
+              onOpenLogoutConfirm={() => setProfileLogoutOpen(true)}
+            />
+          </Suspense>
+        ) : (
+          <nav
+            aria-label={TXT.quickNav}
+            className={`mx-auto grid max-w-sm ${isAdmin ? "grid-cols-3" : "grid-cols-4"} place-items-center rounded-full border border-black/5 bg-white/95 px-1.5 py-2 backdrop-blur-xl`}
+          >
+            {mobileNavItems.map(({ href, label, icon: Icon }) => {
+              const targetHref =
+                href === "/profile" ? (user ? (user.role === "admin" ? "/admin" : "/profile") : "/login") : href;
+              const navLabel =
+                href === "/profile"
+                  ? user
+                    ? user.role === "admin"
+                      ? "الإدارة"
+                      : TXT.account
+                    : TXT.login
+                  : label;
+              const isActive =
+                targetHref === "/"
+                  ? pathname === "/"
+                  : href === "/cart"
+                    ? pathname === "/cart" || cartMounted
+                    : pathname === targetHref || (targetHref ? pathname?.startsWith(`${targetHref}/`) : false);
+              if (href === "/cart") {
+                return (
+                  <button
+                    type="button"
+                    key="cart"
+                    onClick={() => {
+                      setCartOpen(true);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-[10px] font-medium leading-none transition-colors hover:bg-brand-light/35 active:scale-95 ${
+                      isActive ? "text-black" : "text-neutral-500"
+                    }`}
+                  >
+                    <ShoppingCart className={`h-5 w-5 ${adminIconClassName}`} aria-hidden />
+                    <span className="truncate">{label}</span>
+                  </button>
+                );
+              }
               return (
-                <button
-                  type="button"
-                  key="cart"
-                  onClick={() => {
-                    setCartOpen(true);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-[10px] font-medium leading-none transition-colors hover:bg-brand-light/35 active:scale-95 ${
+                <Link
+                  key={href}
+                  href={targetHref}
+                  title={href === "/profile" ? navLabel : undefined}
+                  aria-label={href === "/profile" ? navLabel : undefined}
+                  className={`flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-[10px] font-medium leading-none transition-colors ${
                     isActive ? "text-black" : "text-neutral-500"
                   }`}
                 >
-                  <ShoppingCart className={`h-5 w-5 ${adminIconClassName}`} aria-hidden />
-                  <span className="truncate">{label}</span>
-                </button>
+                  <Icon className={`h-5 w-5 ${adminIconClassName}`} aria-hidden />
+                  <span className="truncate">{navLabel}</span>
+                </Link>
               );
-            }
-            return (
-              <Link
-                key={href}
-                href={targetHref}
-                className={`flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-[10px] font-medium leading-none transition-colors ${
-                  isActive ? "text-black" : "text-neutral-500"
-                }`}
-              >
-                <Icon className={`h-5 w-5 ${adminIconClassName}`} aria-hidden />
-                <span className="truncate">{label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+            })}
+          </nav>
+        )}
       </div>
+
+      <ConfirmModal
+        open={profileLogoutOpen}
+        title="تأكيد تسجيل الخروج"
+        message="هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟"
+        confirmLabel="تسجيل الخروج"
+        cancelLabel="إلغاء"
+        danger
+        busy={profileLogoutBusy}
+        onConfirm={confirmProfileLogout}
+        onCancel={() => {
+          if (!profileLogoutBusy) setProfileLogoutOpen(false);
+        }}
+      />
 
       <style
         // eslint-disable-next-line react/no-danger

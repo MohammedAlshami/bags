@@ -5,7 +5,8 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
 import { RecommendedProductsSection } from "@/app/components/RecommendedProductsSection";
-import { formatDualDiscountPrice, formatDualPrice, type ProductSizePrice } from "@/lib/price-format";
+import { useDisplayCurrency } from "@/app/context/CurrencyContext";
+import { formatDualDiscountPriceForDisplay, formatPriceForDisplay, type ProductSizePrice } from "@/lib/price-format";
 import { sans } from "@/lib/page-theme";
 import { addToCartPrimaryButtonClassName } from "@/lib/add-to-cart-ui";
 import { addToCartToastTitlePackage, useAddToCartWithToast } from "@/lib/use-add-to-cart-with-toast";
@@ -13,10 +14,10 @@ import { addToCartToastTitlePackage, useAddToCartWithToast } from "@/lib/use-add
 type PackageProduct = {
   _id: string;
   name: string;
-  price: string;
+  saudiRiyal: number;
   oldRiyal?: number | null;
-  beforeDiscountPrice?: string | null;
-  beforeDiscountOldRiyal?: number | null;
+  saudiRiyalBeforeDiscount?: number | null;
+  oldRiyalBeforeDiscount?: number | null;
   sizes?: ProductSizePrice[] | null;
   category: string;
   image: string;
@@ -31,31 +32,46 @@ type PackageDeal = {
   contentsAr: Array<{ title: string; body: string }>;
   closingAr: string;
   image: string;
-  price: string;
+  saudiRiyal: number;
   oldRiyal?: number | null;
-  beforeDiscountPrice?: string | null;
-  beforeDiscountOldRiyal?: number | null;
+  saudiRiyalBeforeDiscount?: number | null;
+  oldRiyalBeforeDiscount?: number | null;
   products: PackageProduct[];
 };
 
 const FALLBACK_DESCRIPTION =
   "مجموعة مختارة بعناية لتمنحك روتين عناية متكامل بسعر خاص، مع منتجات متناسقة يمكن استخدامها معاً للحصول على تجربة كاملة من الملكة جولد.";
 
+function PackageProductRowPrice({
+  saudiRiyal,
+  oldRiyal,
+}: {
+  saudiRiyal: number;
+  oldRiyal: number | null;
+}) {
+  const displayMode = useDisplayCurrency();
+  return (
+    <p className="shrink-0 text-sm text-neutral-700" style={sans}>
+      {formatPriceForDisplay(displayMode, saudiRiyal, oldRiyal)}
+    </p>
+  );
+}
+
 function PackageMainSection({ packageDeal }: { packageDeal: PackageDeal }) {
   const { addToCartWithToast } = useAddToCartWithToast();
+  const displayMode = useDisplayCurrency();
   const heroImage = packageDeal.image || packageDeal.products[0]?.image || "";
   const description = packageDeal.introAr?.trim() || packageDeal.description?.trim() || FALLBACK_DESCRIPTION;
-  const displayPrice = formatDualDiscountPrice({
-    price: packageDeal.price,
+  const displayPrice = formatDualDiscountPriceForDisplay(displayMode, {
+    saudiRiyal: packageDeal.saudiRiyal,
     oldRiyal: packageDeal.oldRiyal ?? null,
-    beforeDiscountPrice: packageDeal.beforeDiscountPrice,
-    beforeDiscountOldRiyal: packageDeal.beforeDiscountOldRiyal,
+    saudiRiyalBeforeDiscount: packageDeal.saudiRiyalBeforeDiscount,
+    oldRiyalBeforeDiscount: packageDeal.oldRiyalBeforeDiscount,
   });
   const regularTotal = useMemo(
     () =>
       packageDeal.products.reduce((sum, product) => {
-        const match = product.price.match(/[\d.,]+/);
-        return sum + (match ? Number(match[0].replace(/,/g, "")) || 0 : 0);
+        return sum + (Number.isFinite(product.saudiRiyal) ? product.saudiRiyal : 0);
       }, 0),
     [packageDeal.products]
   );
@@ -152,9 +168,7 @@ function PackageMainSection({ packageDeal }: { packageDeal: PackageDeal }) {
                       {product.category}
                     </p>
                   </div>
-                  <p className="shrink-0 text-sm text-neutral-700" style={sans}>
-                    {formatDualPrice(product.price, product.oldRiyal ?? null)}
-                  </p>
+                  <PackageProductRowPrice saudiRiyal={product.saudiRiyal} oldRiyal={product.oldRiyal ?? null} />
                 </Link>
               ))}
             </div>
@@ -172,7 +186,7 @@ function PackageMainSection({ packageDeal }: { packageDeal: PackageDeal }) {
                 {
                   slug: `package:${packageDeal._id}`,
                   name: packageDeal.name,
-                  price: packageDeal.price,
+                  saudiRiyal: packageDeal.saudiRiyal,
                   oldRiyal: packageDeal.oldRiyal ?? null,
                   image: heroImage,
                 },
@@ -230,6 +244,30 @@ export default function PackagePage() {
           return;
         }
         const packageData = data as Record<string, unknown>;
+        const sar = Number(packageData.saudiRiyal);
+        if (!Number.isFinite(sar)) {
+          setPackageDeal(null);
+          return;
+        }
+        const rawProducts = Array.isArray(packageData.products) ? packageData.products : [];
+        const products: PackageProduct[] = rawProducts.map((pr) => {
+          const o = pr as Record<string, unknown>;
+          const psar = Number(o.saudiRiyal);
+          return {
+            _id: String(o._id ?? ""),
+            name: String(o.name ?? ""),
+            saudiRiyal: Number.isFinite(psar) ? psar : 0,
+            oldRiyal: typeof o.oldRiyal === "number" ? o.oldRiyal : null,
+            saudiRiyalBeforeDiscount:
+              typeof o.saudiRiyalBeforeDiscount === "number" ? o.saudiRiyalBeforeDiscount : null,
+            oldRiyalBeforeDiscount:
+              typeof o.oldRiyalBeforeDiscount === "number" ? o.oldRiyalBeforeDiscount : null,
+            sizes: Array.isArray(o.sizes) ? (o.sizes as ProductSizePrice[]) : null,
+            category: String(o.category ?? ""),
+            image: String(o.image ?? ""),
+            slug: String(o.slug ?? o._id ?? ""),
+          };
+        });
         setPackageDeal({
           _id: String(packageData._id),
           name: String(packageData.name),
@@ -240,19 +278,20 @@ export default function PackagePage() {
             : [],
           closingAr: typeof packageData.closingAr === "string" ? packageData.closingAr : "",
           image: typeof packageData.image === "string" ? packageData.image : "",
-          price: String(packageData.price),
+          saudiRiyal: sar,
           oldRiyal:
             typeof packageData.oldRiyal === "number"
               ? Number(packageData.oldRiyal)
               : null,
-          beforeDiscountPrice: typeof packageData.beforeDiscountPrice === "string" ? String(packageData.beforeDiscountPrice) : null,
-          beforeDiscountOldRiyal:
-            typeof packageData.beforeDiscountOldRiyal === "number"
-              ? Number(packageData.beforeDiscountOldRiyal)
+          saudiRiyalBeforeDiscount:
+            typeof packageData.saudiRiyalBeforeDiscount === "number"
+              ? Number(packageData.saudiRiyalBeforeDiscount)
               : null,
-          products: Array.isArray(packageData.products)
-            ? (packageData.products as PackageProduct[])
-            : [],
+          oldRiyalBeforeDiscount:
+            typeof packageData.oldRiyalBeforeDiscount === "number"
+              ? Number(packageData.oldRiyalBeforeDiscount)
+              : null,
+          products,
         });
       })
       .finally(() => setLoading(false));

@@ -11,10 +11,10 @@ type PackageRow = {
   description: string | null;
   image: string | null;
   product_ids: unknown;
-  price: string;
+  saudi_riyal: number | null;
   old_riyal: number | null;
-  before_discount_price: string | null;
-  before_discount_old_riyal: number | null;
+  saudi_riyal_before_discount: number | null;
+  old_riyal_before_discount: number | null;
   intro_ar: string | null;
   contents_ar: unknown;
   closing_ar: string | null;
@@ -64,8 +64,8 @@ export async function GET(
     }
 
     const packageRows = await sql`
-      SELECT id, name, description, image, product_ids, price, old_riyal,
-             before_discount_price, before_discount_old_riyal,
+      SELECT id, name, description, image, product_ids, saudi_riyal, old_riyal,
+             saudi_riyal_before_discount, old_riyal_before_discount,
              intro_ar, contents_ar, closing_ar, created_at, updated_at
       FROM packages
       WHERE id = ${id}
@@ -76,11 +76,16 @@ export async function GET(
       return NextResponse.json({ error: "Package not found" }, { status: 404 });
     }
 
+    const sar = Number(packageRow.saudi_riyal);
+    if (!Number.isFinite(sar)) {
+      return NextResponse.json({ error: "Invalid package price data" }, { status: 500 });
+    }
+
     const productIds = parseProductIds(packageRow.product_ids);
     const productRows = productIds.length
       ? ((await sql`
-          SELECT p.id, p.name, p.price, p.old_riyal,
-                 p.before_discount_price, p.before_discount_old_riyal,
+          SELECT p.id, p.name, p.saudi_riyal, p.old_riyal,
+                 p.saudi_riyal_before_discount, p.old_riyal_before_discount,
                  p.sizes, p.category, p.category_id, p.image,
                  p.description_ar, p.ingredients_ar, p.usage_ar, p.free_from_ar, p.warning_ar, p.contents_ar,
                  p.collection_id,
@@ -104,10 +109,12 @@ export async function GET(
       name: packageRow.name,
       description: packageRow.description ?? "",
       image: packageRow.image ?? "",
-      price: packageRow.price,
+      saudiRiyal: sar,
       oldRiyal: packageRow.old_riyal == null ? null : Number(packageRow.old_riyal),
-      beforeDiscountPrice: packageRow.before_discount_price ?? null,
-      beforeDiscountOldRiyal: packageRow.before_discount_old_riyal == null ? null : Number(packageRow.before_discount_old_riyal),
+      saudiRiyalBeforeDiscount:
+        packageRow.saudi_riyal_before_discount == null ? null : Number(packageRow.saudi_riyal_before_discount),
+      oldRiyalBeforeDiscount:
+        packageRow.old_riyal_before_discount == null ? null : Number(packageRow.old_riyal_before_discount),
       introAr: packageRow.intro_ar ?? packageRow.description ?? "",
       contentsAr: parsePackageContents(packageRow.contents_ar),
       closingAr: packageRow.closing_ar ?? "",

@@ -5,7 +5,12 @@ import { useMemo } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
 import { useAddToCartWithToast } from "@/lib/use-add-to-cart-with-toast";
 import { addToCartCardOutlineButtonClassName } from "@/lib/add-to-cart-ui";
-import { formatDualPrice, formatSizePrice, type ProductSizePrice } from "@/lib/price-format";
+import { useDisplayCurrency } from "@/app/context/CurrencyContext";
+import {
+  formatPriceForDisplay,
+  formatSizePriceForDisplay,
+  type ProductSizePrice,
+} from "@/lib/price-format";
 import { sans, pagePaddingX } from "@/lib/page-theme";
 
 export type FeaturedProductItem = {
@@ -13,7 +18,7 @@ export type FeaturedProductItem = {
   image: string;
   category: string;
   name: string;
-  price: string;
+  saudiRiyal: number;
   oldRiyal?: number | null;
   sizes?: ProductSizePrice[] | null;
   /** 0–5; shown on the image chip, defaults to 5.0 */
@@ -30,8 +35,11 @@ function StarIcon({ className }: { className?: string }) {
 
 export function FeaturedProductCard({ item }: { item: FeaturedProductItem }) {
   const { addToCartWithToast } = useAddToCartWithToast();
+  const displayMode = useDisplayCurrency();
   const size = Array.isArray(item.sizes) && item.sizes.length > 0 ? item.sizes[0] : null;
-  const priceLine = size ? formatSizePrice(size) : formatDualPrice(item.price, item.oldRiyal);
+  const priceLine = size
+    ? formatSizePriceForDisplay(displayMode, size)
+    : formatPriceForDisplay(displayMode, item.saudiRiyal, item.oldRiyal);
   const rawRating = item.rating ?? 5;
   const rating = Math.min(5, Math.max(0, Number.isFinite(rawRating) ? rawRating : 5));
   const ratingText = rating.toFixed(1);
@@ -42,7 +50,7 @@ export function FeaturedProductCard({ item }: { item: FeaturedProductItem }) {
     addToCartWithToast({
       slug: item.slug,
       name: size ? `${item.name} - ${size.label}` : item.name,
-      price: size ? `${size.sarPrice} ر.س` : item.price,
+      saudiRiyal: size ? size.sarPrice : item.saudiRiyal,
       image: item.image,
       oldRiyal: size ? size.oldRiyal : item.oldRiyal,
     });

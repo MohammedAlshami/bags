@@ -20,8 +20,19 @@ import { orderStatusAr } from "@/lib/admin-ar";
 type StatIconKey = "products" | "customers" | "orders";
 
 type Stat = { label: string; value: number; href: string; iconKey: StatIconKey };
-type RecentOrder = { _id: string; status?: string; total?: number; customer?: { username?: string } };
-type RecentCustomer = { _id: string; username?: string };
+type RecentOrder = {
+  _id: string;
+  status?: string;
+  total?: number;
+  customer?: { username?: string; fullName?: string };
+};
+type RecentCustomer = { _id: string; username?: string; fullName?: string };
+
+function displayCustomerName(c?: { fullName?: string; username?: string }) {
+  const n = c?.fullName?.trim();
+  if (n) return n;
+  return c?.username ?? "—";
+}
 
 const STAT_ICONS: Record<StatIconKey, React.ComponentType<{ className?: string }>> = {
   products: Package,
@@ -215,7 +226,7 @@ export function AdminDashboardClient({
             <ul className="space-y-3">
               {recentOrders.map((o) => (
                 <li key={String(o._id)} className="flex justify-between gap-2 text-sm text-neutral-700" style={sans}>
-                  <span>{o.customer?.username ?? "—"}</span>
+                  <span>{displayCustomerName(o.customer)}</span>
                   <span className="shrink-0 text-left">
                     {orderStatusAr(o.status ?? "")} · {o.total != null ? formatSar(Number(o.total)) : "—"}
                   </span>
@@ -239,7 +250,7 @@ export function AdminDashboardClient({
             <ul className="space-y-3">
               {recentCustomers.map((u) => (
                 <li key={String(u._id)} className="text-sm text-neutral-700" style={sans}>
-                  {u.username ?? "—"}
+                  {displayCustomerName(u)}
                 </li>
               ))}
             </ul>

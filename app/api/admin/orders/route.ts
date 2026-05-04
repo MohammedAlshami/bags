@@ -3,38 +3,9 @@ import { sql } from "@/lib/db";
 import { mapOrderAdminDetail, mapOrderAdminList, type OrderRow } from "@/lib/db-mappers";
 import { requireAdmin } from "@/lib/auth";
 import { isUuid } from "@/lib/id";
-import { parsePrice } from "@/lib/cart";
+import { getOrderLineSar, normalizeOrderLineItems, type OrderLineItem } from "@/lib/order-line-items";
 
 export const dynamic = "force-dynamic";
-
-type LineItem = { slug: string; name: string; price: string; quantity: number; image?: string };
-
-function normalizeLineItems(raw: unknown): LineItem[] {
-  if (!Array.isArray(raw)) {
-    throw new Error("Invalid items");
-  }
-  if (raw.length === 0) {
-    throw new Error("Items required");
-  }
-  const out: LineItem[] = [];
-  for (const entry of raw) {
-    if (!entry || typeof entry !== "object") continue;
-    const o = entry as Record<string, unknown>;
-    const slug = typeof o.slug === "string" ? o.slug.trim() : "";
-    const name = typeof o.name === "string" ? o.name.trim() : "";
-    const price = typeof o.price === "string" ? o.price.trim() : "";
-    const image = typeof o.image === "string" ? o.image.trim() : "";
-    const q = typeof o.quantity === "number" ? o.quantity : parseInt(String(o.quantity ?? ""), 10);
-    const quantity = Number.isFinite(q) && q >= 1 ? Math.floor(q) : 0;
-    if (!slug || !name || !price || quantity < 1) {
-      throw new Error("Invalid items");
-    }
-    const line: LineItem = { slug, name, price, quantity };
-    if (image) line.image = image;
-    out.push(line);
-  }
-  return out;
-}
 
 function normalizeShipping(body: Record<string, unknown>) {
   const sa = body.shippingAddress;
@@ -101,15 +72,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Customer not found" }, { status: 400 });
     }
 
-    let items: LineItem[];
+    let items: OrderLineItem[];
     try {
-      items = normalizeLineItems(body.items);
+      items = normalizeOrderLineItems(body.items);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Invalid items";
       return NextResponse.json({ error: msg }, { status: 400 });
     }
 
-    const total = items.reduce((sum, it) => sum + parsePrice(it.price) * it.quantity, 0);
+    const total = items.reduce((sum, it) => sum + getOrderLineSar(it) * it.quantity, 0);
 
     let status = "pending";
     const statusIn = body.status;

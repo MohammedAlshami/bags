@@ -6,6 +6,7 @@ import ConditionalNavbar from "./components/ConditionalNavbar";
 import ConditionalFooter from "./components/ConditionalFooter";
 import { WhatsAppFloat } from "./components/WhatsAppFloat";
 import { CartProvider } from "./context/CartContext";
+import { CurrencyProvider } from "./context/CurrencyContext";
 import { CartToaster } from "./components/CartToaster";
 
 const geistSans = Geist({
@@ -49,11 +50,13 @@ export default async function RootLayout({
         className={`${tajawal.variable} ${geistSans.variable} ${geistMono.variable} ${cormorant.variable} antialiased font-sans overflow-x-hidden`}
       >
         <CartProvider>
-          <ConditionalNavbar categories={categories} />
-          {children}
+          <CurrencyProvider>
+            <ConditionalNavbar categories={categories} />
+            {children}
           <ConditionalFooter />
           <WhatsAppFloat />
           <CartToaster />
+          </CurrencyProvider>
         </CartProvider>
       </body>
     </html>

@@ -9,7 +9,6 @@ import {
   SEED_SHIPPING_ADDRESS,
 } from "@/lib/seed-data";
 import { DEFAULT_CATEGORY_NAMES } from "@/lib/categories";
-import { parsePrice } from "@/lib/cart";
 import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 
@@ -60,7 +59,7 @@ export async function POST() {
       collectionBySlug.set(row.slug as string, row.id as string);
     }
 
-    const products: { id: string; name: string; price: string }[] = [];
+    const products: { id: string; name: string; saudiRiyal: number }[] = [];
     for (const p of SEED_PRODUCTS) {
       const collectionId =
         collectionBySlug.get(p.collectionSlug) ?? collectionBySlug.get("essentials");
@@ -68,11 +67,11 @@ export async function POST() {
       if (!collectionId) throw new Error("Missing collection for product");
       if (!categoryId) throw new Error("Missing category for product");
       const ins = await sql`
-        INSERT INTO products (name, price, category, category_id, image, collection_id)
-        VALUES (${p.name}, ${p.price}, ${p.category}, ${categoryId}::uuid, ${p.image}, ${collectionId}::uuid)
-        RETURNING id, name, price
+        INSERT INTO products (name, saudi_riyal, category, category_id, image, collection_id)
+        VALUES (${p.name}, ${p.saudiRiyal}, ${p.category}, ${categoryId}::uuid, ${p.image}, ${collectionId}::uuid)
+        RETURNING id, name, saudi_riyal
       `;
-      products.push(ins[0] as { id: string; name: string; price: string });
+      products.push(ins[0] as { id: string; name: string; saudiRiyal: number });
     }
 
     await sql`
@@ -154,7 +153,7 @@ export async function POST() {
     const shippingAddress = { ...SEED_SHIPPING_ADDRESS, branchKey: "jeddah-sanabel" };
 
     const firstProduct = products[0];
-    const priceNum = parsePrice(firstProduct.price);
+    const priceNum = firstProduct.saudiRiyal;
     const openRows = await sql`
       SELECT id FROM orders WHERE status = 'pending' AND customer_id = ${seedCustomerId}::uuid LIMIT 1
     `;
@@ -168,7 +167,7 @@ export async function POST() {
             {
               slug: firstProduct.id,
               name: firstProduct.name,
-              price: firstProduct.price,
+              saudiRiyal: firstProduct.saudiRiyal,
               quantity: 1,
             },
           ])}::jsonb,
@@ -185,7 +184,7 @@ export async function POST() {
     `;
     if (shippedRows.length === 0) {
       const secondProduct = products[1];
-      const secondPriceNum = parsePrice(secondProduct?.price ?? "189.00 ر.س");
+      const secondPriceNum = secondProduct?.saudiRiyal ?? 189;
       await sql`
         INSERT INTO orders (customer_id, items, total, status, shipping_address, tracking_number, carrier, shipped_at)
         VALUES (
@@ -194,7 +193,7 @@ export async function POST() {
             {
               slug: secondProduct?.id ?? "leather-crossbody",
               name: secondProduct?.name ?? "تونر أساسي",
-              price: secondProduct?.price ?? "189.00 ر.س",
+              saudiRiyal: secondPriceNum,
               quantity: 1,
             },
           ])}::jsonb,

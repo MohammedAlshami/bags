@@ -1,12 +1,12 @@
 import { SafeImage } from "@/app/components/SafeImage";
 import { pagePaddingX, sans, serif } from "@/lib/page-theme";
-import { formatDualDiscountPrice } from "@/lib/price-format";
+import { ShopPackagePriceBlock } from "@/app/components/ShopPackagePriceBlock";
 import Link from "next/link";
 
 export type ShopPackageProduct = {
   id: string;
   name: string;
-  price: string;
+  saudiRiyal: number;
   image: string;
 };
 
@@ -15,15 +15,24 @@ export type ShopPackage = {
   name: string;
   description: string;
   image: string;
-  price: string;
+  saudiRiyal: number;
   oldRiyal: number | null;
-  beforeDiscountPrice?: string | null;
-  beforeDiscountOldRiyal?: number | null;
+  saudiRiyalBeforeDiscount?: number | null;
+  oldRiyalBeforeDiscount?: number | null;
   products: ShopPackageProduct[];
 };
 
 export function ShopPackagesSection({ packages }: { packages: ShopPackage[] }) {
   if (packages.length === 0) return null;
+
+  const single = packages.length === 1;
+  const pair = packages.length === 2;
+
+  const gridClass = single
+    ? "w-full"
+    : pair
+      ? "grid w-full grid-cols-1 gap-4 pb-2 sm:grid-cols-2"
+      : "grid grid-cols-1 gap-4 pb-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
 
   return (
     <section className="w-full py-8 md:py-10" aria-labelledby="shop-packages-heading" lang="ar">
@@ -44,23 +53,12 @@ export function ShopPackagesSection({ packages }: { packages: ShopPackage[] }) {
 
         <div
           role="region"
-          aria-roledescription={packages.length === 1 ? undefined : "شبكة الباقات"}
-          aria-label={packages.length === 1 ? "باقة واحدة" : "باقات مختارة — صفوف من البطاقات"}
-          className={
-            packages.length === 1
-              ? "w-full"
-              : "grid grid-cols-1 gap-4 pb-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-          }
+          aria-roledescription={single ? undefined : "شبكة الباقات"}
+          aria-label={single ? "باقة واحدة" : pair ? "باقتان — عرض كامل متساوٍ" : "باقات مختارة — صفوف من البطاقات"}
+          className={gridClass}
         >
           {packages.map((item, pkgIndex) => {
             const heroImage = item.image || item.products[0]?.image || "";
-            const single = packages.length === 1;
-            const priceLines = formatDualDiscountPrice({
-              price: item.price,
-              oldRiyal: item.oldRiyal,
-              beforeDiscountPrice: item.beforeDiscountPrice,
-              beforeDiscountOldRiyal: item.beforeDiscountOldRiyal,
-            });
             return (
               <Link
                 key={item.id}
@@ -83,7 +81,9 @@ export function ShopPackagesSection({ packages }: { packages: ShopPackage[] }) {
                     sizes={
                       single
                         ? "(max-width: 768px) 100vw, (max-width: 1536px) min(92vw, 1200px), 1152px"
-                        : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                        : pair
+                          ? "(max-width: 640px) 100vw, 50vw"
+                          : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                     }
                   />
                 ) : null}
@@ -91,7 +91,7 @@ export function ShopPackagesSection({ packages }: { packages: ShopPackage[] }) {
                 <div
                   className={[
                     "absolute inset-y-0 right-0 flex w-full flex-col justify-end p-3 text-right text-white sm:p-4 md:p-5",
-                    single ? "max-w-xl md:max-w-2xl lg:max-w-3xl" : "max-w-[min(100%,18rem)] sm:max-w-[min(100%,20rem)]",
+                    single ? "max-w-xl md:max-w-2xl lg:max-w-3xl" : pair ? "max-w-[min(100%,22rem)] sm:max-w-[min(100%,24rem)]" : "max-w-[min(100%,18rem)] sm:max-w-[min(100%,20rem)]",
                   ].join(" ")}
                 >
                   <p className="text-[11px] font-medium text-white/85 sm:text-xs md:text-sm" style={sans}>
@@ -100,14 +100,12 @@ export function ShopPackagesSection({ packages }: { packages: ShopPackage[] }) {
                   <h3 className="mt-1 line-clamp-2 text-lg font-semibold leading-snug sm:text-xl md:text-[1.35rem]" style={serif}>
                     {item.name}
                   </h3>
-                  <p className="mt-2 text-xs font-semibold text-white md:text-sm" style={sans}>
-                    {priceLines.current}
-                  </p>
-                  {priceLines.before ? (
-                    <p className="mt-1 text-xs text-white/60 line-through" style={sans}>
-                      {priceLines.before}
-                    </p>
-                  ) : null}
+                  <ShopPackagePriceBlock
+                    saudiRiyal={item.saudiRiyal}
+                    oldRiyal={item.oldRiyal}
+                    saudiRiyalBeforeDiscount={item.saudiRiyalBeforeDiscount}
+                    oldRiyalBeforeDiscount={item.oldRiyalBeforeDiscount}
+                  />
                   <p className="mt-2 line-clamp-2 text-xs leading-5 text-white/80 md:text-sm" style={sans}>
                     {item.description || "مجموعة منتجات مختارة بعناية."}
                   </p>

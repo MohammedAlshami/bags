@@ -6,6 +6,8 @@ import { Instagram, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
 import { pagePaddingX } from "@/lib/page-theme";
+import { useDisplayCurrency } from "@/app/context/CurrencyContext";
+import { formatPriceForDisplay, formatSizePriceForDisplay, type ProductSizePrice } from "@/lib/price-format";
 
 const serif = { fontFamily: "var(--font-cormorant), serif" };
 const sans = { fontFamily: "var(--font-playpen-arabic), sans-serif" };
@@ -40,8 +42,10 @@ export type SocialReelProduct = {
   slug: string;
   name: string;
   image: string;
-  /** Formatted as on the product page: sizes, or dual currency from DB. */
-  priceLine: string;
+  saudiRiyal: number;
+  oldRiyal: number | null;
+  /** When the product has sizes, first size row — drives reel price display */
+  size: ProductSizePrice | null;
 };
 
 type SocialReelItem = {
@@ -74,6 +78,10 @@ const SOCIAL_LINKS: { href: string; label: string; Icon: typeof Instagram }[] = 
 ];
 
 function ReelProductCard({ product }: { product: SocialReelProduct }) {
+  const displayMode = useDisplayCurrency();
+  const priceLine = product.size
+    ? formatSizePriceForDisplay(displayMode, product.size)
+    : formatPriceForDisplay(displayMode, product.saudiRiyal, product.oldRiyal);
   return (
     <Link
       href={`/product/${product.slug}`}
@@ -96,7 +104,7 @@ function ReelProductCard({ product }: { product: SocialReelProduct }) {
           {product.name}
         </p>
         <p className="mt-1.5 line-clamp-2 break-words text-[14px] font-semibold leading-snug text-brand-primary sm:text-[15px]">
-          {product.priceLine}
+          {priceLine}
         </p>
       </div>
     </Link>

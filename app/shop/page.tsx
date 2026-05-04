@@ -17,10 +17,10 @@ type PackageRow = {
   description: string | null;
   image: string | null;
   product_ids: unknown;
-  price: string;
+  saudi_riyal: number | null;
   old_riyal: number | null;
-  before_discount_price: string | null;
-  before_discount_old_riyal: number | null;
+  saudi_riyal_before_discount: number | null;
+  old_riyal_before_discount: number | null;
 };
 
 function parsePackageProductIds(value: unknown): string[] {
@@ -50,8 +50,8 @@ export default async function ShopPage({
   `;
 
   const rows = await sql`
-    SELECT p.id, p.name, p.price, p.old_riyal,
-           p.before_discount_price, p.before_discount_old_riyal,
+    SELECT p.id, p.name, p.saudi_riyal, p.old_riyal,
+           p.saudi_riyal_before_discount, p.old_riyal_before_discount,
            p.sizes, p.category, p.category_id, p.image,
            p.created_at, p.updated_at,
            cat.id AS cat_id, cat.name AS cat_name,
@@ -71,10 +71,10 @@ export default async function ShopPage({
         : null;
     return {
       name: mapped.name,
-      price: mapped.price,
+      saudiRiyal: mapped.saudiRiyal,
       oldRiyal: mapped.oldRiyal,
-      beforeDiscountPrice: mapped.beforeDiscountPrice,
-      beforeDiscountOldRiyal: mapped.beforeDiscountOldRiyal,
+      saudiRiyalBeforeDiscount: mapped.saudiRiyalBeforeDiscount,
+      oldRiyalBeforeDiscount: mapped.oldRiyalBeforeDiscount,
       sizes: mapped.sizes as CatalogProduct["sizes"],
       category: mapped.category,
       categoryId: mapped.categoryId,
@@ -117,8 +117,8 @@ export default async function ShopPage({
     .filter((c) => c.image);
 
   const packageRows = (await sql`
-    SELECT id, name, description, image, product_ids, price, old_riyal,
-           before_discount_price, before_discount_old_riyal
+    SELECT id, name, description, image, product_ids, saudi_riyal, old_riyal,
+           saudi_riyal_before_discount, old_riyal_before_discount
     FROM packages
     ORDER BY created_at DESC
   `) as PackageRow[];
@@ -129,25 +129,33 @@ export default async function ShopPage({
       {
         id: product.slug,
         name: product.name,
-        price: product.price,
+        saudiRiyal: product.saudiRiyal,
         image: product.image,
       },
     ])
   );
 
-  const packages: ShopPackage[] = packageRows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    description: row.description ?? "",
-    image: row.image ?? "",
-    price: row.price,
-    oldRiyal: row.old_riyal == null ? null : Number(row.old_riyal),
-    beforeDiscountPrice: row.before_discount_price ?? null,
-    beforeDiscountOldRiyal: row.before_discount_old_riyal == null ? null : Number(row.before_discount_old_riyal),
-    products: parsePackageProductIds(row.product_ids)
-      .map((id) => productsById.get(id))
-      .filter((product): product is NonNullable<typeof product> => Boolean(product)),
-  }));
+  const packages: ShopPackage[] = packageRows.map((row) => {
+    const sar = Number(row.saudi_riyal);
+    if (!Number.isFinite(sar)) {
+      throw new Error(`Package ${row.id} has invalid saudi_riyal`);
+    }
+    return {
+      id: row.id,
+      name: row.name,
+      description: row.description ?? "",
+      image: row.image ?? "",
+      saudiRiyal: sar,
+      oldRiyal: row.old_riyal == null ? null : Number(row.old_riyal),
+      saudiRiyalBeforeDiscount:
+        row.saudi_riyal_before_discount == null ? null : Number(row.saudi_riyal_before_discount),
+      oldRiyalBeforeDiscount:
+        row.old_riyal_before_discount == null ? null : Number(row.old_riyal_before_discount),
+      products: parsePackageProductIds(row.product_ids)
+        .map((id) => productsById.get(id))
+        .filter((product): product is NonNullable<typeof product> => Boolean(product)),
+    };
+  });
 
   const allCategoryIds = new Set(catalogCategories.map((c) => c._id));
   const validatedInitialCategoryId =

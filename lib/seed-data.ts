@@ -88,7 +88,7 @@ const DEFAULT_COLLECTION_SLUG = "essentials";
 
 export const SEED_PRODUCTS = PRODUCTS.map((p) => ({
   name: p.name,
-  price: p.price,
+  saudiRiyal: p.saudiRiyal,
   category: p.category,
   image: p.image,
   slug: p.slug,

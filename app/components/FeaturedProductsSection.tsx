@@ -4,7 +4,7 @@ import { FeaturedProductsClient, type FeaturedProductItem } from "./FeaturedProd
 
 export async function FeaturedProductsSection() {
   const rows = await sql`
-    SELECT p.id, p.name, p.price, p.category, p.category_id, p.image, p.collection_id,
+    SELECT p.id, p.name, p.saudi_riyal, p.old_riyal, p.category, p.category_id, p.image, p.collection_id,
            p.created_at, p.updated_at,
            cat.id AS cat_id, cat.name AS cat_name,
            c.id AS col_id, c.name AS col_name, c.slug AS col_slug
@@ -21,7 +21,8 @@ export async function FeaturedProductsSection() {
     image: p.image,
     category: p.category,
     name: p.name,
-    price: p.price,
+    saudiRiyal: p.saudiRiyal,
+    oldRiyal: p.oldRiyal,
   }));
 
   return <FeaturedProductsClient products={products} />;

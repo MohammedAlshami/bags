@@ -1,0 +1,71 @@
+{
+  "engine": "Cloudflare D1 (SQLite)",
+  "notes": "Effective shape after float-price migrations 0002/0003. Legacy columns price, before_discount_price, before_discount_old_riyal were dropped from both tables.",
+  "tables": {
+    "products": {
+      "columns": [
+        { "name": "id", "type": "TEXT", "primaryKey": true, "notes": "UUID string" },
+        { "name": "name", "type": "TEXT", "nullable": false },
+        { "name": "saudi_riyal", "type": "REAL", "nullable": false, "notes": "Current price SAR" },
+        { "name": "old_riyal", "type": "REAL", "nullable": true },
+        { "name": "saudi_riyal_before_discount", "type": "REAL", "nullable": true },
+        { "name": "old_riyal_before_discount", "type": "REAL", "nullable": true },
+        {
+          "name": "sizes",
+          "type": "TEXT",
+          "nullable": true,
+          "notes": "JSON array of { label, sarPrice, oldRiyal }"
+        },
+        { "name": "category", "type": "TEXT", "nullable": false, "notes": "Denormalized name" },
+        { "name": "category_id", "type": "TEXT", "nullable": false, "notes": "UUID; categories.id" },
+        { "name": "image", "type": "TEXT", "nullable": false },
+        { "name": "collection_id", "type": "TEXT", "nullable": true, "notes": "UUID; collections.id" },
+        { "name": "description_ar", "type": "TEXT", "nullable": true },
+        { "name": "ingredients_ar", "type": "TEXT", "nullable": true },
+        { "name": "usage_ar", "type": "TEXT", "nullable": true },
+        { "name": "free_from_ar", "type": "TEXT", "nullable": true },
+        { "name": "warning_ar", "type": "TEXT", "nullable": true },
+        { "name": "contents_ar", "type": "TEXT", "nullable": true },
+        { "name": "created_at", "type": "TEXT", "nullable": false },
+        { "name": "updated_at", "type": "TEXT", "nullable": false }
+      ],
+      "removedColumns": ["price", "before_discount_price", "before_discount_old_riyal", "slug"]
+    },
+    "packages": {
+      "columns": [
+        { "name": "id", "type": "TEXT", "primaryKey": true, "notes": "UUID string" },
+        { "name": "name", "type": "TEXT", "nullable": false },
+        { "name": "description", "type": "TEXT", "nullable": false, "notes": "Default empty string" },
+        { "name": "image", "type": "TEXT", "nullable": false, "notes": "Default empty string" },
+        {
+          "name": "product_ids",
+          "type": "TEXT",
+          "nullable": false,
+          "notes": "JSON array of product UUID strings"
+        },
+        { "name": "saudi_riyal", "type": "REAL", "nullable": false },
+        { "name": "old_riyal", "type": "REAL", "nullable": true },
+        { "name": "saudi_riyal_before_discount", "type": "REAL", "nullable": true },
+        { "name": "old_riyal_before_discount", "type": "REAL", "nullable": true },
+        { "name": "intro_ar", "type": "TEXT", "nullable": true },
+        {
+          "name": "contents_ar",
+          "type": "TEXT",
+          "nullable": true,
+          "notes": "JSON array of { title, body } as string"
+        },
+        { "name": "closing_ar", "type": "TEXT", "nullable": true },
+        { "name": "created_at", "type": "TEXT", "nullable": false },
+        { "name": "updated_at", "type": "TEXT", "nullable": false }
+      ],
+      "removedColumns": ["price", "before_discount_price", "before_discount_old_riyal"]
+    }
+  },
+  "codeReferences": [
+    "app/api/admin/products/route.ts",
+    "app/api/admin/packages/route.ts",
+    "lib/db-mappers.ts",
+    "migrations/0002_float_prices_add_columns.sql",
+    "migrations/0003_float_prices_drop_legacy.sql"
+  ]
+}

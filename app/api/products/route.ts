@@ -11,6 +11,8 @@ export async function GET(request: Request) {
     const search = searchParams.get("search")?.trim() || "";
     const categoriesParam = searchParams.getAll("category").filter(Boolean);
     const collectionSlug = searchParams.get("collection")?.trim() || "";
+    const rawLimit = parseInt(searchParams.get("limit") ?? "", 10);
+    const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 200) : 0;
 
     let collectionId: string | null = null;
     let filterGeneral = false;
@@ -26,8 +28,8 @@ export async function GET(request: Request) {
     }
 
     const rows = await sql`
-      SELECT p.id, p.name, p.price, p.old_riyal,
-             p.before_discount_price, p.before_discount_old_riyal,
+      SELECT p.id, p.name, p.saudi_riyal, p.old_riyal,
+             p.saudi_riyal_before_discount, p.old_riyal_before_discount,
              p.sizes, p.category, p.category_id, p.image, p.collection_id,
              p.created_at, p.updated_at,
              cat.id AS cat_id, cat.name AS cat_name,
@@ -58,7 +60,8 @@ export async function GET(request: Request) {
         (!filterGeneral && collectionId == null);
       return matchesSearch && matchesCategory && matchesCollection;
     });
-    return NextResponse.json(list);
+    const out = limit > 0 ? list.slice(0, limit) : list;
+    return NextResponse.json(out);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to fetch products";
     return NextResponse.json({ error: message }, { status: 500 });

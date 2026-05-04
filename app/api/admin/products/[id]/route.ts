@@ -19,10 +19,15 @@ function normalizeNullableNumber(value: unknown): number | null {
   return Number.isFinite(num) ? num : null;
 }
 
+function normalizeRequiredFiniteNumber(value: unknown): number | null {
+  const num = Number(value);
+  return Number.isFinite(num) && num >= 0 ? num : null;
+}
+
 async function fetchProductJoined(id: string) {
   const rows = await sql`
-    SELECT p.id, p.name, p.price, p.category, p.category_id, p.image,
-           p.old_riyal, p.before_discount_price, p.before_discount_old_riyal,
+    SELECT p.id, p.name, p.saudi_riyal, p.category, p.category_id, p.image,
+           p.old_riyal, p.saudi_riyal_before_discount, p.old_riyal_before_discount,
            p.sizes, p.description_ar, p.ingredients_ar, p.usage_ar, p.free_from_ar, p.warning_ar, p.contents_ar,
            p.collection_id,
            p.created_at, p.updated_at,
@@ -73,7 +78,8 @@ export async function PUT(
     if (!cur) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const name = body.name !== undefined ? String(body.name).trim() : cur.name;
-    const price = body.price !== undefined ? String(body.price).trim() : cur.price;
+    const saudiRiyal =
+      body.saudiRiyal !== undefined ? normalizeRequiredFiniteNumber(body.saudiRiyal) : normalizeRequiredFiniteNumber(cur.saudi_riyal);
     const categoryWasProvided = body.categoryId !== undefined || body.category !== undefined;
     const category = categoryWasProvided
       ? await resolveCategorySelection(
@@ -88,10 +94,14 @@ export async function PUT(
     }
     const image = body.image !== undefined ? String(body.image).trim() : cur.image;
     const oldRiyal = body.oldRiyal !== undefined ? normalizeNullableNumber(body.oldRiyal) : cur.old_riyal ?? null;
-    const beforeDiscountPrice =
-      body.beforeDiscountPrice !== undefined ? normalizeNullableText(body.beforeDiscountPrice) : cur.before_discount_price ?? null;
-    const beforeDiscountOldRiyal =
-      body.beforeDiscountOldRiyal !== undefined ? normalizeNullableNumber(body.beforeDiscountOldRiyal) : cur.before_discount_old_riyal ?? null;
+    const saudiRiyalBeforeDiscount =
+      body.saudiRiyalBeforeDiscount !== undefined
+        ? normalizeNullableNumber(body.saudiRiyalBeforeDiscount)
+        : cur.saudi_riyal_before_discount ?? null;
+    const oldRiyalBeforeDiscount =
+      body.oldRiyalBeforeDiscount !== undefined
+        ? normalizeNullableNumber(body.oldRiyalBeforeDiscount)
+        : cur.old_riyal_before_discount ?? null;
     const descriptionAr =
       body.descriptionAr !== undefined ? normalizeNullableText(body.descriptionAr) : cur.description_ar ?? null;
     const ingredientsAr =
@@ -108,16 +118,20 @@ export async function PUT(
         ? String(body.collectionId).trim()
         : cur.collection_id ?? null;
 
+    if (saudiRiyal == null) {
+      return NextResponse.json({ error: "Invalid saudiRiyal" }, { status: 400 });
+    }
+
     await sql`
       UPDATE products SET
         name = ${name},
-        price = ${price},
+        saudi_riyal = ${saudiRiyal},
         category = ${category?.name ?? cur.category},
         category_id = ${category?.id ?? cur.category_id}::uuid,
         image = ${image},
         old_riyal = ${oldRiyal},
-        before_discount_price = ${beforeDiscountPrice},
-        before_discount_old_riyal = ${beforeDiscountOldRiyal},
+        saudi_riyal_before_discount = ${saudiRiyalBeforeDiscount},
+        old_riyal_before_discount = ${oldRiyalBeforeDiscount},
         sizes = ${sizes}::jsonb,
         description_ar = ${descriptionAr},
         ingredients_ar = ${ingredientsAr},

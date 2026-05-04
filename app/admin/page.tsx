@@ -57,10 +57,10 @@ export default async function AdminDashboardPage() {
     ]);
 
   const recentCustomers = await sql`
-    SELECT id, username FROM users WHERE role = 'customer' ORDER BY created_at DESC LIMIT 5
+    SELECT id, username, full_name FROM users WHERE role = 'customer' ORDER BY created_at DESC LIMIT 5
   `;
   const recentOrders = await sql`
-    SELECT o.id, o.status, o.total, u.username AS customer_username
+    SELECT o.id, o.status, o.total, u.username AS customer_username, u.full_name AS customer_full_name
     FROM orders o
     JOIN users u ON u.id = o.customer_id
     ORDER BY o.created_at DESC
@@ -107,11 +107,15 @@ export default async function AdminDashboardPage() {
         _id: String(o.id),
         status: o.status as string,
         total: o.total as number,
-        customer: { username: o.customer_username as string },
+        customer: {
+          username: o.customer_username as string,
+          fullName: (o.customer_full_name as string | null) ?? undefined,
+        },
       }))}
       recentCustomers={recentCustomers.map((u) => ({
         _id: String(u.id),
         username: u.username as string,
+        fullName: (u.full_name as string | null) ?? undefined,
       }))}
       revenueTotal={revenueTotal}
       revenueSeries={revenueSeries}

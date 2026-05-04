@@ -18,7 +18,7 @@ import { adminIconClassName, sans } from "@/lib/page-theme";
 import { formatSar } from "@/lib/format-sar";
 import { adminApiErrorAr, orderStatusAr } from "@/lib/admin-ar";
 import { AdminSkeletonOrderDetailPage } from "@/lib/admin-skeleton";
-import { getStoreLocationById } from "@/lib/store-locations";
+import { getOrderLineSar, type OrderLineItem } from "@/lib/order-line-items";
 
 type ShippingAddress = {
   fullName?: string;
@@ -37,7 +37,14 @@ type CustomerRef = {
   address?: string;
   phone?: string;
 };
-type OrderItem = { slug?: string; name?: string; price?: string; quantity?: number; image?: string };
+type OrderItem = {
+  slug?: string;
+  name?: string;
+  saudiRiyal?: number;
+  price?: string;
+  quantity?: number;
+  image?: string;
+};
 type OrderDetail = {
   _id: string;
   customer: CustomerRef;
@@ -67,11 +74,6 @@ function formatShippingAddress(sa: ShippingAddress | null | undefined): string {
     sa.country,
   ].filter(Boolean);
   return parts.join("\n") || "";
-}
-
-function parseItemPrice(price: string | undefined): number {
-  const n = parseFloat(String(price ?? "").replace(/[^\d.-]/g, ""));
-  return Number.isFinite(n) ? n : 0;
 }
 
 function paymentStatusSummary(order: OrderDetail): string {
@@ -590,9 +592,8 @@ export default function AdminOrderDetailPage() {
               </thead>
               <tbody>
                 {order.items.map((item, i) => {
-                  const price = item.price ?? "";
+                  const num = getOrderLineSar(item as OrderLineItem);
                   const qty = item.quantity ?? 0;
-                  const num = parseItemPrice(price);
                   const subtotal = num * qty;
                   return (
                     <tr key={i} className="border-b border-black/5 bg-white">
@@ -610,7 +611,7 @@ export default function AdminOrderDetailPage() {
                       </td>
                       <td className="p-4">{item.name ?? "—"}</td>
                       <td className="p-4 text-neutral-600" dir="ltr">
-                        {price || "—"}
+                        {num > 0 ? formatSar(num) : "—"}
                       </td>
                       <td className="p-4">{qty}</td>
                       <td className="p-4 text-end">{formatSar(subtotal)}</td>

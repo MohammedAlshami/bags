@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { formatSar } from "@/lib/format-sar";
 import { isUuid } from "@/lib/id";
 
 export const dynamic = "force-dynamic";
@@ -12,10 +11,10 @@ type PackageRow = {
   description: string | null;
   image?: string | null;
   product_ids: unknown;
-  price: string;
+  saudi_riyal: number | null;
   old_riyal?: number | null;
-  before_discount_price?: string | null;
-  before_discount_old_riyal?: number | null;
+  saudi_riyal_before_discount?: number | null;
+  old_riyal_before_discount?: number | null;
   intro_ar?: string | null;
   contents_ar?: unknown;
   closing_ar?: string | null;
@@ -55,16 +54,22 @@ function parsePackageContents(value: unknown): Array<{ title: string; body: stri
 }
 
 function mapPackage(row: PackageRow) {
+  const sar = Number(row.saudi_riyal);
+  if (!Number.isFinite(sar)) {
+    throw new Error(`Package ${row.id} has invalid saudi_riyal`);
+  }
   return {
     _id: row.id,
     name: row.name,
     description: row.description ?? "",
     image: row.image ?? "",
     productIds: parseJsonArray(row.product_ids),
-    price: row.price,
+    saudiRiyal: sar,
     oldRiyal: row.old_riyal == null ? null : Number(row.old_riyal),
-    beforeDiscountPrice: row.before_discount_price ?? null,
-    beforeDiscountOldRiyal: row.before_discount_old_riyal == null ? null : Number(row.before_discount_old_riyal),
+    saudiRiyalBeforeDiscount:
+      row.saudi_riyal_before_discount == null ? null : Number(row.saudi_riyal_before_discount),
+    oldRiyalBeforeDiscount:
+      row.old_riyal_before_discount == null ? null : Number(row.old_riyal_before_discount),
     introAr: row.intro_ar ?? row.description ?? "",
     contentsAr: parsePackageContents(row.contents_ar),
     closingAr: row.closing_ar ?? "",
@@ -89,8 +94,8 @@ async function productCountForIds(productIds: string[]) {
 
 async function fetchPackage(id: string) {
   const rows = await sql`
-    SELECT id, name, description, image, product_ids, price, old_riyal,
-           before_discount_price, before_discount_old_riyal,
+    SELECT id, name, description, image, product_ids, saudi_riyal, old_riyal,
+           saudi_riyal_before_discount, old_riyal_before_discount,
            intro_ar, contents_ar, closing_ar, created_at, updated_at
     FROM packages
     WHERE id = ${id}
@@ -118,49 +123,51 @@ export async function PUT(
     const contentsAr = Array.isArray(body.contentsAr) ? JSON.stringify(body.contentsAr) : null;
     const closingAr = String(body.closingAr ?? "").trim();
     const image = String(body.image ?? "").trim();
-    const priceValue = Number(body.price);
+    const saudiRiyal = Number(body.saudiRiyal);
     const oldRiyal = body.oldRiyal == null || body.oldRiyal === "" ? null : Number(body.oldRiyal);
-    const beforeDiscountPriceValue =
-      body.beforeDiscountPrice == null || body.beforeDiscountPrice === "" ? null : Number(body.beforeDiscountPrice);
-    const beforeDiscountOldRiyal =
-      body.beforeDiscountOldRiyal == null || body.beforeDiscountOldRiyal === "" ? null : Number(body.beforeDiscountOldRiyal);
+    const saudiRiyalBeforeDiscount =
+      body.saudiRiyalBeforeDiscount == null || body.saudiRiyalBeforeDiscount === ""
+        ? null
+        : Number(body.saudiRiyalBeforeDiscount);
+    const oldRiyalBeforeDiscount =
+      body.oldRiyalBeforeDiscount == null || body.oldRiyalBeforeDiscount === ""
+        ? null
+        : Number(body.oldRiyalBeforeDiscount);
     const productIds = normalizeProductIds(body.productIds);
 
-    if (!name || !Number.isFinite(priceValue) || priceValue < 0 || productIds.length === 0) {
-      return NextResponse.json({ error: "Name, price, and products required" }, { status: 400 });
+    if (!name || !Number.isFinite(saudiRiyal) || saudiRiyal < 0 || productIds.length === 0) {
+      return NextResponse.json({ error: "Name, saudiRiyal, and products required" }, { status: 400 });
     }
     if (oldRiyal !== null && (!Number.isFinite(oldRiyal) || oldRiyal < 0)) {
       return NextResponse.json({ error: "Invalid old riyal price" }, { status: 400 });
     }
-    if (beforeDiscountPriceValue !== null && (!Number.isFinite(beforeDiscountPriceValue) || beforeDiscountPriceValue < 0)) {
-      return NextResponse.json({ error: "Invalid before discount price" }, { status: 400 });
+    if (saudiRiyalBeforeDiscount !== null && (!Number.isFinite(saudiRiyalBeforeDiscount) || saudiRiyalBeforeDiscount < 0)) {
+      return NextResponse.json({ error: "Invalid before discount SAR price" }, { status: 400 });
     }
-    if (beforeDiscountOldRiyal !== null && (!Number.isFinite(beforeDiscountOldRiyal) || beforeDiscountOldRiyal < 0)) {
+    if (oldRiyalBeforeDiscount !== null && (!Number.isFinite(oldRiyalBeforeDiscount) || oldRiyalBeforeDiscount < 0)) {
       return NextResponse.json({ error: "Invalid before discount old riyal price" }, { status: 400 });
     }
     if ((await productCountForIds(productIds)) !== productIds.length) {
       return NextResponse.json({ error: "Some products were not found" }, { status: 400 });
     }
 
-    const price = formatSar(priceValue);
-    const beforeDiscountPrice = beforeDiscountPriceValue === null ? null : formatSar(beforeDiscountPriceValue);
     const updated = await sql`
       UPDATE packages SET
         name = ${name},
         description = ${description},
         image = ${image},
         product_ids = ${JSON.stringify(productIds)},
-        price = ${price},
+        saudi_riyal = ${saudiRiyal},
         old_riyal = ${oldRiyal},
-        before_discount_price = ${beforeDiscountPrice},
-        before_discount_old_riyal = ${beforeDiscountOldRiyal},
+        saudi_riyal_before_discount = ${saudiRiyalBeforeDiscount},
+        old_riyal_before_discount = ${oldRiyalBeforeDiscount},
         intro_ar = ${introAr},
         contents_ar = ${contentsAr},
         closing_ar = ${closingAr},
         updated_at = now()
       WHERE id = ${id}
-      RETURNING id, name, description, image, product_ids, price, old_riyal,
-                before_discount_price, before_discount_old_riyal,
+      RETURNING id, name, description, image, product_ids, saudi_riyal, old_riyal,
+                saudi_riyal_before_discount, old_riyal_before_discount,
                 intro_ar, contents_ar, closing_ar, created_at, updated_at
     `;
     return NextResponse.json(mapPackage(updated[0] as PackageRow));

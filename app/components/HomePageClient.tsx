@@ -9,6 +9,8 @@ import { SocialMediaSection } from "./SocialMediaSection";
 import { StoreLocationsSection } from "./StoreLocationsSection";
 import { HomeReviewsSection } from "./HomeReviewsSection";
 import { HomeFaqSection } from "./HomeFaqSection";
+import { HomeBlogSection } from "./HomeBlogSection";
+import type { HomeBlogPostItem } from "./HomeBlogSection";
 import { ShopByCategorySection } from "./ShopByCategorySection";
 import type { HomeCategorySectionData } from "./HomeCategoryProductSections";
 import type { ShopByCategoryStripItem } from "./ShopByCategorySection";
@@ -23,6 +25,7 @@ type HomeVisibility = {
   locations: boolean;
   reviews: boolean;
   faq: boolean;
+  blogs: boolean;
 };
 
 const DEFAULT_VISIBILITY: HomeVisibility = {
@@ -32,6 +35,7 @@ const DEFAULT_VISIBILITY: HomeVisibility = {
   locations: true,
   reviews: true,
   faq: true,
+  blogs: true,
 };
 
 function parseVisibility(value: unknown): HomeVisibility {
@@ -44,6 +48,7 @@ function parseVisibility(value: unknown): HomeVisibility {
     locations: v.locations ?? true,
     reviews: v.reviews ?? true,
     faq: v.faq ?? true,
+    blogs: v.blogs ?? true,
   };
 }
 
@@ -52,11 +57,13 @@ export function HomePageClient({
   categorySections,
   socialReelProducts,
   reviewProducts,
+  homeBlogPosts,
 }: {
   shopByCategoryItems: ShopByCategoryStripItem[];
   categorySections: HomeCategorySectionData[];
   socialReelProducts: SocialReelProduct[];
   reviewProducts: ReviewProductRef[];
+  homeBlogPosts: HomeBlogPostItem[];
 }) {
   const [bg, setBg] = useState<HomeBg>("white");
   const [visibility, setVisibility] = useState<HomeVisibility>(DEFAULT_VISIBILITY);
@@ -87,6 +94,7 @@ export function HomePageClient({
       {visibility.social ? <SocialMediaSection products={socialReelProducts} /> : null}
       {visibility.reviews ? <HomeReviewsSection products={reviewProducts} /> : null}
       {visibility.faq ? <HomeFaqSection /> : null}
+      {visibility.blogs ? <HomeBlogSection posts={homeBlogPosts} /> : null}
       {visibility.locations ? <StoreLocationsSection variant="fullBleed" /> : null}
     </main>
   );

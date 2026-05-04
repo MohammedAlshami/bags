@@ -12,17 +12,9 @@ import { getCheckoutProvinceById, CHECKOUT_PROVINCES, isValidCheckoutProvinceId,
 import { CHECKOUT_PICKUP_POINTS, type StoreLocation } from "@/lib/store-locations";
 import { BANK_TRANSFER_INFO } from "@/lib/bank-info";
 import { applyCheckoutDiscount } from "@/lib/order-discount";
-import { formatDualPrice, type ProductSizePrice } from "@/lib/price-format";
+import { formatPriceForDisplay, formatCartSubtotalDisplay, type ProductSizePrice } from "@/lib/price-format";
+import { useDisplayCurrency } from "@/app/context/CurrencyContext";
 import type { CartItem } from "@/lib/cart";
-
-function formatSar(n: number) {
-  return (
-    new Intl.NumberFormat("ar-SA", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(n) + " ر.س"
-  );
-}
 
 type MeUser = { username: string; role: string } | null;
 type ProfileAddress = { fullName: string; address: string; phone: string };
@@ -124,6 +116,10 @@ function BranchSelectDropdown({
     </div>
   );
 }
+
+/** Same destination as `WhatsAppFloat` — customer contact for order follow-up. */
+const WHATSAPP_ORDER_CONTACT_HREF = "https://wa.me/967782183149";
+const WHATSAPP_DISPLAY_NUMBER = "+967 782 183 149";
 
 const QTY_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
@@ -234,8 +230,9 @@ function resolveOldRiyalForLine(item: Pick<CartItem, "name" | "oldRiyal">, meta?
 }
 
 function CartLinePrice({ item, meta }: { item: CartItem; meta?: LinePriceMeta | null }) {
+  const displayMode = useDisplayCurrency();
   const oldRiyal = resolveOldRiyalForLine(item, meta);
-  const line = oldRiyal != null && oldRiyal > 0 ? formatDualPrice(item.price, oldRiyal) : item.price;
+  const line = formatPriceForDisplay(displayMode, item.saudiRiyal, oldRiyal != null && oldRiyal > 0 ? oldRiyal : null);
   return (
     <p className="mt-0.5 text-sm text-neutral-500" style={sans}>
       {line}
@@ -263,6 +260,7 @@ function CartCheckoutInner() {
   const placedOrderId = paymentOrderId ? null : searchParams.get("placed");
 
   const { items, removeFromCart, updateQuantity, subtotal, clearCart } = useCart();
+  const displayMode = useDisplayCurrency();
   const cartSlugKey = useMemo(
     () =>
       [...new Set(items.map((i) => i.slug))]
@@ -349,6 +347,7 @@ function CartCheckoutInner() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [uploadBusy, setUploadBusy] = useState(false);
+  const [paymentProofDoneModalOpen, setPaymentProofDoneModalOpen] = useState(false);
 
   const [placedOrderSnapshot, setPlacedOrderSnapshot] = useState<{ _id: string; total: number } | null>(null);
   const [placedLoading, setPlacedLoading] = useState(false);
@@ -403,6 +402,7 @@ function CartCheckoutInner() {
   useEffect(() => {
     if (!paymentOrderId) {
       setPaymentOrder(null);
+      setPaymentProofDoneModalOpen(false);
       return;
     }
     setPaymentLoading(true);
@@ -476,6 +476,20 @@ function CartCheckoutInner() {
     };
   }, [placedOrderId, router]);
 
+  useEffect(() => {
+    if (!paymentProofDoneModalOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPaymentProofDoneModalOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [paymentProofDoneModalOpen]);
+
   const placeOrder = useCallback(async () => {
     const needsBranch = cityScope === "outside" || deliveryMethod === "pickup";
     const normalizedPaymentMethod = cityScope === "outside" ? "bank" : paymentMethod;
@@ -502,7 +516,8 @@ function CartCheckoutInner() {
           items: items.map((i) => ({
             slug: i.slug,
             name: i.name,
-            price: i.price,
+            saudiRiyal: i.saudiRiyal,
+            oldRiyal: i.oldRiyal,
             quantity: i.quantity,
             image: i.image,
           })),
@@ -570,6 +585,7 @@ function CartCheckoutInner() {
         status: pData.status ?? "",
         paymentProofUrl: pData.paymentProofUrl ?? null,
       });
+      setPaymentProofDoneModalOpen(true);
     } catch (e) {
       setPaymentError(e instanceof Error ? e.message : "خطأ");
     } finally {
@@ -643,7 +659,9 @@ function CartCheckoutInner() {
               <section className="rounded-2xl border border-neutral-200 bg-[#FCF0F2]/40 p-6">
                 <p className="mt-4 text-sm text-neutral-700" style={sans}>
                   المبلغ المستحق:{" "}
-                  <span className="font-semibold text-neutral-900">{formatSar(Number(paymentOrder.total))}</span>
+                  <span className="font-semibold text-neutral-900">
+                    {formatPriceForDisplay(displayMode, Number(paymentOrder.total), null)}
+                  </span>
                 </p>
               </section>
 
@@ -754,6 +772,58 @@ function CartCheckoutInner() {
             </div>
           ) : null}
         </div>
+
+        {paymentProofDoneModalOpen ? (
+          <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" dir="rtl">
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/45"
+              aria-label="إغلاق"
+              onClick={() => setPaymentProofDoneModalOpen(false)}
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="payment-proof-done-title"
+              className="relative z-[1] w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl"
+              style={sans}
+            >
+              <h2 id="payment-proof-done-title" className="text-lg font-semibold text-neutral-900">
+                تم استلام طلبكِ
+              </h2>
+              <p className="mt-3 text-sm leading-relaxed text-neutral-600">
+                تم استلام إثبات الدفع. سنتواصل معكِ قريباً بخصوص الطلب. يمكنكِ أيضاً مراسلتنا على واتساب على الرقم{" "}
+                <a
+                  href={WHATSAPP_ORDER_CONTACT_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-brand-primary underline underline-offset-2 hover:text-brand-dark"
+                  dir="ltr"
+                >
+                  {WHATSAPP_DISPLAY_NUMBER}
+                </a>
+                .
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <a
+                  href={WHATSAPP_ORDER_CONTACT_HREF}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex flex-1 min-w-[8rem] justify-center rounded-full border border-emerald-600 bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                >
+                  واتساب
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPaymentProofDoneModalOpen(false)}
+                  className="inline-flex flex-1 min-w-[8rem] justify-center rounded-full border border-neutral-300 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-900 transition-colors hover:bg-neutral-50"
+                >
+                  حسناً
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </main>
     );
   }
@@ -792,7 +862,9 @@ function CartCheckoutInner() {
                 </p>
                 <p className="mt-3 text-sm text-neutral-700" style={sans}>
                   الإجمالي:{" "}
-                  <span className="font-semibold text-neutral-900">{formatSar(Number(placedOrderSnapshot.total))}</span>
+                  <span className="font-semibold text-neutral-900">
+                    {formatPriceForDisplay(displayMode, Number(placedOrderSnapshot.total), null)}
+                  </span>
                 </p>
                 <p className="mt-4 text-sm leading-relaxed text-neutral-600" style={sans}>
                   سنُتابع تجهيز الطلب والتوصيل حسب الخيارات التي حددتِها. يمكنكِ مراجعة تفاصيل الطلب في أي وقت من صفحة
@@ -905,17 +977,21 @@ function CartCheckoutInner() {
                   <dl className="mt-3 space-y-2 text-sm" style={sans}>
                     <div className="flex justify-between gap-4 text-neutral-700">
                       <dt>المجموع الفرعي</dt>
-                      <dd className="font-medium tabular-nums text-neutral-900">{formatSar(subtotal)}</dd>
+                      <dd className="font-medium tabular-nums text-neutral-900">
+                        {formatCartSubtotalDisplay(items, displayMode)}
+                      </dd>
                     </div>
                     {checkoutTotals.discountAmount > 0 ? (
                       <div className="flex justify-between gap-4 text-brand-primary">
                         <dt>الخصم {appliedVoucher ? `(${appliedVoucher})` : ""}</dt>
-                        <dd className="font-medium tabular-nums">− {formatSar(checkoutTotals.discountAmount)}</dd>
+                        <dd className="font-medium tabular-nums">− {formatPriceForDisplay(displayMode, checkoutTotals.discountAmount, null)}</dd>
                       </div>
                     ) : null}
                     <div className="flex justify-between gap-4 pt-1 text-base font-semibold text-neutral-900">
                       <dt>الإجمالي</dt>
-                      <dd className="tabular-nums text-brand-primary">{formatSar(checkoutTotals.total)}</dd>
+                      <dd className="tabular-nums text-brand-primary">
+                        {formatPriceForDisplay(displayMode, checkoutTotals.total, null)}
+                      </dd>
                     </div>
                   </dl>
                   <p className="mt-3 text-[11px] leading-relaxed text-neutral-500" style={sans}>
@@ -1013,7 +1089,7 @@ function CartCheckoutInner() {
                       </label>
                       <ProvinceSelectDropdown id="checkout-province" value={provinceId} onChange={setProvinceId} />
                       <p className="mt-2 text-[11px] leading-relaxed text-neutral-500" style={sans}>
-                        يحدد اختيار المحافظة خيارات التوصيل والدفع أدناه (محافظة صنعاء: توصيل مباشر أو استلام من المكتب؛ باقي المحافظات وفق سياسة الشحن).
+                        يحدد اختيار المحافظة خيارات التوصيل والدفع أدناه (صنعاء: توصيل مباشر أو استلام من المكتب؛ باقي المحافظات وفق سياسة الشحن).
                       </p>
                     </div>
 
@@ -1129,7 +1205,7 @@ function CartCheckoutInner() {
                       <p className="mt-1 text-[11px] text-neutral-400" style={sans}>
                         {cityScope === "outside"
                           ? "للمحافظات غير صنعاء يتوفر التحويل البنكي فقط."
-                          : "في محافظة صنعاء يمكنك اختيار التحويل أو الدفع عند الاستلام."}
+                          : "في صنعاء يمكنك اختيار التحويل أو الدفع عند الاستلام."}
                       </p>
                       <div className="mt-4 space-y-3">
                         <label className="flex cursor-pointer items-start gap-3 text-start">

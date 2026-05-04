@@ -9,7 +9,7 @@ export type CheckoutProvince = {
 
 /** محافظة صنعاء وحدة تستخدم منطق التوصيل المباشر/الاستلام؛ باقي المحافظات منطق الشحن للمحافظات. */
 export const CHECKOUT_PROVINCES: CheckoutProvince[] = [
-  { id: "sanaa", label: "محافظة صنعاء", cityScope: "sanaa" },
+  { id: "sanaa", label: "صنعاء", cityScope: "sanaa" },
   { id: "aden", label: "عدن", cityScope: "outside" },
   { id: "taiz", label: "تعز", cityScope: "outside" },
   { id: "hudaydah", label: "الحديدة", cityScope: "outside" },

@@ -11,7 +11,7 @@ import {
 import {
   getCartFromStorage,
   saveCartToStorage,
-  parsePrice,
+  getCartLineSar,
   type CartItem,
 } from "@/lib/cart";
 
@@ -74,7 +74,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const count = items.reduce((acc, i) => acc + i.quantity, 0);
   const subtotal = items.reduce(
-    (acc, i) => acc + parsePrice(i.price) * i.quantity,
+    (acc, i) => acc + getCartLineSar(i) * i.quantity,
     0
   );
 
