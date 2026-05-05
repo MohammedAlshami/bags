@@ -10,6 +10,7 @@ const SECTION_BG = "#FAF8F5";
 
 export type HomeBlogPostItem = {
   _id: string;
+  slug: string;
   title: string;
   excerpt: string;
   coverImage: string;
@@ -34,7 +35,7 @@ function BlogCard({ post }: { post: HomeBlogPostItem }) {
 
   return (
     <Link
-      href={`/blog/${post._id}`}
+      href={`/blog/${post.slug}`}
       className="group flex h-full flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-[0_1px_0_rgba(0,0,0,0.04)] transition-colors hover:border-neutral-300"
       dir="rtl"
     >

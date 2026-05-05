@@ -120,6 +120,7 @@ export default async function Home() {
     const p = mapBlogPost(row);
     return {
       _id: p._id,
+      slug: p.slug,
       title: p.title,
       excerpt: p.excerpt,
       coverImage: p.coverImage,

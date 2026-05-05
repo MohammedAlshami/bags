@@ -93,9 +93,7 @@ function formatDate(date: string | null) {
 }
 
 function statusClasses(status: BlogStatus) {
-  return status === "published"
-    ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-    : "bg-amber-50 text-amber-700 ring-1 ring-amber-200";
+  return status === "published" ? "text-emerald-700" : "text-amber-700";
 }
 
 function replaceBlockType(block: BlogBlock, type: BlogBlockType): BlogBlock {
@@ -882,7 +880,7 @@ export default function AdminBlogsPage() {
                 ) : (
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(182,58,107,0.16),_transparent_38%),linear-gradient(135deg,#faeff6_0%,#f7f0ea_100%)]" />
                 )}
-                <div className="absolute end-3 top-3 rounded-full px-3 py-1 text-[11px] font-medium ring-1 ring-inset">
+                <div className="absolute end-3 top-3 rounded-full bg-white px-3 py-1 text-[11px] font-medium ring-1 ring-inset ring-black/10">
                   <span className={statusClasses(post.status)}>{post.status === "published" ? "منشور" : "مسودة"}</span>
                 </div>
               </div>

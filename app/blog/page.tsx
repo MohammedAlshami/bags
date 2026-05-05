@@ -28,7 +28,7 @@ function PostCard({ post, featured = false }: { post: ReturnType<typeof mapBlogP
 
   return (
     <Link
-      href={`/blog/${post._id}`}
+      href={`/blog/${post.slug}`}
       className={featured ? "group overflow-hidden rounded-[1.75rem] bg-transparent" : "group overflow-hidden rounded-[1.25rem] bg-transparent"}
       dir="rtl"
     >

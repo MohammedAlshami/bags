@@ -56,12 +56,12 @@ function renderBlock(block: BlogBlock) {
   }
 }
 
-async function getBlogById(id: string) {
+async function getBlogBySlug(slug: string) {
   const rows = await sql`
     SELECT id, title, slug, excerpt, cover_image, author_name, status, content, seo_title,
            seo_description, tags, published_at, created_at, updated_at
     FROM blog_posts
-    WHERE id = ${id}::uuid AND status = 'published'
+    WHERE slug = ${slug} AND status = 'published'
     LIMIT 1
   `;
   return rows[0] ? mapBlogPost(rows[0] as BlogPostRow) : null;
@@ -79,9 +79,9 @@ async function getRelatedPosts(id: string) {
   return (rows as BlogPostRow[]).map(mapBlogPost);
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const post = await getBlogById(id);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getBlogBySlug(slug);
   if (!post) {
     return { title: "المدونة | الملكة جولد", description: "مقالات ونصائح عن العناية والجمال." };
   }
@@ -96,11 +96,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-export default async function BlogPostPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const post = await getBlogById(id);
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const post = await getBlogBySlug(slug);
   if (!post) notFound();
-  const related = await getRelatedPosts(id);
+  const related = await getRelatedPosts(post._id);
   const cover = post.coverImage.trim();
   const blocks = post.content.length > 0 ? post.content : [];
 
@@ -132,7 +132,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ id: s
             </div>
             <div className="grid gap-5 md:grid-cols-3">
               {related.map((item) => (
-                <Link key={item._id} href={`/blog/${item._id}`} className="group overflow-hidden rounded-[1.5rem] bg-transparent">
+                <Link key={item._id} href={`/blog/${item.slug}`} className="group overflow-hidden rounded-[1.5rem] bg-transparent">
                   <div className="relative aspect-[4/3] overflow-hidden rounded-[1.5rem] bg-[#f7eef2]">
                     {item.coverImage ? <SafeImage src={item.coverImage} alt={item.title} fill className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]" sizes="(max-width: 768px) 100vw, 33vw" /> : null}
                   </div>
