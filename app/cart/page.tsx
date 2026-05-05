@@ -10,7 +10,7 @@ import { sans, pagePaddingX } from "@/lib/page-theme";
 import { ProvinceSelectDropdown } from "@/app/components/ProvinceSelectDropdown";
 import { getCheckoutProvinceById, CHECKOUT_PROVINCES, isValidCheckoutProvinceId, normalizeCheckoutProvinceId } from "@/lib/checkout-provinces";
 import { CHECKOUT_PICKUP_POINTS, type StoreLocation } from "@/lib/store-locations";
-import { BANK_TRANSFER_INFO } from "@/lib/bank-info";
+import { YemenPaymentStepTransferSection, YemenPreCheckoutPaymentDeliveryGuide } from "@/app/components/cart/YemenCartCheckoutSections";
 import { applyCheckoutDiscount } from "@/lib/order-discount";
 import { formatPriceForDisplay, formatCartSubtotalDisplay, type ProductSizePrice } from "@/lib/price-format";
 import { useDisplayCurrency } from "@/app/context/CurrencyContext";
@@ -642,7 +642,7 @@ function CartCheckoutInner() {
             إتمام الدفع
           </h1>
           <p className="mt-2 text-sm text-neutral-600" style={sans}>
-            حوّل المبلغ إلى حسابنا، ثم ارفع صورة إثبات التحويل. اذكر رقم الطلب في وصف التحويل إن أمكن.
+            حوّلي المبلغ بإحدى الطرق المعروضة أدناه، ثم ارفعي صورة إثبات التحويل. اذكري رقم الطلب في وصف التحويل إن أمكن.
           </p>
 
           {paymentLoading ? (
@@ -667,33 +667,11 @@ function CartCheckoutInner() {
 
               <section className="rounded-2xl border border-neutral-200 bg-white p-6">
                 <h2 className="text-lg font-semibold text-neutral-900" style={sans}>
-                  بيانات التحويل البنكي
+                  بيانات التحويل
                 </h2>
-                <dl className="mt-4 space-y-3 text-sm" style={sans}>
-                  <div>
-                    <dt className="text-neutral-500">البنك</dt>
-                    <dd className="font-medium text-neutral-900">{BANK_TRANSFER_INFO.bankName}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-neutral-500">اسم الحساب</dt>
-                    <dd className="font-medium text-neutral-900">{BANK_TRANSFER_INFO.accountName}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-neutral-500">الآيبان (IBAN)</dt>
-                    <dd className="font-mono text-right text-neutral-900" dir="ltr">
-                      {BANK_TRANSFER_INFO.iban}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-neutral-500">رقم الحساب</dt>
-                    <dd className="font-mono text-right text-neutral-900" dir="ltr">
-                      {BANK_TRANSFER_INFO.accountNumber}
-                    </dd>
-                  </div>
-                </dl>
-                <p className="mt-4 text-xs text-neutral-600" style={sans}>
-                  {BANK_TRANSFER_INFO.referenceHint}
-                </p>
+                <div className="mt-4">
+                  <YemenPaymentStepTransferSection />
+                </div>
               </section>
 
               {paymentError ? (
@@ -1119,6 +1097,8 @@ function CartCheckoutInner() {
                       </div>
                     </div>
 
+                    <YemenPreCheckoutPaymentDeliveryGuide />
+
                     {cityScope === "sanaa" ? (
                       <div>
                         <p className="mb-2 text-xs font-medium text-neutral-500" style={sans}>
@@ -1169,7 +1149,7 @@ function CartCheckoutInner() {
                           <ul className="list-disc space-y-2 pe-1 ps-5 text-sm leading-relaxed text-neutral-600 marker:text-brand-primary/70">
                             <li>توصيل سريع: اليوم التالي أو في نفس اليوم حسب التوفر.</li>
                             <li>الدفع عند الاستلام عند استلام الشحنة من المكتب.</li>
-                            <li>رسوم التوصيل: ٨٠٠ ر.س.</li>
+                            <li>رسوم التوصيل للمحافظات الأخرى: 1000 ريال يمني أو 8 ريال سعودي (حسب التنسيق).</li>
                             <li>يكمّل السداد عبر تحويل بنكي حسب التنسيق معنا.</li>
                             <li>مدة التوصيل المتوقعة: ٢–٥ أيام عمل.</li>
                             <li>تتم الشحنات عبر مكتبي السلمي أو القدسي — اختاري نقطة التوصيل أدناه.</li>

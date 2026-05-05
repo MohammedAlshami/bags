@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
 import { RecommendedProductsSection } from "@/app/components/RecommendedProductsSection";
+import { YemenBranchShippingDetails } from "@/app/components/shop/YemenBranchShippingDetails";
 import { useDisplayCurrency } from "@/app/context/CurrencyContext";
 import { formatDualDiscountPriceForDisplay, formatPriceForDisplay, type ProductSizePrice } from "@/lib/price-format";
 import { sans } from "@/lib/page-theme";
@@ -201,12 +202,13 @@ function PackageMainSection({ packageDeal }: { packageDeal: PackageDeal }) {
 
           <div className="mt-10 space-y-8 border-t border-neutral-200/90 pt-8">
             <div>
-              <h3 className="mb-2 text-sm font-semibold text-neutral-900" style={sans}>
+              <h3 className="mb-3 text-sm font-semibold text-neutral-900" style={sans}>
                 الشحن
               </h3>
-              <p className="text-sm leading-relaxed text-neutral-600 md:text-base" style={sans}>
-                تُجهّز الباقة كطلب واحد وتُشحن حسب خيارات التوصيل المتاحة في صفحة الدفع.
+              <p className="mb-4 text-sm leading-relaxed text-neutral-600 md:text-base" style={sans}>
+                تُجهّز الباقة كطلب واحد وتُشحن حسب خيارات التوصيل في صفحة الدفع.
               </p>
+              <YemenBranchShippingDetails />
             </div>
             <div>
               <h3 className="mb-2 text-sm font-semibold text-neutral-900" style={sans}>

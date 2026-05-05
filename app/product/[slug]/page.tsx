@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
 import Link from "next/link";
 import { RecommendedProductsSection } from "@/app/components/RecommendedProductsSection";
+import { YemenBranchShippingDetails } from "@/app/components/shop/YemenBranchShippingDetails";
 import { sans } from "@/lib/page-theme";
 import { addToCartPrimaryButtonClassName } from "@/lib/add-to-cart-ui";
 import { useAddToCartWithToast } from "@/lib/use-add-to-cart-with-toast";
@@ -212,13 +213,10 @@ function ProductMainSection({ product }: { product: ProductItem }) {
 
           <div className="mt-10 space-y-8 border-t border-neutral-200/90 pt-8">
             <div>
-              <h3 className="mb-2 text-sm font-semibold text-neutral-900" style={sans}>
+              <h3 className="mb-3 text-sm font-semibold text-neutral-900" style={sans}>
                 الشحن
               </h3>
-              <p className="text-sm leading-relaxed text-neutral-600 md:text-base" style={sans}>
-                شحن مجاني على الطلبات ضمن المملكة. تُجهّز الطلبات خلال 2–5 أيام عمل، مع تتبع يصلكِ عبر البريد أو
-                الرسائل.
-              </p>
+              <YemenBranchShippingDetails />
             </div>
           </div>
         </div>

@@ -46,24 +46,6 @@
   }
 }
 
-/* Endless offers ticker: two half-width copies, -50% = one full loop */
-.qgb-ticker-row {
-  min-height: 40px;
-  align-items: center;
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-  animation: qgb-ticker-scroll 36s linear infinite;
-}
-
-@keyframes qgb-ticker-scroll {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
 @layer base {
   /* Pointer on common interactive elements (Tailwind utilities win when more specific). */
   a[href]:not([tabindex="-1"]),
@@ -148,10 +130,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .qgb-ticker-row {
-    animation: none;
-  }
-
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   summary {
