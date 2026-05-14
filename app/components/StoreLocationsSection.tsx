@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Phone } from "lucide-react";
 import { STORE_LOCATIONS, buildMapEmbedUrl } from "@/lib/store-locations";
 import { sans, serif } from "@/lib/page-theme";
 
@@ -11,13 +11,13 @@ type StoreLocationsSectionProps = {
 };
 
 export function StoreLocationsSection({ variant = "default" }: StoreLocationsSectionProps) {
-  const [activeName, setActiveName] = useState<string>(STORE_LOCATIONS[0].name);
+  const [activeId, setActiveId] = useState<string>(STORE_LOCATIONS[0].id);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const activeStore = useMemo(
-    () => STORE_LOCATIONS.find((store) => store.name === activeName) ?? STORE_LOCATIONS[0],
-    [activeName]
+    () => STORE_LOCATIONS.find((s) => s.id === activeId) ?? STORE_LOCATIONS[0],
+    [activeId]
   );
 
   useEffect(() => {
@@ -75,9 +75,10 @@ export function StoreLocationsSection({ variant = "default" }: StoreLocationsSec
                 نقاط البيع
               </h3>
               <p className="qgb-body mt-1.5">
-                اختاري الفرع لعرض موقعه على الخريطة.
+                اختر المحافظة لعرض موقعها على الخريطة.
               </p>
 
+              {/* Dropdown */}
               <div className="relative mt-4">
                 <button
                   type="button"
@@ -88,7 +89,9 @@ export function StoreLocationsSection({ variant = "default" }: StoreLocationsSec
                   aria-controls="store-location-listbox"
                   onClick={() => setDropdownOpen((o) => !o)}
                 >
-                  <span className="min-w-0 flex-1 truncate font-medium">{activeStore.name}</span>
+                  <span className="min-w-0 flex-1 truncate font-medium">
+                    {activeStore.city} — {activeStore.name}
+                  </span>
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 text-brand-primary transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
                     strokeWidth={2.25}
@@ -101,33 +104,57 @@ export function StoreLocationsSection({ variant = "default" }: StoreLocationsSec
                     id="store-location-listbox"
                     role="listbox"
                     aria-labelledby="stores-panel-heading"
-                    className="cute-scrollbar absolute start-0 end-0 top-[calc(100%+0.25rem)] z-20 max-h-48 overflow-y-auto rounded-[8px] border-[1.5px] border-brand-light bg-white py-1 shadow-md"
+                    className="cute-scrollbar absolute start-0 end-0 top-[calc(100%+0.25rem)] z-20 max-h-52 overflow-y-auto rounded-[8px] border-[1.5px] border-brand-light bg-white py-1 shadow-md"
                   >
                     {STORE_LOCATIONS.map((store) => {
-                      const selected = store.name === activeStore.name;
+                      const selected = store.id === activeStore.id;
                       return (
-                        <li key={store.name} role="presentation">
+                        <li key={store.id} role="presentation">
                           <button
                             type="button"
                             role="option"
                             aria-selected={selected}
-                            className={`w-full px-3 py-2 text-right text-[13px] transition-colors ${
+                            className={`w-full px-3 py-2.5 text-right transition-colors ${
                               selected
                                 ? "bg-brand-light font-semibold text-brand-primary"
                                 : "text-body hover:bg-brand-light/70"
                             }`}
                             onClick={() => {
-                              setActiveName(store.name);
+                              setActiveId(store.id);
                               setDropdownOpen(false);
                             }}
                           >
-                            {store.name}
+                            <span className="block text-[13px] font-medium leading-tight">
+                              {store.city}
+                            </span>
+                            <span className="block text-[11px] text-neutral-500 leading-tight mt-0.5">
+                              {store.name}
+                            </span>
                           </button>
                         </li>
                       );
                     })}
                   </ul>
                 ) : null}
+              </div>
+
+              {/* Active store details */}
+              <div className="mt-3 space-y-1">
+                {activeStore.address && (
+                  <p className="text-[12px] leading-relaxed text-neutral-600">
+                    {activeStore.address}
+                  </p>
+                )}
+                {activeStore.phone && (
+                  <a
+                    href={`tel:${activeStore.phone}`}
+                    className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#B63A6B] hover:underline"
+                    dir="ltr"
+                  >
+                    <Phone className="h-3 w-3" strokeWidth={2} />
+                    {activeStore.phone}
+                  </a>
+                )}
               </div>
             </div>
           </div>

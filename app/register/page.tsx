@@ -138,7 +138,7 @@ export default function RegisterPage() {
           إنشاء حساب
         </h1>
         <p className="mt-3 text-sm text-neutral-600" style={sans}>
-          سجّلي بياناتك للطلب والتوصيل. يمكنك لاحقاً تسجيل الدخول بالبريد الإلكتروني وكلمة المرور.
+          سجّل بياناتك للطلب والتوصيل. يمكنك لاحقاً تسجيل الدخول بالبريد الإلكتروني وكلمة المرور.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-10 space-y-8">

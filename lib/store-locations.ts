@@ -4,12 +4,14 @@ export type StoreLocation = {
   name: string;
   city: string;
   country: string;
+  address: string;
+  phone?: string;
   lat: number;
   lon: number;
 };
 
 /**
- * Shipping offices used at checkout for pickup / governorate orders (سلمي · قدسي).
+ * Shipping offices used at checkout for pickup / governorate orders.
  * Full {@link STORE_LOCATIONS} remains for the public locations page and legacy orders.
  */
 export const CHECKOUT_PICKUP_POINTS: StoreLocation[] = [
@@ -18,6 +20,7 @@ export const CHECKOUT_PICKUP_POINTS: StoreLocation[] = [
     name: "مكتب الشحن — السلمي",
     city: "",
     country: "اليمن",
+    address: "",
     lat: 15.3694,
     lon: 44.191,
   },
@@ -26,26 +29,150 @@ export const CHECKOUT_PICKUP_POINTS: StoreLocation[] = [
     name: "مكتب الشحن — القدسي",
     city: "",
     country: "اليمن",
+    address: "",
     lat: 15.3789,
     lon: 44.2138,
   },
 ];
 
 export const STORE_LOCATIONS: StoreLocation[] = [
-  { id: "sanaa-al-kumaym", name: "الكميم – الربيع نسمة", city: "صنعاء", country: "اليمن", lat: 15.3694, lon: 44.191 },
-  { id: "sanaa-max-city", name: "ماكس سيتي بجانب الستين – تاتشز", city: "صنعاء", country: "اليمن", lat: 15.3789, lon: 44.2138 },
-  { id: "sanaa-flora", name: "مول الزهراء مركز وير نايس جوار السكنيه المدينه - سعوان فلورا", city: "صنعاء", country: "اليمن", lat: 15.3982, lon: 44.2306 },
-  { id: "al-madinah-you-for-you", name: "مول سيتي – أنتِ لكِ (الدور الثاني)", city: "المدينة", country: "اليمن", lat: 16.31, lon: 42.77 },
-  { id: "marib-star", name: "شارع سنتر، سيتي مول – ستار الطيف", city: "مأرب", country: "اليمن", lat: 15.47, lon: 45.32 },
-  { id: "ataq-mariam", name: "خط المرور شارع الأول، الدور البلد، سوق – مريم", city: "عتق", country: "اليمن", lat: 14.55, lon: 46.83 },
-  { id: "ib-paris-rose", name: "التجاري جرعان مجمع العدين، شارع – باريس روز", city: "إب", country: "اليمن", lat: 13.97, lon: 44.18 },
-  { id: "mukalla-mqayl", name: "لذهب العماري مقاييل صبايا", city: "المكلا", country: "اليمن", lat: 14.5425, lon: 49.1242 },
-  { id: "al-mahra-sabaya", name: "جب وادي ومحلات باصفار مسجد جانب النساء سوق صبايا-", city: "المهرة", country: "اليمن", lat: 16.73, lon: 52.83 },
-  { id: "al-hudaydah-ameer", name: "للصرافه حريش شركةبن أمام صدام _شارع الرافدين أمير محل", city: "الحديدة", country: "اليمن", lat: 14.797, lon: 42.95 },
-  { id: "aden-albayraq", name: "٥٠ شارع المنصورة مول العطور-البيرق •أطياف", city: "عدن", country: "اليمن", lat: 12.8, lon: 45.03 },
-  { id: "omran-al-babily", name: "للخياطه البابلي جوار البابلي سوق عمران", city: "عمران", country: "اليمن", lat: 15.66, lon: 43.94 },
-  { id: "dhamar-al-majid", name: "بلقيس مدرسة أمام المعارض شارع ذمار للعطور الماجد", city: "ذمار", country: "اليمن", lat: 14.55, lon: 44.38 },
-  { id: "taiz-al-huban", name: "واالمسبح الحوبان / بالفرعين السحريه القوه محل الشميري مطعم مقابل المسبح المدينه الثاني الدور مول الجوهره مركز الحوبان", city: "تعز", country: "اليمن", lat: 13.58, lon: 44.02 },
+  {
+    id: "sanaa-al-kumaym",
+    name: "الربيع نسمة",
+    city: "صنعاء",
+    country: "اليمن",
+    address: "الكميم",
+    lat: 15.3694,
+    lon: 44.191,
+  },
+  {
+    id: "sanaa-sixty-st",
+    name: "تاتشز",
+    city: "صنعاء",
+    country: "اليمن",
+    address: "شارع الستين (بجانب ماكس سيتي)",
+    lat: 15.3789,
+    lon: 44.2138,
+  },
+  {
+    id: "sanaa-flora",
+    name: "فلورا",
+    city: "صنعاء",
+    country: "اليمن",
+    address: "سعوان — المدينة السكنية، جوار مركز وير نايس، مول الزهراء",
+    lat: 15.3982,
+    lon: 44.2306,
+  },
+  {
+    id: "taiz-city-mall",
+    name: "أنت لك",
+    city: "تعز (المدينة)",
+    country: "اليمن",
+    address: "سيتي مول — الدور الثاني",
+    phone: "776846456",
+    lat: 13.5789,
+    lon: 44.0209,
+  },
+  {
+    id: "marib-star",
+    name: "الطيف ستار",
+    city: "مأرب",
+    country: "اليمن",
+    address: "سيتي مول سنتر — شارع الأربعين",
+    phone: "780093653",
+    lat: 15.47,
+    lon: 45.32,
+  },
+  {
+    id: "ataq-mariam",
+    name: "مريم",
+    city: "شبوة (عتق)",
+    country: "اليمن",
+    address: "سوق البلد — الدور الأول، شارع المرور، خط الثلاثين",
+    phone: "737948953",
+    lat: 14.55,
+    lon: 46.83,
+  },
+  {
+    id: "ib-paris-rose",
+    name: "باريس روز",
+    city: "إب",
+    country: "اليمن",
+    address: "شارع العدين — مجمع جرعان التجاري",
+    phone: "777158717",
+    lat: 13.97,
+    lon: 44.18,
+  },
+  {
+    id: "mukalla-sabaya",
+    name: "صبايا",
+    city: "المكلا",
+    country: "اليمن",
+    address: "مقابل العماري للذهب",
+    phone: "730944448",
+    lat: 14.5425,
+    lon: 49.1242,
+  },
+  {
+    id: "al-mahra-sabaya",
+    name: "صبايا",
+    city: "المهرة",
+    country: "اليمن",
+    address: "سوق النساء — بجانب مسجد باصفار ومحلات وادي جب",
+    phone: "780044447",
+    lat: 16.73,
+    lon: 52.83,
+  },
+  {
+    id: "al-hudaydah-ameer",
+    name: "أمير الرافدين",
+    city: "الحديدة",
+    country: "اليمن",
+    address: "شارع صدام — أمام شركة بن حريش للصرافة",
+    phone: "772464139",
+    lat: 14.797,
+    lon: 42.95,
+  },
+  {
+    id: "aden-albayraq",
+    name: "أطياف العطور",
+    city: "عدن",
+    country: "اليمن",
+    address: "المنصورة — البيرق مول، شارع 50",
+    phone: "771203768",
+    lat: 12.8,
+    lon: 45.03,
+  },
+  {
+    id: "omran-al-babily",
+    name: "البابلي",
+    city: "عمران",
+    country: "اليمن",
+    address: "سوق عمران — جوار البابلي للخياطة",
+    phone: "774052218",
+    lat: 15.66,
+    lon: 43.94,
+  },
+  {
+    id: "dhamar-al-majid",
+    name: "الماجد للعطور",
+    city: "ذمار",
+    country: "اليمن",
+    address: "شارع المعارض — أمام مدرسة بلقيس",
+    phone: "777150077",
+    lat: 14.55,
+    lon: 44.38,
+  },
+  {
+    id: "taiz-al-huban",
+    name: "القوة السحرية",
+    city: "تعز (الحوبان والمسبح)",
+    country: "اليمن",
+    address: "فرع المسبح: مقابل مطعم الشميري | فرع الحوبان: مركز الجوهرة مول، الدور الثاني",
+    phone: "776329097",
+    lat: 13.58,
+    lon: 44.02,
+  },
 ];
 
 export function getStoreLocationById(id: string): StoreLocation | undefined {

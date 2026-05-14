@@ -13,7 +13,7 @@ export default function LocationsPage() {
             نقاط البيع في السعودية واليمن
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-neutral-600 md:text-base" style={sans}>
-            مواقعنا تمتد من المملكة إلى اليمن — اختاري الفرع واطّلعي على موقعه على الخريطة.
+            مواقعنا تمتد من المملكة إلى اليمن — اختر الفرع واطّلع على موقعه على الخريطة.
           </p>
           </div>
         </header>

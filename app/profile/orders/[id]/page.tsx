@@ -201,14 +201,17 @@ export default function ProfileOrderDetailPage() {
                 تفاصيل الطلب
               </h1>
               <p className="mt-1 text-sm text-neutral-500" style={sans}>
-                رقم الطلب الكامل متاح للدفع والمراسلات
+                الرقم الكامل متاح أدناه للمراسلات
               </p>
             </div>
 
             <div className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/[0.04] sm:rounded-2xl sm:p-6 md:p-8">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="font-mono text-xs text-neutral-400" dir="ltr">
+                  <p className="text-sm font-semibold text-neutral-900 font-mono" dir="ltr" style={sans}>
+                    #{shortId.toUpperCase()}
+                  </p>
+                  <p className="mt-0.5 font-mono text-[11px] text-neutral-400 break-all" dir="ltr">
                     {order._id}
                   </p>
                   <p className="mt-2 text-sm text-neutral-600" style={sans}>

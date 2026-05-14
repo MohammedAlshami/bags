@@ -52,12 +52,12 @@ export default function TrackContent() {
       const res = await fetch(`/api/track?orderId=${encodeURIComponent(id)}&email=${encodeURIComponent(em)}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(typeof data.error === "string" ? data.error : "لم يُعثر على الطلب. تحققي من الرقم والبريد.");
+        setError(typeof data.error === "string" ? data.error : "لم يُعثر على الطلب. تحقق من الرقم والبريد.");
         return;
       }
       setResult(data);
     } catch {
-      setError("حدث خطأ. حاولي مرة أخرى.");
+      setError("حدث خطأ. حاول مرة أخرى.");
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,7 @@ export default function TrackContent() {
           تتبع الطلب
         </h1>
         <p className="mt-3 text-sm text-neutral-600" style={sans}>
-          أدخلي رقم الطلب من رسالة التأكيد والبريد المستخدم عند الشراء.
+          أدخل رقم الطلب من رسالة التأكيد والبريد المستخدم عند الشراء.
         </p>
 
         <form onSubmit={handleSubmit} className="mb-10 mt-8 space-y-4">

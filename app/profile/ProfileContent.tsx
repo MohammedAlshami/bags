@@ -234,11 +234,11 @@ export default function ProfileContent() {
                   طلباتي
                 </h1>
                 <p className="mt-1 text-sm text-neutral-600" style={sans}>
-                  اختاري طلباً لعرض المنتجات والدفع والتتبع.
+                  اختر طلباً لعرض المنتجات والدفع والتتبع.
                 </p>
                 {orders.length === 0 ? (
                   <p className="mt-5 text-sm text-neutral-500 sm:mt-8" style={sans}>
-                    لم تقدّمي أي طلبات بعد.
+                    لم تُقدَّم أي طلبات بعد.
                   </p>
                 ) : (
                   <ul className="mt-5 space-y-3 sm:mt-8 sm:space-y-4">

@@ -21,7 +21,7 @@ export default function ForgotPasswordPage() {
           استعادة كلمة المرور
         </h1>
         <p className="mt-4 text-sm text-neutral-600" style={sans}>
-          أدخلي بريدك الإلكتروني لإرسال رابط إعادة التعيين عند تفعيل الخدمة.
+          أدخل بريدك الإلكتروني لإرسال رابط إعادة التعيين عند تفعيل الخدمة.
         </p>
         <form onSubmit={handleSubmit} className="mt-10 space-y-8">
           <div>

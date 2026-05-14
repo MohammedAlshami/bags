@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Phone } from "lucide-react";
 import {
   STORE_LOCATIONS,
   buildGoogleMapsLink,
@@ -29,25 +30,38 @@ function LocationRow({ store, index }: { store: StoreLocation; index: number }) 
       </div>
 
       <div
-        className="flex flex-1 flex-col justify-center gap-6 bg-white py-8 md:py-12"
+        className="flex flex-1 flex-col justify-center gap-5 bg-white py-8 md:py-12"
         dir="rtl"
         style={sans}
       >
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#B63A6B]">{store.country}</p>
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#B63A6B]">{store.city}</p>
           <h2 className="mt-2 text-2xl font-semibold leading-snug text-neutral-900 md:text-3xl lg:text-4xl" style={serif}>
             {store.name}
           </h2>
-          <p className="mt-4 text-sm leading-relaxed text-neutral-600 md:text-base">{store.city}</p>
+          {store.address && (
+            <p className="mt-3 text-sm leading-relaxed text-neutral-600 md:text-base">
+              {store.address}
+            </p>
+          )}
         </div>
-        <p className="text-sm leading-relaxed text-neutral-600 md:text-base">
-          زورينا في هذا الفرع — فريقنا يرحّب بكِ ويساعدكِ على اختيار ما يناسبكِ.
-        </p>
+
+        {store.phone && (
+          <a
+            href={`tel:${store.phone}`}
+            className="inline-flex w-fit items-center gap-2 text-sm font-medium text-[#B63A6B] hover:underline"
+            dir="ltr"
+          >
+            <Phone className="h-4 w-4" strokeWidth={2} />
+            {store.phone}
+          </a>
+        )}
+
         <Link
           href={mapsHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex w-fit items-center rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors hover:brightness-110"
+          className="inline-flex w-fit items-center rounded-full px-6 py-3 text-sm font-semibold text-white transition-[filter] hover:brightness-110"
           style={{ backgroundColor: "#B63A6B" }}
         >
           فتح في خرائط Google

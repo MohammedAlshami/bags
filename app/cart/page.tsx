@@ -495,7 +495,7 @@ function CartCheckoutInner() {
     const normalizedPaymentMethod = cityScope === "outside" ? "bank" : paymentMethod;
     if ((needsBranch && !branchKey) || items.length === 0) return;
     if (!profileAddress?.address?.trim()) {
-      setPlaceError("أضيفي العنوان الكامل أولاً.");
+      setPlaceError("أضف العنوان الكامل أولاً.");
       setAddressPanelOpen(true);
       return;
     }
@@ -585,7 +585,7 @@ function CartCheckoutInner() {
         status: pData.status ?? "",
         paymentProofUrl: pData.paymentProofUrl ?? null,
       });
-      setPaymentProofDoneModalOpen(true);
+      router.push(`/payment-confirmed?orderId=${encodeURIComponent(pData._id ?? paymentOrderId)}`);
     } catch (e) {
       setPaymentError(e instanceof Error ? e.message : "خطأ");
     } finally {
@@ -642,7 +642,7 @@ function CartCheckoutInner() {
             إتمام الدفع
           </h1>
           <p className="mt-2 text-sm text-neutral-600" style={sans}>
-            حوّلي المبلغ بإحدى الطرق المعروضة أدناه، ثم ارفعي صورة إثبات التحويل. اذكري رقم الطلب في وصف التحويل إن أمكن.
+            حوّل المبلغ بإحدى الطرق المعروضة أدناه، ثم ارفع صورة إثبات التحويل. اذكر رقم الطلب في وصف التحويل إن أمكن.
           </p>
 
           {paymentLoading ? (
@@ -767,10 +767,10 @@ function CartCheckoutInner() {
               style={sans}
             >
               <h2 id="payment-proof-done-title" className="text-lg font-semibold text-neutral-900">
-                تم استلام طلبكِ
+                تم استلام طلبك
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-neutral-600">
-                تم استلام إثبات الدفع. سنتواصل معكِ قريباً بخصوص الطلب. يمكنكِ أيضاً مراسلتنا على واتساب على الرقم{" "}
+                تم استلام إثبات الدفع. سنتواصل معك قريباً بخصوص الطلب. يمكنك أيضاً مراسلتنا على واتساب على الرقم{" "}
                 <a
                   href={WHATSAPP_ORDER_CONTACT_HREF}
                   target="_blank"
@@ -814,10 +814,10 @@ function CartCheckoutInner() {
             تأكيد الطلب
           </p>
           <h1 className="mt-2 text-3xl font-medium text-neutral-900 md:text-4xl" style={sans}>
-            تم استلام طلبكِ
+            تم استلام طلبك
           </h1>
           <p className="mt-2 text-sm text-neutral-600" style={sans}>
-            شكراً لثقتكِ. سيتم الدفع عند الاستلام كما اخترتِ.
+            شكراً لثقتك. سيتم الدفع عند الاستلام كما اخترت.
           </p>
 
           {placedLoading ? (
@@ -835,7 +835,7 @@ function CartCheckoutInner() {
                 <p className="text-sm text-neutral-800" style={sans}>
                   رقم الطلب:{" "}
                   <span className="font-mono text-[13px] font-semibold tabular-nums text-neutral-900" dir="ltr">
-                    {placedOrderSnapshot._id}
+                    #{String(placedOrderSnapshot._id).slice(-8).toUpperCase()}
                   </span>
                 </p>
                 <p className="mt-3 text-sm text-neutral-700" style={sans}>
@@ -845,7 +845,7 @@ function CartCheckoutInner() {
                   </span>
                 </p>
                 <p className="mt-4 text-sm leading-relaxed text-neutral-600" style={sans}>
-                  سنُتابع تجهيز الطلب والتوصيل حسب الخيارات التي حددتِها. يمكنكِ مراجعة تفاصيل الطلب في أي وقت من صفحة
+                  سنُتابع تجهيز الطلب والتوصيل حسب الخيارات المحددة. يمكنك مراجعة تفاصيل الطلب في أي وقت من صفحة
                   الطلبات.
                 </p>
               </section>
@@ -977,7 +977,7 @@ function CartCheckoutInner() {
                       ? "يُستكمل الدفع بالتحويل إلى حسابنا بعد تأكيد الطلب."
                       : cityScope === "sanaa" && deliveryMethod === "direct"
                         ? "لا يُطلب تحويل الآن؛ السداد عند التوصيل إلى عنوانك."
-                        : "لا يُطلب تحويل الآن؛ السداد عند الاستلام من نقطة التوصيل التي اخترتِها."}
+                        : "لا يُطلب تحويل الآن؛ السداد عند الاستلام."}
                   </p>
                 </div>
 
@@ -995,7 +995,7 @@ function CartCheckoutInner() {
                           setVoucherInput(e.target.value);
                           setVoucherError(null);
                         }}
-                        placeholder="أدخلي الكود"
+                        placeholder="أدخل الكود"
                         className="min-w-0 flex-1 rounded-xl bg-neutral-50 px-3 py-2.5 text-sm text-neutral-900 outline-none ring-1 ring-neutral-200/80 transition-shadow placeholder:text-neutral-400 focus:ring-2 focus:ring-brand-primary/35"
                         style={sans}
                         autoComplete="off"
@@ -1049,7 +1049,7 @@ function CartCheckoutInner() {
                 {!isCustomer ? (
                   <div className="space-y-3">
                     <p className="text-sm text-neutral-600" style={sans}>
-                      سجّلي الدخول لإتمام الطلب وتحديد المحافظة والعنوان وطريقة الدفع.
+                      سجّل الدخول لإتمام الطلب وتحديد المحافظة والعنوان وطريقة الدفع.
                     </p>
                     <Link
                       href={`/login?next=${encodeURIComponent("/cart")}`}
@@ -1076,7 +1076,7 @@ function CartCheckoutInner() {
                         <div className="min-w-0" style={sans}>
                           <p className="text-xs font-medium text-neutral-500">العنوان التفصيلي</p>
                           <p className="mt-0.5 text-[11px] leading-relaxed text-neutral-400">
-                            مطلوب لجميع الطلبات — الحي، الشارع، وأقرب معلم داخل المحافظة التي اخترتِها.
+                            مطلوب لجميع الطلبات — الحي، الشارع، وأقرب معلم داخل المحافظة المختارة.
                           </p>
                           <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-900">
                             {profileAddress?.address?.trim() || "لا يوجد عنوان محفوظ بعد."}
@@ -1129,7 +1129,7 @@ function CartCheckoutInner() {
                             <span className="text-sm text-neutral-800" style={sans}>
                               <span className="font-medium text-neutral-900">الاستلام من نقطة توصيل</span>
                               <span className="mt-1 block text-xs text-neutral-500">
-                                استلمي الطلب من مكتب شحن السلمي أو القدسي — نقاط استلام متاحة في مختلف المناطق. اختاري المكتب أدناه.
+                                استلم الطلب من مكتب الشحن المتاح في منطقتك.
                               </span>
                             </span>
                           </label>
@@ -1152,30 +1152,13 @@ function CartCheckoutInner() {
                             <li>رسوم التوصيل للمحافظات الأخرى: 1000 ريال يمني أو 8 ريال سعودي (حسب التنسيق).</li>
                             <li>يكمّل السداد عبر تحويل بنكي حسب التنسيق معنا.</li>
                             <li>مدة التوصيل المتوقعة: ٢–٥ أيام عمل.</li>
-                            <li>تتم الشحنات عبر مكتبي السلمي أو القدسي — اختاري نقطة التوصيل أدناه.</li>
                           </ul>
                         </div>
                       </details>
                     )}
 
                     <div>
-                      {(cityScope === "outside" || deliveryMethod === "pickup") ? (
-                        <>
-                          <label htmlFor="branch" className="mb-2 block text-xs font-medium text-neutral-500" style={sans}>
-                            نقطة التوصيل (مكتب الاستلام)
-                          </label>
-                          <BranchSelectDropdown
-                            id="branch"
-                            value={branchKey}
-                            onChange={setBranchKey}
-                            locations={CHECKOUT_PICKUP_POINTS}
-                            placeholder="اختيار مكتب الاستلام"
-                          />
-                          <p className="mt-2 text-[11px] leading-relaxed text-neutral-500" style={sans}>
-                            مكتبا الشحن السلمي والقدسي يخدمان التوصيل والاستلام — اختاري نقطة الاستلام المناسبة لكِ.
-                          </p>
-                        </>
-                      ) : null}
+                      {(cityScope === "outside" || deliveryMethod === "pickup") ? null : null}
                     </div>
 
                     <div>
@@ -1199,7 +1182,7 @@ function CartCheckoutInner() {
                           <span className="text-sm leading-snug text-neutral-800" style={sans}>
                             <span className="font-medium text-neutral-900">تحويل بنكي</span>
                             <span className="mt-1 block text-[13px] font-normal text-neutral-500">
-                              بعد تأكيد الطلب ستجدين بيانات الحساب لإتمام التحويل ورفع إثبات الدفع.
+                              بعد تأكيد الطلب ستجد بيانات الحساب لإتمام التحويل ورفع إثبات الدفع.
                             </span>
                           </span>
                         </label>
@@ -1229,7 +1212,7 @@ function CartCheckoutInner() {
                     ) : null}
                     <button
                       type="button"
-                      disabled={placing || !branchKey}
+                      disabled={placing || items.length === 0}
                       onClick={() => void placeOrder()}
                       className="qgb-btn-primary flex w-full justify-center disabled:pointer-events-none disabled:opacity-45"
                       style={sans}
@@ -1298,7 +1281,7 @@ function CartCheckoutInner() {
                   value={addressDraft.address}
                   onChange={(e) => setAddressDraft((prev) => ({ ...prev, address: e.target.value }))}
                   className="min-h-28 w-full rounded-xl bg-neutral-50 px-3 py-2.5 text-sm ring-1 ring-neutral-200/80 outline-none focus:ring-2 focus:ring-brand-primary/35"
-                  placeholder="الحي، الشارع، أقرب معلم، وفق المحافظة التي اخترتِها في السلة…"
+                  placeholder="الحي، الشارع، أقرب معلم، وفق المحافظة المختارة في السلة…"
                 />
               </div>
               <button
