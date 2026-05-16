@@ -6,11 +6,12 @@ import type { NavCategory } from "@/lib/get-nav-categories";
 
 type Props = {
   categories: NavCategory[];
+  hasBlog: boolean;
 };
 
 /** Renders the main site Navbar only when not on an admin route. */
-export default function ConditionalNavbar({ categories }: Props) {
+export default function ConditionalNavbar({ categories, hasBlog }: Props) {
   const pathname = usePathname();
   if (pathname?.startsWith("/admin")) return null;
-  return <Navbar categories={categories} />;
+  return <Navbar categories={categories} hasBlog={hasBlog} />;
 }

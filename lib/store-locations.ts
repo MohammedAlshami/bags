@@ -38,7 +38,7 @@ export const CHECKOUT_PICKUP_POINTS: StoreLocation[] = [
 export const STORE_LOCATIONS: StoreLocation[] = [
   {
     id: "sanaa-al-kumaym",
-    name: "الربيع نسمة",
+    name: "نسمة الربيع",
     city: "صنعاء",
     country: "اليمن",
     address: "الكميم",
@@ -50,7 +50,7 @@ export const STORE_LOCATIONS: StoreLocation[] = [
     name: "تاتشز",
     city: "صنعاء",
     country: "اليمن",
-    address: "شارع الستين (بجانب ماكس سيتي)",
+    address: "شارع الستين (بجانب سيتي ماكس)",
     lat: 15.3789,
     lon: 44.2138,
   },

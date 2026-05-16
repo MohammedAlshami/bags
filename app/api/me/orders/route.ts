@@ -14,6 +14,7 @@ import {
 } from "@/lib/order-line-items";
 import { mapOrderAdminDetail, type OrderRow } from "@/lib/db-mappers";
 import { applyCheckoutDiscount } from "@/lib/order-discount";
+import { sendOrderCreatedEmail } from "@/lib/order-emails";
 
 export const dynamic = "force-dynamic";
 
@@ -225,6 +226,37 @@ export async function POST(request: Request) {
     if (!row) {
       return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
     }
+
+    try {
+      const adminEmail = process.env.ADMIN_EMAIL;
+      if (adminEmail) {
+        const items = Array.isArray(row.items) ? row.items : [];
+        const sa = row.shipping_address && typeof row.shipping_address === "object"
+          ? row.shipping_address as Record<string, string>
+          : {};
+        const paymentMethod = typeof sa.paymentMethod === "string" ? sa.paymentMethod : "bank";
+        await sendOrderCreatedEmail({
+          adminEmail,
+          customerEmail: row.customer_email || "",
+          orderId: row.id,
+          customerName: row.customer_full_name || row.customer_username || "عميل",
+          customerPhone: row.customer_phone || "",
+          total: row.total,
+          status: row.status,
+          items: items.map((it: Record<string, unknown>) => ({
+            name: typeof it.name === "string" ? it.name : "",
+            quantity: typeof it.quantity === "number" ? it.quantity : 1,
+            price: typeof it.price === "number" ? it.price : 0,
+          })),
+          shippingAddress: sa,
+          createdAt: row.created_at,
+          paymentMethod,
+        });
+      }
+    } catch (emailErr) {
+      console.error("[Order Created Email]", emailErr);
+    }
+
     return NextResponse.json(mapOrderAdminDetail(row));
   } catch (err) {
     const e = err as { status?: number };

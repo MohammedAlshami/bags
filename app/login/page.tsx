@@ -7,8 +7,9 @@ import { sans, pagePaddingX } from "@/lib/page-theme";
 
 function mapLoginError(msg: string): string {
   if (msg.includes("disabled")) return "تم تعطيل هذا الحساب.";
-  if (msg.includes("Invalid") || msg.includes("password")) return "البريد أو اسم المستخدم أو كلمة المرور غير صحيحة.";
-  if (msg.includes("required")) return "يرجى إدخال البريد أو اسم المستخدم وكلمة المرور.";
+  if (msg.includes("Invalid") || msg.includes("credentials"))
+    return "البريد الإلكتروني أو رقم الجوال أو كلمة المرور غير صحيحة.";
+  if (msg.includes("required")) return "يرجى إدخال بيانات تسجيل الدخول وكلمة المرور.";
   return msg || "تعذّر تسجيل الدخول.";
 }
 
@@ -20,7 +21,7 @@ function safeNextPath(raw: string | null): string | null {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -30,7 +31,7 @@ function LoginForm() {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: username.trim(), password }),
+      body: JSON.stringify({ identifier: identifier.trim(), password }),
       credentials: "include",
     });
     const data = await res.json().catch(() => ({}));
@@ -59,22 +60,29 @@ function LoginForm() {
             {error}
           </p>
         )}
+
         <form onSubmit={handleSubmit} className="mt-10 space-y-8">
           <div>
-            <label htmlFor="login-username" className="mb-2 block text-xs text-neutral-500" style={sans}>
-              البريد الإلكتروني أو اسم المستخدم
+            <label htmlFor="login-identifier" className="mb-2 block text-xs text-neutral-500" style={sans}>
+              البريد الإلكتروني أو رقم الجوال
             </label>
             <input
-              id="login-username"
+              id="login-identifier"
               type="text"
               autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
+              placeholder="مثال: user@example.com أو 0501234567"
               className="w-full border-b border-neutral-200 bg-transparent py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
               style={sans}
+              dir="ltr"
             />
+            <p className="mt-1.5 text-xs text-neutral-400" style={sans}>
+              مثال: user@example.com أو 0501234567
+            </p>
           </div>
+
           <div>
             <label htmlFor="login-password" className="mb-2 block text-xs text-neutral-500" style={sans}>
               كلمة المرور
@@ -90,6 +98,7 @@ function LoginForm() {
               style={sans}
             />
           </div>
+
           <div className="flex flex-col gap-6">
             <button
               type="submit"
@@ -99,7 +108,11 @@ function LoginForm() {
               دخول
             </button>
             <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
-              <Link href="/login/forgot-password" className="text-neutral-600 transition-colors hover:text-black hover:underline" style={sans}>
+              <Link
+                href="/login/forgot-password"
+                className="text-neutral-600 transition-colors hover:text-black hover:underline"
+                style={sans}
+              >
                 نسيت كلمة المرور؟
               </Link>
             </div>
@@ -108,7 +121,10 @@ function LoginForm() {
 
         <p className="mt-10 text-center text-xs text-neutral-500" style={sans}>
           ليس لديك حساب؟{" "}
-          <Link href="/register" className="font-medium text-neutral-900 underline underline-offset-2 hover:no-underline">
+          <Link
+            href="/register"
+            className="font-medium text-neutral-900 underline underline-offset-2 hover:no-underline"
+          >
             إنشاء حساب
           </Link>
         </p>

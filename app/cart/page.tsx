@@ -353,6 +353,8 @@ function CartCheckoutInner() {
   const [placedLoading, setPlacedLoading] = useState(false);
   const [placedError, setPlacedError] = useState<string | null>(null);
 
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+
   useEffect(() => {
     fetch("/api/auth/me", { credentials: "include" })
       .then((r) => r.json())
@@ -1213,7 +1215,7 @@ function CartCheckoutInner() {
                     <button
                       type="button"
                       disabled={placing || items.length === 0}
-                      onClick={() => void placeOrder()}
+                      onClick={() => setConfirmModalOpen(true)}
                       className="qgb-btn-primary flex w-full justify-center disabled:pointer-events-none disabled:opacity-45"
                       style={sans}
                     >
@@ -1226,6 +1228,83 @@ function CartCheckoutInner() {
           </div>
         )}
       </div>
+      {confirmModalOpen ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" dir="rtl">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/45"
+            aria-label="إغلاق"
+            onClick={() => setConfirmModalOpen(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-order-title"
+            className="relative z-[1] w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl"
+            style={sans}
+          >
+            <h2 id="confirm-order-title" className="text-lg font-semibold text-neutral-900">
+              تأكيد الطلب
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-neutral-600">
+              أنت على وشك تأكيد طلبك. يرجى مراجعة التفاصيل قبل المتابعة.
+            </p>
+            <div className="mt-4 space-y-2 rounded-xl bg-neutral-50 p-4 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-neutral-500">عدد المنتجات</span>
+                <span className="font-medium text-neutral-900">{items.length}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-neutral-500">الإجمالي</span>
+                <span className="font-semibold text-brand-primary">
+                  {formatPriceForDisplay(displayMode, checkoutTotals.total, null)}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-neutral-500">طريقة الدفع</span>
+                <span className="font-medium text-neutral-900">
+                  {paymentMethod === "bank" ? "تحويل بنكي" : "الدفع عند الاستلام"}
+                </span>
+              </div>
+              {cityScope === "sanaa" && deliveryMethod === "direct" ? (
+                <div className="flex justify-between gap-4">
+                  <span className="text-neutral-500">التوصيل</span>
+                  <span className="font-medium text-neutral-900">توصيل مباشر</span>
+                </div>
+              ) : null}
+              {(cityScope === "outside" || deliveryMethod === "pickup") ? (
+                <div className="flex justify-between gap-4">
+                  <span className="text-neutral-500">الاستلام</span>
+                  <span className="font-medium text-neutral-900">
+                    {CHECKOUT_PICKUP_POINTS.find((p) => p.id === branchKey)?.name || "نقطة توصيل"}
+                  </span>
+                </div>
+              ) : null}
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmModalOpen(false);
+                  void placeOrder();
+                }}
+                disabled={placing}
+                className="inline-flex flex-1 min-w-[8rem] justify-center rounded-full border border-neutral-900 bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-neutral-800 disabled:pointer-events-none disabled:opacity-45"
+              >
+                {placing ? "جاري المعالجة..." : "تأكيد"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmModalOpen(false)}
+                disabled={placing}
+                className="inline-flex flex-1 min-w-[8rem] justify-center rounded-full border border-neutral-300 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-900 transition-colors hover:bg-neutral-50 disabled:pointer-events-none disabled:opacity-45"
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {addressPanelOpen ? (
         <>
           <button

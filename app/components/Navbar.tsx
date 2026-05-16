@@ -53,11 +53,17 @@ const SCROLL_TOP_REVEAL_PX = 20;
 /** Side cart panel transition duration (ms); keep in sync with `duration-[]` on cart UI */
 const CART_DRAWER_MS = 300;
 
-const ABOUT_LINKS = [
+const ABOUT_LINKS_BASE = [
   { label: "من نحن", href: "/about" },
-  { label: "المدونة", href: "/blog" },
   { label: "نقاط البيع", href: "/locations" },
 ] as const;
+
+function getAboutLinks(hasBlog: boolean) {
+  if (hasBlog) {
+    return [...ABOUT_LINKS_BASE, { label: "المدونة", href: "/blog" }] as const;
+  }
+  return ABOUT_LINKS_BASE;
+}
 
 function splitInto3(cats: NavCategory[]): [NavCategory[], NavCategory[], NavCategory[]] {
   if (cats.length === 0) return [[], [], []];
@@ -68,14 +74,18 @@ function splitInto3(cats: NavCategory[]): [NavCategory[], NavCategory[], NavCate
 
 const MEGA_TITLES = ["تسوقي حسب الفئة", "اكتشفي المزيد", "مختارات"] as const;
 
-function getMainNavMenu(): MenuItemConfig[] {
-  return [
+function getMainNavMenu(hasBlog: boolean): MenuItemConfig[] {
+  const aboutLinks = getAboutLinks(hasBlog);
+  const base: MenuItemConfig[] = [
     { id: "home", label: "الرئيسية", href: "/" },
     { id: "shop", label: "تسوق", href: "/shop" },
-    { id: "about", label: TXT.about, hasDropdown: true as const, aboutLinks: [...ABOUT_LINKS] },
-    { id: "blog", label: "المدونة", href: "/blog" },
-    { id: "presets", label: "تشكيلة المجموعات", hasMega: true as const },
+    { id: "about", label: TXT.about, hasDropdown: true as const, aboutLinks },
   ];
+  if (hasBlog) {
+    base.push({ id: "blog", label: "المدونة", href: "/blog" });
+  }
+  base.push({ id: "presets", label: "تشكيلة المجموعات", hasMega: true as const });
+  return base;
 }
 
 function isMainNavSimpleLinkActive(itemId: string, pathname: string | null | undefined): boolean {
@@ -235,9 +245,10 @@ function MobileDrawerAccordionTrigger({
 
 type NavbarProps = {
   categories: NavCategory[];
+  hasBlog: boolean;
 };
 
-export default function Navbar({ categories }: NavbarProps) {
+export default function Navbar({ categories, hasBlog }: NavbarProps) {
   const router = useRouter();
   const [user, setUser] = useState<{ username: string; role: string } | null>(null);
   const [shopBg, setShopBg] = useState<"white" | "pink">("white");
@@ -371,7 +382,7 @@ export default function Navbar({ categories }: NavbarProps) {
     if (!mobileMenuOpen) setMobileDrawerSection(null);
   }, [mobileMenuOpen]);
 
-  const menuItems = getMainNavMenu();
+  const menuItems = getMainNavMenu(hasBlog);
 
   const topBarBg = isShopPink ? "#FAEFF6" : "#ffffff";
   const mainNavClass = isShopPink ? "bg-[#FAEFF6]" : "bg-white";
@@ -897,7 +908,7 @@ export default function Navbar({ categories }: NavbarProps) {
                 {mobileDrawerSection === "about" ? (
                   <div className="border-t border-gray-100 bg-[#FAFAFA] px-3 pb-4 pt-2">
                     <ul className="space-y-1">
-                      {ABOUT_LINKS.map((l) => (
+                      {getAboutLinks(hasBlog).map((l) => (
                         <li key={l.href}>
                           <Link
                             href={l.href}
@@ -914,6 +925,7 @@ export default function Navbar({ categories }: NavbarProps) {
                 ) : null}
               </div>
 
+              {hasBlog ? (
               <Link
                 href="/blog"
                 onClick={closeMobileNav}
@@ -922,6 +934,7 @@ export default function Navbar({ categories }: NavbarProps) {
                 <span>{TXT.blog}</span>
                 <ChevronLeft className="h-5 w-5 shrink-0 text-gray-400" strokeWidth={2} aria-hidden />
               </Link>
+              ) : null}
 
               <div className="border-b border-gray-100">
                 <MobileDrawerAccordionTrigger

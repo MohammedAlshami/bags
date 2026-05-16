@@ -11,11 +11,11 @@ export default function RegisterPage() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [address, setAddress] = useState("");
   const [provinceId, setProvinceId] = useState("");
-  const [phone, setPhone] = useState("");
   const [errorModal, setErrorModal] = useState<{ message: string; detail?: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -52,10 +52,10 @@ export default function RegisterPage() {
         body: JSON.stringify({
           fullName: fullName.trim(),
           email: email.trim(),
+          phone: phone.trim(),
           password,
           address: address.trim(),
           provinceId: provinceId.trim(),
-          phone: phone.trim(),
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
@@ -70,7 +70,8 @@ export default function RegisterPage() {
             : typeof data.error === "string"
               ? data.error
               : "";
-        const detail = typeof data.detail === "string" && data.detail.trim() !== "" ? data.detail : undefined;
+        const detail =
+          typeof data.detail === "string" && data.detail.trim() !== "" ? data.detail : undefined;
         setErrorModal({
           message: msg || "تعذّر إنشاء الحساب.",
           ...(detail ? { detail } : {}),
@@ -138,10 +139,11 @@ export default function RegisterPage() {
           إنشاء حساب
         </h1>
         <p className="mt-3 text-sm text-neutral-600" style={sans}>
-          سجّل بياناتك للطلب والتوصيل. يمكنك لاحقاً تسجيل الدخول بالبريد الإلكتروني وكلمة المرور.
+          سجّل بياناتك للطلب والتوصيل. يمكنك لاحقاً تسجيل الدخول بالبريد الإلكتروني أو رقم الجوال وكلمة المرور.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-10 space-y-8">
+          {/* Full name */}
           <div>
             <label htmlFor="register-fullName" className="mb-2 block text-xs text-neutral-500" style={sans}>
               الاسم الكامل
@@ -157,6 +159,8 @@ export default function RegisterPage() {
               style={sans}
             />
           </div>
+
+          {/* Email */}
           <div>
             <label htmlFor="register-email" className="mb-2 block text-xs text-neutral-500" style={sans}>
               البريد الإلكتروني
@@ -173,6 +177,31 @@ export default function RegisterPage() {
               dir="ltr"
             />
           </div>
+
+          {/* Phone */}
+          <div>
+            <label htmlFor="register-phone" className="mb-2 block text-xs text-neutral-500" style={sans}>
+              رقم الجوال
+            </label>
+            <input
+              id="register-phone"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+              required
+              placeholder="مثال: 0501234567"
+              className="w-full border-b border-neutral-200 bg-transparent py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
+              style={sans}
+              dir="ltr"
+            />
+            <p className="mt-1.5 text-xs text-neutral-400" style={sans}>
+              مثال: 0501234567
+            </p>
+          </div>
+
+          {/* Password */}
           <div>
             <label htmlFor="register-password" className="mb-2 block text-xs text-neutral-500" style={sans}>
               كلمة المرور
@@ -189,6 +218,8 @@ export default function RegisterPage() {
               style={sans}
             />
           </div>
+
+          {/* Confirm password */}
           <div>
             <label htmlFor="register-confirm" className="mb-2 block text-xs text-neutral-500" style={sans}>
               تأكيد كلمة المرور
@@ -205,6 +236,8 @@ export default function RegisterPage() {
               style={sans}
             />
           </div>
+
+          {/* Address */}
           <div>
             <label htmlFor="register-address" className="mb-2 block text-xs text-neutral-500" style={sans}>
               عنوان الشحن
@@ -220,28 +253,15 @@ export default function RegisterPage() {
               style={sans}
             />
           </div>
+
+          {/* Province */}
           <div>
             <label htmlFor="register-province" className="mb-2 block text-xs text-neutral-500" style={sans}>
               المحافظة
             </label>
             <ProvinceSelectDropdown id="register-province" value={provinceId} onChange={setProvinceId} />
           </div>
-          <div>
-            <label htmlFor="register-phone" className="mb-2 block text-xs text-neutral-500" style={sans}>
-              رقم الجوال
-            </label>
-            <input
-              id="register-phone"
-              type="tel"
-              autoComplete="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              className="w-full border-b border-neutral-200 bg-transparent py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none"
-              style={sans}
-              dir="ltr"
-            />
-          </div>
+
           <button
             type="submit"
             disabled={loading}
@@ -254,7 +274,10 @@ export default function RegisterPage() {
 
         <p className="mt-10 text-center text-sm text-neutral-600" style={sans}>
           لديك حساب؟{" "}
-          <Link href="/login" className="font-medium text-neutral-900 underline underline-offset-2 hover:no-underline">
+          <Link
+            href="/login"
+            className="font-medium text-neutral-900 underline underline-offset-2 hover:no-underline"
+          >
             تسجيل الدخول
           </Link>
         </p>

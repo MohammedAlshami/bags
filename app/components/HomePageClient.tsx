@@ -31,7 +31,7 @@ type HomeVisibility = {
 const DEFAULT_VISIBILITY: HomeVisibility = {
   hero: true,
   featured: true,
-  social: true,
+  social: false,
   locations: true,
   reviews: true,
   faq: true,
@@ -44,7 +44,7 @@ function parseVisibility(value: unknown): HomeVisibility {
   return {
     hero: v.hero ?? true,
     featured: v.featured ?? true,
-    social: v.social ?? true,
+    social: v.social ?? false,
     locations: v.locations ?? true,
     reviews: v.reviews ?? true,
     faq: v.faq ?? true,

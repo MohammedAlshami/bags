@@ -4,13 +4,19 @@ import Link from "next/link";
 import { ArrowLeft, Globe, Instagram } from "lucide-react";
 import { pagePaddingX, sans } from "@/lib/page-theme";
 
-const QUICK_LINKS = [
+const QUICK_LINKS_BASE = [
   { label: "المتجر الرئيسي", href: "/shop" },
-  { label: "المدونة", href: "/blog" },
   { label: "جديد المجموعة", href: "/shop" },
   { label: "العروض الخاصة", href: "/shop" },
   { label: "آراء العملاء", href: "/shop" },
-];
+] as const;
+
+function getQuickLinks(hasBlog: boolean) {
+  if (hasBlog) {
+    return [...QUICK_LINKS_BASE, { label: "المدونة", href: "/blog" }] as const;
+  }
+  return QUICK_LINKS_BASE;
+}
 
 const ABOUT_LINKS = [
   { label: "من نحن", href: "/about" },
@@ -36,7 +42,8 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-export function Footer() {
+export function Footer({ hasBlog }: { hasBlog: boolean }) {
+  const quickLinks = getQuickLinks(hasBlog);
   return (
     <footer
       className="bg-white text-body"
@@ -95,7 +102,7 @@ export function Footer() {
               روابط سريعة
             </h4>
             <ul className="space-y-3.5 sm:space-y-4">
-              {QUICK_LINKS.map((item) => (
+              {quickLinks.map((item) => (
                 <li key={item.label}>
                   <Link href={item.href} className={linkClass}>
                     {item.label}

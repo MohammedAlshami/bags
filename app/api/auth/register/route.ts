@@ -10,6 +10,10 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+function normalizePhone(phone: string) {
+  return phone.trim().replace(/[\s\-]/g, "");
+}
+
 function registrationErrorPayload(err: unknown): { message: string; detail?: string } {
   const raw = err instanceof Error ? err.message : String(err);
   const lower = raw.toLowerCase();
@@ -21,9 +25,13 @@ function registrationErrorPayload(err: unknown): { message: string; detail?: str
   ) {
     return {
       message:
-        "قاعدة البيانات لم تُحدَّث بعد (عمود المحافظة مفقود). من جذر المشروع شغّل: npx wrangler d1 migrations apply goldqueen --remote",
+        "قاعدة البيانات لم تُحدَّث بعد (عمود المحافظة مفقود). من جذر المشروع شغّل: npx wrangler d1 migrations apply goldqueen --remote",
       detail,
     };
+  }
+
+  if (lower.includes("unique") || lower.includes("unique constraint")) {
+    return { message: "البريد الإلكتروني أو رقم الهاتف مستخدم بالفعل", detail };
   }
 
   return {
@@ -37,14 +45,17 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     const emailRaw = typeof body.email === "string" ? body.email.trim() : "";
+    const phoneRaw = typeof body.phone === "string" ? body.phone.trim() : "";
     const password = typeof body.password === "string" ? body.password : "";
     const fullName = typeof body.fullName === "string" ? body.fullName.trim() : "";
     const address = typeof body.address === "string" ? body.address.trim() : "";
-    const phone = typeof body.phone === "string" ? body.phone.trim() : "";
     const provinceIdRaw = typeof body.provinceId === "string" ? body.provinceId.trim() : "";
 
     if (!emailRaw || !emailRaw.includes("@")) {
       return NextResponse.json({ message: "البريد الإلكتروني غير صالح" }, { status: 400 });
+    }
+    if (!phoneRaw) {
+      return NextResponse.json({ message: "رقم الهاتف مطلوب" }, { status: 400 });
     }
     if (!fullName) {
       return NextResponse.json({ message: "الاسم مطلوب" }, { status: 400 });
@@ -58,29 +69,37 @@ export async function POST(req: Request) {
     if (!provinceIdRaw || !isValidCheckoutProvinceId(provinceIdRaw)) {
       return NextResponse.json({ message: "اختر المحافظة" }, { status: 400 });
     }
-    if (!phone) {
-      return NextResponse.json({ message: "رقم الهاتف مطلوب" }, { status: 400 });
-    }
 
     const provinceId = normalizeCheckoutProvinceId(provinceIdRaw);
     const emailNorm = normalizeEmail(emailRaw);
+    const phoneNorm = normalizePhone(phoneRaw);
 
-    const duplicate = await sql`
+    // Check for duplicate email
+    const duplicateEmail = await sql`
       SELECT id FROM users
-      WHERE LOWER(TRIM(username)) = ${emailNorm}
-         OR LOWER(TRIM(COALESCE(email, ''))) = ${emailNorm}
+      WHERE LOWER(TRIM(COALESCE(email, ''))) = ${emailNorm}
+         OR LOWER(TRIM(username)) = ${emailNorm}
       LIMIT 1
     `;
-
-    if (duplicate.length > 0) {
+    if (duplicateEmail.length > 0) {
       return NextResponse.json({ message: "البريد الإلكتروني مستخدم بالفعل" }, { status: 409 });
+    }
+
+    // Check for duplicate phone
+    const duplicatePhone = await sql`
+      SELECT id FROM users
+      WHERE TRIM(COALESCE(phone, '')) = ${phoneNorm}
+      LIMIT 1
+    `;
+    if (duplicatePhone.length > 0) {
+      return NextResponse.json({ message: "رقم الهاتف مستخدم بالفعل" }, { status: 409 });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const inserted = await sql`
       INSERT INTO users (username, password, role, email, full_name, address, phone, province_id)
-      VALUES (${emailNorm}, ${hashedPassword}, 'customer', ${emailRaw}, ${fullName}, ${address}, ${phone}, ${provinceId})
+      VALUES (${emailNorm}, ${hashedPassword}, 'customer', ${emailRaw}, ${fullName}, ${address}, ${phoneNorm}, ${provinceId})
       RETURNING id, username, password, role, email, full_name, address, phone, province_id, disabled, created_at, updated_at
     `;
 

@@ -8,36 +8,49 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const username = typeof body.username === "string" ? body.username.trim() : "";
+    // Accept either "identifier" (email or phone) or legacy "username"/"phone" fields
+    const raw =
+      typeof body.identifier === "string"
+        ? body.identifier.trim()
+        : typeof body.username === "string"
+        ? body.username.trim()
+        : typeof body.phone === "string"
+        ? body.phone.trim()
+        : "";
     const password = typeof body.password === "string" ? body.password : "";
 
-    if (!username || !password) {
-      return NextResponse.json({ error: "Username and password required" }, { status: 400 });
+    if (!raw || !password) {
+      return NextResponse.json({ error: "Identifier and password required" }, { status: 400 });
     }
+
+    // Normalise: strip spaces/dashes for phone comparison
+    const phoneNorm = raw.replace(/[\s\-]/g, "");
+    const emailNorm = raw.toLowerCase();
 
     const rows = await sql`
       SELECT id, username, password, role, disabled
       FROM users
-      WHERE LOWER(TRIM(username)) = LOWER(TRIM(${username}))
-         OR LOWER(TRIM(COALESCE(email, ''))) = LOWER(TRIM(${username}))
+      WHERE LOWER(TRIM(COALESCE(email, ''))) = ${emailNorm}
+         OR LOWER(TRIM(username)) = ${emailNorm}
+         OR TRIM(COALESCE(phone, '')) = ${phoneNorm}
       LIMIT 1
     `;
     const user = rows[0];
     if (!user) {
-      return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
     if (user.disabled) {
       return NextResponse.json({ error: "Account is disabled" }, { status: 401 });
     }
 
-    const match = await compare(password, user.password);
+    const match = await compare(password, user.password as string);
     if (!match) {
-      return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
     const token = await signToken({
-      username: user.username,
-      role: user.role,
+      username: user.username as string,
+      role: user.role as string,
       sub: String(user.id),
     });
 

@@ -8,6 +8,7 @@ import { WhatsAppFloat } from "./components/WhatsAppFloat";
 import { CartProvider } from "./context/CartContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
 import { CartToaster } from "./components/CartToaster";
+import { sql } from "@/lib/db";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -43,6 +44,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const { categories } = await getNavData();
+  const blogCountRows = await sql`SELECT COUNT(*) as cnt FROM blog_posts WHERE status = 'published'`;
+  const hasBlog = Number((blogCountRows[0] as { cnt: number }).cnt) > 0;
   return (
     <html lang="ar" dir="rtl">
       <head />
@@ -51,9 +54,9 @@ export default async function RootLayout({
       >
         <CartProvider>
           <CurrencyProvider>
-            <ConditionalNavbar categories={categories} />
+            <ConditionalNavbar categories={categories} hasBlog={hasBlog} />
             {children}
-          <ConditionalFooter />
+          <ConditionalFooter hasBlog={hasBlog} />
           <WhatsAppFloat />
           <CartToaster />
           </CurrencyProvider>

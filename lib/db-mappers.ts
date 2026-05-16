@@ -3,7 +3,7 @@ export type UserRow = {
   username: string;
   password?: string;
   role: string;
-  email: string;
+  email?: string | null;
   full_name: string;
   address: string;
   phone: string;

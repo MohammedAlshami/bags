@@ -2,18 +2,36 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "goldqueen",
   "main": ".open-next/worker.js",
+
   "compatibility_date": "2026-04-29",
+
+  "workers_dev": true,
+
+  "routes": [
+    {
+      "pattern": "goldqueen.store",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.goldqueen.store",
+      "custom_domain": true
+    }
+  ],
+
   "compatibility_flags": [
     "nodejs_compat"
   ],
+
   "vars": {
     "R2_BUCKET_NAME": "makeup",
     "R2_PUBLIC_URL": "https://pub-9f312be7e4a94c53b384bfcf5701085e.r2.dev"
   },
+
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+
   "d1_databases": [
     {
       "binding": "DB",
@@ -23,12 +41,14 @@
       "migrations_dir": "migrations"
     }
   ],
+
   "r2_buckets": [
     {
       "binding": "MEDIA",
       "bucket_name": "makeup"
     }
   ],
+
   "observability": {
     "enabled": true
   }

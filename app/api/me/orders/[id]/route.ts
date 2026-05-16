@@ -3,6 +3,7 @@ import { sql } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { isUuid } from "@/lib/id";
 import { mapOrderAdminDetail, type OrderRow } from "@/lib/db-mappers";
+import { sendReceiptSubmittedEmail } from "@/lib/order-emails";
 
 export const dynamic = "force-dynamic";
 
@@ -85,6 +86,37 @@ export async function PATCH(
 
     const order = await fetchCustomerOrder(id, session.sub);
     if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    if (paymentProofUrl) {
+      try {
+        const adminEmail = process.env.ADMIN_EMAIL;
+        if (adminEmail) {
+          const items = Array.isArray(order.items) ? order.items : [];
+          const sa = order.shipping_address && typeof order.shipping_address === "object"
+            ? order.shipping_address as Record<string, string>
+            : {};
+          await sendReceiptSubmittedEmail({
+            adminEmail,
+            customerEmail: order.customer_email || "",
+            orderId: order.id,
+            customerName: order.customer_full_name || order.customer_username || "عميل",
+            customerPhone: order.customer_phone || "",
+            total: order.total,
+            items: items.map((it: Record<string, unknown>) => ({
+              name: typeof it.name === "string" ? it.name : "",
+              quantity: typeof it.quantity === "number" ? it.quantity : 1,
+              price: typeof it.price === "number" ? it.price : 0,
+            })),
+            shippingAddress: sa,
+            receiptImageUrl: paymentProofUrl,
+            createdAt: order.created_at,
+          });
+        }
+      } catch (emailErr) {
+        console.error("[Receipt Submitted Email]", emailErr);
+      }
+    }
+
     return NextResponse.json(mapOrderAdminDetail(order));
   } catch (err) {
     console.error("[PATCH /api/me/orders/[id]]", err);
