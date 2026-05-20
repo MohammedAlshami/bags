@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import TrackContent from "./TrackContent";
+
+export const metadata: Metadata = {
+  title: "تتبع الطلب",
+  description: "تتبعي حالة طلبك من الملكة جولد باستخدام رقم الطلب — معرفة موعد التوصيل وحالة الشحن.",
+  robots: { index: false },
+};
 
 function TrackFallback() {
   return (

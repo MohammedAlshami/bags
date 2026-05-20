@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { SafeImage } from "@/app/components/SafeImage";
 import { sql } from "@/lib/db";
 import { mapBlogPost, type BlogBlock, type BlogPostRow } from "@/lib/blog";
+import { blogUrl, parseProductSlugParam } from "@/lib/slugs";
 import { pagePaddingX, sans } from "@/lib/page-theme";
 import { CalendarDays, BookOpen, Tag } from "lucide-react";
 
@@ -56,12 +57,13 @@ function renderBlock(block: BlogBlock) {
   }
 }
 
-async function getBlogBySlug(slug: string) {
+async function getBlogBySlug(param: string) {
+  const { prefix } = parseProductSlugParam(param);
   const rows = await sql`
     SELECT id, title, slug, excerpt, cover_image, author_name, status, content, seo_title,
            seo_description, tags, published_at, created_at, updated_at
     FROM blog_posts
-    WHERE slug = ${slug} AND status = 'published'
+    WHERE id LIKE ${prefix + "%"} AND status = 'published'
     LIMIT 1
   `;
   return rows[0] ? mapBlogPost(rows[0] as BlogPostRow) : null;
@@ -83,15 +85,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const post = await getBlogBySlug(slug);
   if (!post) {
-    return { title: "المدونة | الملكة جولد", description: "مقالات ونصائح عن العناية والجمال." };
+    return { title: "المدونة", description: "مقالات ونصائح عن العناية والجمال." };
   }
   return {
-    title: `${post.seoTitle || post.title} | الملكة جولد`,
+    title: post.seoTitle || post.title,
     description: post.seoDescription || post.excerpt,
     openGraph: {
       title: post.seoTitle || post.title,
       description: post.seoDescription || post.excerpt,
-      images: post.coverImage ? [post.coverImage] : [],
+      images: post.coverImage ? [{ url: post.coverImage }] : [],
     },
   };
 }
@@ -132,7 +134,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </div>
             <div className="grid gap-5 md:grid-cols-3">
               {related.map((item) => (
-                <Link key={item._id} href={`/blog/${item.slug}`} className="group overflow-hidden rounded-[1.5rem] bg-transparent">
+                <Link key={item._id} href={blogUrl(item._id, item.title)} className="group overflow-hidden rounded-[1.5rem] bg-transparent">
                   <div className="relative aspect-[4/3] overflow-hidden rounded-[1.5rem] bg-[#f7eef2]">
                     {item.coverImage ? <SafeImage src={item.coverImage} alt={item.title} fill className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]" sizes="(max-width: 768px) 100vw, 33vw" /> : null}
                   </div>

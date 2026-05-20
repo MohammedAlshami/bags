@@ -1,0 +1,118 @@
+# الملكة جولد (Queen Gold)
+
+الملكة جولد هو متجر إلكتروني يمني سعودي متخصص في منتجات العناية بالبشرة والجمال — نقدم تشكيلة واسعة من المنتجات التجميلية عالية الجودة مع خدمة توصيل إلى اليمن والمملكة العربية السعودية.
+
+## Overview
+
+Queen Gold is an e-commerce platform specializing in beauty, skincare, and personal care products. We serve customers across Yemen and Saudi Arabia, offering a curated selection of cosmetics, skincare products, fragrance, and beauty packages. Our platform supports dual-currency pricing (SAR/YER), branch-based shipping in Yemen, order tracking, and a loyalty program.
+
+## Core Features
+
+- E-commerce catalog with categories, collections, and packages
+- Dual-currency pricing (Saudi Riyal and Yemeni Riyal)
+- Store pickup and shipping across Yemen and Saudi Arabia
+- Real-time order tracking
+- Blog with beauty tips and articles
+- Admin dashboard for managing products, orders, customers, and content
+- WhatsApp integration for customer support
+- Mobile-responsive Arabic-first design
+
+## Documentation
+
+- https://queengold.co
+- https://queengold.co/shop
+- https://queengold.co/about
+- https://queengold.co/locations
+- https://queengold.co/blog
+- https://queengold.co/track
+
+## API
+
+REST API with JSON responses. All API routes are under `/api/`.
+
+### Public Endpoints
+
+- `GET /api/store-locations` — List all store locations
+- `GET /api/products/:id` — Get product details by UUID
+- `GET /api/packages/:id` — Get package details by UUID
+- `GET /api/blog-posts` — List published blog posts
+- `GET /api/categories` — List product categories
+- `GET /api/collections` — List collections
+- `POST /api/auth/login` — User login
+- `POST /api/auth/register` — User registration
+- `POST /api/auth/forgot-password` — Request password reset
+- `POST /api/auth/reset-password` — Reset password with token
+- `GET /api/me/profile` — Get authenticated user profile
+- `GET /api/me/orders` — Get user's orders
+
+### Admin Endpoints (requires authentication)
+
+- `GET|POST /api/admin/products` — List / create products
+- `GET|PUT|DELETE /api/admin/products/:id` — Single product CRUD
+- `GET|POST /api/admin/packages` — List / create packages
+- `GET|PUT|DELETE /api/admin/packages/:id` — Single package CRUD
+- `GET|POST /api/admin/categories` — List / create categories
+- `GET|PUT|DELETE /api/admin/categories/:id` — Single category CRUD
+- `GET|POST /api/admin/collections` — List / create collections
+- `GET|PUT|DELETE /api/admin/collections/:id` — Single collection CRUD
+- `GET|POST /api/admin/orders` — List / create orders
+- `GET|PUT /api/admin/orders/:id` — Single order read/update
+- `GET|POST /api/admin/customers` — List / create customers
+- `GET|PUT|DELETE /api/admin/customers/:id` — Single customer CRUD
+- `GET|POST /api/admin/blogs` — List / create blog posts
+- `GET|PUT|DELETE /api/admin/blogs/:id` — Single blog post CRUD
+- `GET|POST /api/admin/store-locations` — List / create locations
+- `GET|PUT|DELETE /api/admin/store-locations/:id` — Single location CRUD
+- `GET|PUT /api/admin/shipping` — Manage shipping settings
+
+## Important Pages
+
+- https://queengold.co — Home page with featured products, categories, and blog
+- https://queengold.co/shop — Full product catalog with category/collection filters
+- https://queengold.co/product/:id-slug — Individual product detail page (slug derived from name)
+- https://queengold.co/package/:id — Beauty package detail page
+- https://queengold.co/about — Brand story, FAQ, and payment details
+- https://queengold.co/locations — All physical store locations with maps
+- https://queengold.co/blog — Beauty tips and articles
+- https://queengold.co/blog/:id-title — Individual blog post (slug derived from title)
+- https://queengold.co/cart — Shopping cart and checkout
+- https://queengold.co/track — Order tracking by order ID
+- https://queengold.co/login — Customer login
+- https://queengold.co/register — Customer registration
+
+## Brand
+
+- **Brand name**: الملكة جولد (Queen Gold)
+- **Theme**: Purple and gold luxury aesthetic
+- **Target market**: Yemen and Saudi Arabia
+- **Language**: Arabic (primary)
+- **Website**: https://queengold.co
+
+## Use Cases
+
+- **Browse products by category** — Customers can shop by skincare, makeup, hair care, and fragrance categories
+- **Purchase beauty packages** — Curated product bundles at discounted prices
+- **Store pickup** — Select a branch location in Yemen for in-store collection
+- **Order tracking** — Track delivery status using order ID
+- **Blog reading** — Educational beauty content and product guides
+- **Admin management** — Full CRUD for products, orders, customers, inventory, and content
+
+## AI Guidance
+
+- The site is built with Next.js App Router and uses React Server Components where possible
+- Product IDs are UUIDs, not sequential integers
+- Blog slugs are URL-friendly text strings
+- The database is Cloudflare D1 (SQLite-compatible)
+- All admin routes are under `/admin/` and require authentication
+- The site uses Tailwind CSS for styling
+- Favicon and apple-touch-icon use `/logo_img.png`
+- Currency display supports dual pricing (SAR/YER)
+
+## Contact
+
+- WhatsApp: available via floating button on the website
+- Website: https://queengold.co
+- Email: available through admin contact form
+
+Version: 1.0
+Last Updated: 2026-05-19

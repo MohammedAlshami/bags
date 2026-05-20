@@ -12,6 +12,7 @@ import {
   type ProductSizePrice,
 } from "@/lib/price-format";
 import { sans, pagePaddingX } from "@/lib/page-theme";
+import { productUrl } from "@/lib/slugs";
 
 export type FeaturedProductItem = {
   slug: string;
@@ -44,7 +45,7 @@ export function FeaturedProductCard({ item }: { item: FeaturedProductItem }) {
   const rating = Math.min(5, Math.max(0, Number.isFinite(rawRating) ? rawRating : 5));
   const ratingText = rating.toFixed(1);
 
-  const productHref = `/product/${item.slug}`;
+  const productHref = productUrl(item.slug, item.name);
 
   const handleAddToCart = () => {
     addToCartWithToast({

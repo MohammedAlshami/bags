@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Phone } from "lucide-react";
-import { STORE_LOCATIONS, buildMapEmbedUrl } from "@/lib/store-locations";
+import { buildMapEmbedUrl, type StoreLocation } from "@/lib/store-locations";
 import { sans, serif } from "@/lib/page-theme";
 
 type StoreLocationsSectionProps = {
@@ -11,13 +11,26 @@ type StoreLocationsSectionProps = {
 };
 
 export function StoreLocationsSection({ variant = "default" }: StoreLocationsSectionProps) {
-  const [activeId, setActiveId] = useState<string>(STORE_LOCATIONS[0].id);
+  const [locations, setLocations] = useState<StoreLocation[]>([]);
+  const [activeId, setActiveId] = useState<string>("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    fetch("/api/store-locations")
+      .then((r) => r.json() as Promise<StoreLocation[]>)
+      .then((data) => {
+        setLocations(data);
+        if (data.length > 0) setActiveId(data[0]._id);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   const activeStore = useMemo(
-    () => STORE_LOCATIONS.find((s) => s.id === activeId) ?? STORE_LOCATIONS[0],
-    [activeId]
+    () => locations.find((s) => s._id === activeId) ?? locations[0],
+    [activeId, locations]
   );
 
   useEffect(() => {
@@ -45,6 +58,16 @@ export function StoreLocationsSection({ variant = "default" }: StoreLocationsSec
   const mapFrame = fullBleed
     ? "relative min-h-[min(72vh,560px)] w-full overflow-hidden bg-neutral-200"
     : "relative min-h-[min(72vh,560px)] w-full overflow-hidden rounded-xl bg-neutral-200";
+
+  if (loading || !activeStore) {
+    return (
+      <section className="w-full bg-white" dir="rtl" aria-label="نقاط البيع">
+        <div className={`w-full ${fullBleed ? "" : hxPad}`}>
+          <div className={mapFrame} />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="w-full bg-white" dir="rtl" aria-label="نقاط البيع">
@@ -106,10 +129,10 @@ export function StoreLocationsSection({ variant = "default" }: StoreLocationsSec
                     aria-labelledby="stores-panel-heading"
                     className="cute-scrollbar absolute start-0 end-0 top-[calc(100%+0.25rem)] z-20 max-h-52 overflow-y-auto rounded-[8px] border-[1.5px] border-brand-light bg-white py-1 shadow-md"
                   >
-                    {STORE_LOCATIONS.map((store) => {
-                      const selected = store.id === activeStore.id;
+                    {locations.map((store) => {
+                      const selected = store._id === activeStore?._id;
                       return (
-                        <li key={store.id} role="presentation">
+                        <li key={store._id} role="presentation">
                           <button
                             type="button"
                             role="option"
@@ -120,7 +143,7 @@ export function StoreLocationsSection({ variant = "default" }: StoreLocationsSec
                                 : "text-body hover:bg-brand-light/70"
                             }`}
                             onClick={() => {
-                              setActiveId(store.id);
+                              setActiveId(store._id);
                               setDropdownOpen(false);
                             }}
                           >

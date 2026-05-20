@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Home } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "لوحة الإدارة | الملكة جولد",
+  robots: { index: false, follow: false },
+};
 
 import { getSession } from "@/lib/auth";
 import { adminIconClassName, sans } from "@/lib/page-theme";

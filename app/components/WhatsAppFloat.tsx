@@ -2,17 +2,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const WA_HREF = "https://wa.me/967782183149";
+import { useEffect, useState } from "react";
 
 export function WhatsAppFloat() {
   const pathname = usePathname();
+  const [waUrl, setWaUrl] = useState("https://wa.me/967782183149");
+
+  useEffect(() => {
+    fetch("/api/social-links")
+      .then((r) => r.json() as Promise<Array<{ platform: string; url: string }>>)
+      .then((links) => {
+        const wa = links.find((l) => l.platform === "whatsapp");
+        if (wa) setWaUrl(wa.url);
+      })
+      .catch(() => {});
+  }, []);
+
   if (pathname?.startsWith("/admin")) return null;
   if (pathname?.startsWith("/profile")) return null;
 
   return (
     <Link
-      href={WA_HREF}
+      href={waUrl}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-24 right-4 z-[60] flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-transform hover:scale-105 sm:bottom-24 sm:right-5 md:bottom-24 md:right-6 lg:bottom-8 lg:right-8 lg:h-14 lg:w-14"

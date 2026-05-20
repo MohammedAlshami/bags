@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
+import { productUrl } from "@/lib/slugs";
 import { sans } from "@/lib/page-theme";
 
 export type ReviewProductRef = {
@@ -72,7 +73,7 @@ function ReviewCard({
           {body}
         </p>
         <Link
-          href={`/product/${encodeURIComponent(product.slug)}`}
+          href={productUrl(product.slug, product.name)}
           className="mt-auto flex items-center gap-3 rounded-xl border border-neutral-100 bg-neutral-50/90 px-2.5 py-2 pt-4 transition-colors hover:border-brand-primary/25 hover:bg-brand-light/30"
           style={sans}
         >

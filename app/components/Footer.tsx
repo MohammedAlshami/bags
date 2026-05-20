@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Globe, Instagram } from "lucide-react";
 import { pagePaddingX, sans } from "@/lib/page-theme";
 
@@ -25,11 +26,8 @@ const ABOUT_LINKS = [
   { label: "تواصل معنا", href: "/about" },
 ];
 
-const WA_HREF = "https://wa.me/967782183149";
-/** Match `Navbar` home branding */
 const LOGO_SRC = "/logo_img.png";
 const BRAND_NAME = "الملكة جولد";
-const WA_CHANNEL_HREF = "https://whatsapp.com/channel/0029Vb6EdFc3GJP6WMzfXn2N";
 
 const linkClass =
   "text-[13px] sm:text-sm text-body transition-colors hover:text-brand-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary";
@@ -44,6 +42,23 @@ function WhatsAppIcon({ className }: { className?: string }) {
 
 export function Footer({ hasBlog }: { hasBlog: boolean }) {
   const quickLinks = getQuickLinks(hasBlog);
+  const [instaUrl, setInstaUrl] = useState("https://www.instagram.com/queen__007696");
+  const [waUrl, setWaUrl] = useState("https://wa.me/967782183149");
+  const [waChannelUrl, setWaChannelUrl] = useState("https://whatsapp.com/channel/0029Vb6EdFc3GJP6WMzfXn2N");
+
+  useEffect(() => {
+    fetch("/api/social-links")
+      .then((r) => r.json() as Promise<Array<{ platform: string; url: string }>>)
+      .then((links) => {
+        for (const l of links) {
+          if (l.platform === "instagram") setInstaUrl(l.url);
+          if (l.platform === "whatsapp") setWaUrl(l.url);
+          if (l.platform === "whatsapp_channel") setWaChannelUrl(l.url);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <footer
       className="bg-white text-body"
@@ -77,7 +92,7 @@ export function Footer({ hasBlog }: { hasBlog: boolean }) {
             </p>
             <div className="mt-6 flex w-full justify-start gap-3 md:justify-start">
               <a
-                href="https://www.instagram.com/queen__007696"
+                href={instaUrl}
                 aria-label="Instagram"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -86,7 +101,7 @@ export function Footer({ hasBlog }: { hasBlog: boolean }) {
                 <Instagram className="h-5 w-5" aria-hidden />
               </a>
               <a
-                href={WA_HREF}
+                href={waUrl}
                 aria-label="WhatsApp"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -152,7 +167,7 @@ export function Footer({ hasBlog }: { hasBlog: boolean }) {
                   تابعينا على القناة للحصول على آخر العروض والجديد
                 </h3>
                 <a
-                  href={WA_CHANNEL_HREF}
+                  href={waChannelUrl}
                   className="qgb-btn-primary inline-flex w-full min-w-0 items-center justify-center gap-2.5"
                   target="_blank"
                   rel="noreferrer"

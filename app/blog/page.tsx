@@ -4,14 +4,19 @@ import type { Metadata } from "next";
 import { SafeImage } from "@/app/components/SafeImage";
 import { sql } from "@/lib/db";
 import { mapBlogPost, type BlogPostRow } from "@/lib/blog";
+import { blogUrl } from "@/lib/slugs";
 import { pagePaddingX, sans } from "@/lib/page-theme";
 import { ArrowLeft, BookOpen, CalendarDays, Tag } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "المدونة | الملكة جولد",
+  title: "المدونة",
   description: "مقالات ونصائح عن العناية والجمال واستخدام المنتجات بطريقة أفضل.",
+  openGraph: {
+    title: "المدونة",
+    description: "مقالات ونصائح عن العناية والجمال واستخدام المنتجات بطريقة أفضل.",
+  },
 };
 
 function formatDate(date: string | null) {
@@ -28,7 +33,7 @@ function PostCard({ post, featured = false }: { post: ReturnType<typeof mapBlogP
 
   return (
     <Link
-      href={`/blog/${post.slug}`}
+      href={blogUrl(post._id, post.title)}
       className={featured ? "group overflow-hidden rounded-[1.75rem] bg-transparent" : "group overflow-hidden rounded-[1.25rem] bg-transparent"}
       dir="rtl"
     >

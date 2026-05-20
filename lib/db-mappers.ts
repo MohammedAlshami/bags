@@ -1,3 +1,33 @@
+export type StoreLocationRow = {
+  id: string;
+  name: string;
+  city: string;
+  country: string;
+  address: string;
+  phone: string | null;
+  lat: number;
+  lon: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export function mapStoreLocation(row: StoreLocationRow) {
+  return {
+    _id: row.id,
+    name: row.name,
+    city: row.city,
+    country: row.country,
+    address: row.address,
+    phone: row.phone ?? null,
+    lat: row.lat,
+    lon: row.lon,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export type UserRow = {
   id: string;
   username: string;

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronUp, SlidersHorizontal, X } from "lucide-react";
 import { SafeImage } from "@/app/components/SafeImage";
+import { productUrl } from "@/lib/slugs";
 import { sans } from "@/lib/page-theme";
 import { useDisplayCurrency } from "@/app/context/CurrencyContext";
 import { formatDualDiscountPriceForDisplay, formatSizePriceForDisplay } from "@/lib/price-format";
@@ -72,7 +73,7 @@ function ProductCard({ product, priority }: { product: CatalogProduct; priority?
         oldRiyalBeforeDiscount,
       });
   return (
-    <Link href={`/product/${slug}`} className="group flex w-full min-w-0 flex-col" dir="rtl">
+    <Link href={productUrl(slug, name)} className="group flex w-full min-w-0 flex-col" dir="rtl">
       <div className="relative aspect-[3/5] w-full min-h-0 overflow-hidden rounded-2xl bg-neutral-50">
         <SafeImage
           src={image}

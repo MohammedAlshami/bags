@@ -34,8 +34,27 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "الملكة جولد",
-  description: "عناية مختارة بعناية — منتجات تليق بكِ.",
+  metadataBase: new URL("https://goldqueen.store"),
+  title: {
+    default: "الملكة جولد — عناية مختارة بعناية",
+    template: "%s | الملكة جولد",
+  },
+  description: "عناية مختارة بعناية — منتجات تليق بكِ. تشكيلة واسعة من منتجات العناية بالبشرة والجمال مع خدمة توصيل إلى اليمن والمملكة.",
+  icons: { icon: "/logo_img.png", apple: "/logo_img.png" },
+  openGraph: {
+    type: "website",
+    locale: "ar_SA",
+    siteName: "الملكة جولد",
+    title: "الملكة جولد — عناية مختارة بعناية",
+    description: "عناية مختارة بعناية — منتجات تليق بكِ. تشكيلة واسعة من منتجات العناية بالبشرة والجمال.",
+    images: [{ url: "/logo_img.png", width: 512, height: 512 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "الملكة جولد — عناية مختارة بعناية",
+    description: "عناية مختارة بعناية — منتجات تليق بكِ.",
+    images: ["/logo_img.png"],
+  },
 };
 
 export default async function RootLayout({
@@ -48,7 +67,11 @@ export default async function RootLayout({
   const hasBlog = Number((blogCountRows[0] as { cnt: number }).cnt) > 0;
   return (
     <html lang="ar" dir="rtl">
-      <head />
+      <head>
+        <link rel="icon" href="/logo_img.png" type="image/png" />
+        <link rel="shortcut icon" href="/logo_img.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/logo_img.png" />
+      </head>
       <body
         className={`${tajawal.variable} ${geistSans.variable} ${geistMono.variable} ${cormorant.variable} antialiased font-sans overflow-x-hidden`}
       >

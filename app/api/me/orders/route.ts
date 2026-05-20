@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getSession, requireCustomer } from "@/lib/auth";
 import { getCheckoutProvinceById } from "@/lib/checkout-provinces";
-import { isValidBranchKey } from "@/lib/store-locations";
 import {
   collectSlugsFromOrderItemsJson,
   enrichOrderItemsWithCatalog,
@@ -142,7 +141,12 @@ export async function POST(request: Request) {
     const needsBranch = cityScope === "outside" || deliveryMethod === "pickup";
     const rawBranchKey = typeof body.branchKey === "string" ? body.branchKey.trim() : "";
     const branchKey = needsBranch ? rawBranchKey : "";
-    if (needsBranch && (!branchKey || !isValidBranchKey(branchKey))) {
+    if (needsBranch && branchKey) {
+      const locRows = await sql`SELECT 1 FROM store_locations WHERE id = ${branchKey} LIMIT 1`;
+      if (locRows.length === 0) {
+        return NextResponse.json({ error: "Branch required" }, { status: 400 });
+      }
+    } else if (needsBranch && !branchKey) {
       return NextResponse.json({ error: "Branch required" }, { status: 400 });
     }
 

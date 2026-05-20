@@ -1,0 +1,337 @@
+"use client";
+
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { SafeImage } from "@/app/components/SafeImage";
+import Link from "next/link";
+import { RecommendedProductsSection } from "@/app/components/RecommendedProductsSection";
+import { YemenBranchShippingDetails } from "@/app/components/shop/YemenBranchShippingDetails";
+import { sans } from "@/lib/page-theme";
+import { addToCartPrimaryButtonClassName } from "@/lib/add-to-cart-ui";
+import { useAddToCartWithToast } from "@/lib/use-add-to-cart-with-toast";
+import { useDisplayCurrency } from "@/app/context/CurrencyContext";
+import { formatDualDiscountPriceForDisplay, formatSizePriceForDisplay, type ProductSizePrice } from "@/lib/price-format";
+
+type ProductItem = {
+  name: string;
+  saudiRiyal: number;
+  oldRiyal?: number | null;
+  saudiRiyalBeforeDiscount?: number | null;
+  oldRiyalBeforeDiscount?: number | null;
+  sizes?: ProductSizePrice[] | null;
+  category: string;
+  image: string;
+  slug: string;
+  descriptionAr?: string | null;
+  ingredientsAr?: string | null;
+  usageAr?: string | null;
+  freeFromAr?: string | null;
+  warningAr?: string | null;
+  contentsAr?: string | null;
+};
+
+function splitBullets(value?: string | null) {
+  return (value ?? "")
+    .split(/[•\n]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+const DEFAULT_DESCRIPTION_AR =
+  "صُنع بعناية ليدعم بشرتك بنضارة طبيعية وملمس ناعم. تركيبة متوازنة تناسب الاستخدام اليومي، مع التزامنا بجودة العناية التي تليق بعلامة الملكة جولد.";
+const DEFAULT_DETAILS_AR = [
+  "مناسب للاستخدام اليومي",
+  "تركيبة مختبرة ومتوازنة",
+  "عبوة عملية للسفر والاستخدام السريع",
+  "تغليف أنيق يحافظ على المنتج",
+  "صُنع بعناية وفخر محلي",
+];
+
+function ProductMainSection({ product }: { product: ProductItem }) {
+  const { addToCartWithToast } = useAddToCartWithToast();
+  const displayMode = useDisplayCurrency();
+  const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
+  const description = product.descriptionAr?.trim() || DEFAULT_DESCRIPTION_AR;
+  const ingredients = splitBullets(product.ingredientsAr);
+  const usage = splitBullets(product.usageAr);
+  const freeFrom = splitBullets(product.freeFromAr);
+  const warning = product.warningAr?.trim() || "";
+  const contents = splitBullets(product.contentsAr);
+  const sizes = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : null;
+  const selectedSize = sizes ? sizes[Math.min(selectedSizeIndex, sizes.length - 1)] : null;
+  const displayPrice = selectedSize
+    ? { current: formatSizePriceForDisplay(displayMode, selectedSize), before: null }
+    : formatDualDiscountPriceForDisplay(displayMode, {
+        saudiRiyal: product.saudiRiyal,
+        oldRiyal: product.oldRiyal,
+        saudiRiyalBeforeDiscount: product.saudiRiyalBeforeDiscount,
+        oldRiyalBeforeDiscount: product.oldRiyalBeforeDiscount,
+      });
+
+  return (
+    <div className="mx-auto max-w-[1920px] px-4 py-10 pt-20 sm:px-6 md:px-14 md:pt-28 lg:px-24">
+      <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
+        <div className="lg:col-span-7">
+          <div className="relative mx-auto aspect-[3/4] w-full max-w-[min(100%,22rem)] overflow-hidden rounded-2xl sm:max-w-[min(100%,26rem)] md:max-w-[min(100%,30rem)] lg:aspect-[4/5] lg:max-w-none">
+            <SafeImage
+              src={product.image}
+              alt={product.name}
+              fill
+              className="object-cover object-center"
+              sizes="(max-width: 640px) min(100vw, 22rem), (max-width: 1024px) min(100vw, 30rem), 58vw"
+              priority
+            />
+          </div>
+        </div>
+
+        <div className="lg:col-span-5 lg:sticky lg:top-32 lg:h-fit lg:self-start lg:ps-10" dir="rtl">
+          <span className="text-xs text-neutral-500" style={sans}>
+            {product.category}
+          </span>
+          <h1
+            className="mt-3 text-3xl font-medium leading-tight tracking-tight text-neutral-900 md:text-4xl lg:text-[2.75rem]"
+            style={sans}
+          >
+            {product.name}
+          </h1>
+          <div className="mt-5 text-lg font-medium text-neutral-900 md:text-2xl" style={sans}>
+            {displayPrice.current}
+          </div>
+          {displayPrice.before ? (
+            <div className="mt-2 text-base text-neutral-400 line-through md:text-lg" style={sans}>
+              {displayPrice.before}
+            </div>
+          ) : null}
+
+          {sizes ? (
+            <div className="mt-6">
+              <p className="text-xs text-neutral-500" style={sans}>
+                المقاس
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {sizes.map((size, index) => {
+                  const active = index === selectedSizeIndex;
+                  return (
+                    <button
+                      key={`${size.label}-${index}`}
+                      type="button"
+                      onClick={() => setSelectedSizeIndex(index)}
+                      className={[
+                        "rounded-full border px-4 py-2 text-sm transition-colors",
+                        active ? "border-[#B63A6B] bg-[#B63A6B] text-white" : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300",
+                      ].join(" ")}
+                      style={sans}
+                    >
+                      {size.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          <p className="mt-8 text-sm leading-relaxed text-neutral-600 md:text-base" style={sans}>
+            {description}
+          </p>
+
+          <div className="mt-8 space-y-8 border-t border-neutral-200/90 pt-8 md:mt-10">
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-neutral-900 md:text-base" style={sans}>المكونات الرئيسية</h2>
+              <div className="space-y-2">
+                {ingredients.map((detail) => (
+                  <div key={detail} className="flex items-start gap-3 text-sm text-neutral-700 md:text-base" style={sans}>
+                    <span className="mt-2.5 h-1 w-1 shrink-0 rounded-full bg-neutral-400" aria-hidden />
+                    <span>{detail}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-neutral-900 md:text-base" style={sans}>طريقة الاستخدام</h2>
+              <div className="space-y-2">
+                {usage.map((detail) => (
+                  <div key={detail} className="flex items-start gap-3 text-sm text-neutral-700 md:text-base" style={sans}>
+                    <span className="mt-2.5 h-1 w-1 shrink-0 rounded-full bg-neutral-400" aria-hidden />
+                    <span>{detail}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+            {freeFrom.length > 0 ? (
+              <section className="space-y-3">
+                <h2 className="text-sm font-semibold text-neutral-900 md:text-base" style={sans}>خالٍ من</h2>
+                <div className="space-y-2">
+                  {freeFrom.map((detail) => (
+                    <div key={detail} className="flex items-start gap-3 text-sm text-neutral-700 md:text-base" style={sans}>
+                      <span className="mt-2.5 h-1 w-1 shrink-0 rounded-full bg-neutral-400" aria-hidden />
+                      <span>{detail}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+            {warning ? (
+              <section className="space-y-3">
+                <h2 className="text-sm font-semibold text-neutral-900 md:text-base" style={sans}>تحذير</h2>
+                <p className="text-sm leading-relaxed text-neutral-700 md:text-base" style={sans}>
+                  {warning}
+                </p>
+              </section>
+            ) : null}
+            {contents.length > 0 ? (
+              <section className="space-y-3">
+                <h2 className="text-sm font-semibold text-neutral-900 md:text-base" style={sans}>المحتويات</h2>
+                <div className="space-y-2">
+                  {contents.map((detail) => (
+                    <div key={detail} className="flex items-start gap-3 text-sm text-neutral-700 md:text-base" style={sans}>
+                      <span className="mt-2.5 h-1 w-1 shrink-0 rounded-full bg-neutral-400" aria-hidden />
+                      <span>{detail}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              const lineName = selectedSize ? `${product.name} - ${selectedSize.label}` : product.name;
+              addToCartWithToast({
+                slug: product.slug,
+                name: lineName,
+                saudiRiyal: selectedSize ? selectedSize.sarPrice : product.saudiRiyal,
+                image: product.image,
+                oldRiyal: selectedSize ? selectedSize.oldRiyal : product.oldRiyal,
+              });
+            }}
+            className={`mt-12 w-full ${addToCartPrimaryButtonClassName}`}
+            style={sans}
+          >
+            أضف إلى السلة
+          </button>
+
+          <div className="mt-10 space-y-8 border-t border-neutral-200/90 pt-8">
+            <div>
+              <h3 className="mb-3 text-sm font-semibold text-neutral-900" style={sans}>
+                الشحن
+              </h3>
+              <YemenBranchShippingDetails />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StorySection() {
+  return (
+    <section className="border-t border-neutral-200/80 bg-white py-20 md:py-28" dir="rtl">
+      <div className="mx-auto max-w-3xl px-4 text-center sm:px-8">
+        <p className="text-xs text-neutral-500" style={sans}>
+          من الملكة جولد
+        </p>
+        <h2 className="mt-4 text-2xl font-medium leading-snug text-neutral-800 md:text-3xl" style={sans}>
+          عناية تليق بكِ
+        </h2>
+        <p className="mt-6 text-base leading-relaxed text-neutral-600 md:text-lg" style={sans}>
+          نؤمن بأن العناية الحقيقية تبدأ من التفاصيل. نختار مكوّنات بعناية، ونقدّم لكِ تجربة بسيطة وأنيقة تعكس
+          ثقتكِ بنفسكِ في كل خطوة.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+export default function ProductClient({ slug: initialSlug }: { slug?: string }) {
+  const params = useParams();
+  const slug = initialSlug || (typeof params.slug === "string" ? params.slug : "");
+  const [product, setProduct] = useState<ProductItem | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
+    fetch(`/api/products/${encodeURIComponent(slug)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data || typeof data !== "object" || !("name" in data)) {
+          setProduct(null);
+          return;
+        }
+        const productData = data as Record<string, unknown>;
+        const sar = Number(productData.saudiRiyal);
+        if (!Number.isFinite(sar)) {
+          setProduct(null);
+          return;
+        }
+        setProduct({
+          name: String(productData.name),
+          saudiRiyal: sar,
+          category: String(productData.category),
+          image: String(productData.image),
+          slug: String(productData.slug),
+          oldRiyal:
+            typeof productData.oldRiyal === "number"
+              ? Number(productData.oldRiyal)
+              : typeof productData.oldRiyal === "string"
+                ? Number(productData.oldRiyal)
+                : null,
+          saudiRiyalBeforeDiscount:
+            typeof productData.saudiRiyalBeforeDiscount === "number"
+              ? Number(productData.saudiRiyalBeforeDiscount)
+              : null,
+          oldRiyalBeforeDiscount:
+            typeof productData.oldRiyalBeforeDiscount === "number"
+              ? Number(productData.oldRiyalBeforeDiscount)
+              : null,
+          descriptionAr: typeof productData.descriptionAr === "string" ? String(productData.descriptionAr) : null,
+          ingredientsAr: typeof productData.ingredientsAr === "string" ? String(productData.ingredientsAr) : null,
+          usageAr: typeof productData.usageAr === "string" ? String(productData.usageAr) : null,
+          freeFromAr: typeof productData.freeFromAr === "string" ? String(productData.freeFromAr) : null,
+          warningAr: typeof productData.warningAr === "string" ? String(productData.warningAr) : null,
+          contentsAr: typeof productData.contentsAr === "string" ? String(productData.contentsAr) : null,
+          sizes: Array.isArray(productData.sizes)
+            ? (productData.sizes as ProductSizePrice[])
+            : null,
+        });
+      })
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-white pb-24 pt-32" dir="rtl">
+        <p className="text-neutral-500" style={sans}>
+          جاري التحميل…
+        </p>
+      </main>
+    );
+  }
+
+  if (!product) {
+    return (
+      <main className="min-h-screen bg-white pb-24 pt-32" dir="rtl">
+        <div className="mx-auto max-w-lg px-6 text-center">
+          <h1 className="text-2xl font-medium text-neutral-900" style={sans}>
+            المنتج غير متوفر
+          </h1>
+          <Link href="/shop" className="mt-6 inline-block text-sm text-neutral-600 underline-offset-4 hover:text-neutral-900 hover:underline" style={sans}>
+            العودة إلى المتجر
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-white pt-20" dir="rtl">
+      <ProductMainSection product={product} />
+      <StorySection />
+      <RecommendedProductsSection excludeSlug={product.slug} />
+    </main>
+  );
+}

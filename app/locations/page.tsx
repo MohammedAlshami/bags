@@ -1,6 +1,16 @@
+import type { Metadata } from "next";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs";
 import { LocationsAlternatingLayout } from "@/app/components/locations/LocationsAlternatingLayout";
 import { pagePaddingX, sans, serif } from "@/lib/page-theme";
+
+export const metadata: Metadata = {
+  title: "نقاط البيع",
+  description: "جميع فروع الملكة جولد في اليمن والسعودية — عنوان المتجر، رقم الهاتف، وموقعه على الخريطة.",
+  openGraph: {
+    title: "نقاط البيع",
+    description: "جميع فروع الملكة جولد في اليمن والسعودية — عنوان المتجر، رقم الهاتف، وموقعه على الخريطة.",
+  },
+};
 
 export default function LocationsPage() {
   return (

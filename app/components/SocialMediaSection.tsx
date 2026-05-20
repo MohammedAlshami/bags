@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Instagram, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
+import { productUrl } from "@/lib/slugs";
 import { pagePaddingX } from "@/lib/page-theme";
 import { useDisplayCurrency } from "@/app/context/CurrencyContext";
 import { formatPriceForDisplay, formatSizePriceForDisplay, type ProductSizePrice } from "@/lib/price-format";
@@ -84,7 +85,7 @@ function ReelProductCard({ product }: { product: SocialReelProduct }) {
     : formatPriceForDisplay(displayMode, product.saudiRiyal, product.oldRiyal);
   return (
     <Link
-      href={`/product/${product.slug}`}
+      href={productUrl(product.slug, product.name)}
       className="mt-3.5 flex min-h-0 flex-1 items-center gap-3 rounded-2xl border border-neutral-200/90 bg-white p-3.5 transition-colors duration-200 hover:border-brand-primary/35"
       style={sans}
     >

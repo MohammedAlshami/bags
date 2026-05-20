@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import ProfileContent from "./ProfileContent";
+
+export const metadata: Metadata = {
+  title: "حسابي",
+  description: "لوحة تحكم العميل — طلباتي، معلومات الحساب، وتحديث الملف الشخصي.",
+  robots: { index: false },
+};
 
 function ProfileFallback() {
   return (

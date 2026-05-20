@@ -1,9 +1,20 @@
+import type { Metadata } from "next";
 import { ShopPageBanner } from "@/app/components/ShopPageBanner";
 import { ShopCategoryCards } from "@/app/components/shop/ShopCategoryCards";
 import { ShopCatalogClient, type CatalogCategory, type CatalogProduct } from "@/app/components/shop/ShopCatalogClient";
 import { ShopPackagesSection, type ShopPackage } from "@/app/components/shop/ShopPackagesSection";
 import { sql } from "@/lib/db";
 import { mapProduct, type ProductRow } from "@/lib/db-mappers";
+
+export const metadata: Metadata = {
+  title: "المتجر",
+  description: "تصفحي تشكيلة منتجات العناية بالبشرة والجمال من الملكة جولد — عطور، مكياج، كريمات، ومجموعات عناية متكاملة.",
+  openGraph: {
+    title: "المتجر",
+    description: "تصفحي تشكيلة منتجات العناية بالبشرة والجمال من الملكة جولد — عطور، مكياج، كريمات، ومجموعات عناية متكاملة.",
+    images: [{ url: "/logo_img.png", width: 512, height: 512 }],
+  },
+};
 
 type ShopCategory = {
   _id: string;

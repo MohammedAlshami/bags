@@ -9,7 +9,7 @@ import { useCart } from "@/app/context/CartContext";
 import { sans, pagePaddingX } from "@/lib/page-theme";
 import { ProvinceSelectDropdown } from "@/app/components/ProvinceSelectDropdown";
 import { getCheckoutProvinceById, CHECKOUT_PROVINCES, isValidCheckoutProvinceId, normalizeCheckoutProvinceId } from "@/lib/checkout-provinces";
-import { CHECKOUT_PICKUP_POINTS, type StoreLocation } from "@/lib/store-locations";
+import { type StoreLocation } from "@/lib/store-locations";
 import { YemenPaymentStepTransferSection, YemenPreCheckoutPaymentDeliveryGuide } from "@/app/components/cart/YemenCartCheckoutSections";
 import { applyCheckoutDiscount } from "@/lib/order-discount";
 import { formatPriceForDisplay, formatCartSubtotalDisplay, type ProductSizePrice } from "@/lib/price-format";
@@ -41,7 +41,7 @@ function BranchSelectDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const selected = locations.find((b) => b.id === value);
+  const selected = locations.find((b) => b._id === value);
 
   useEffect(() => {
     if (!open) return;
@@ -90,15 +90,15 @@ function BranchSelectDropdown({
           className="absolute start-0 top-full z-50 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 ring-1 ring-neutral-200/90"
         >
           {locations.map((b) => {
-            const isSel = b.id === value;
+            const isSel = b._id === value;
             return (
-              <li key={b.id} role="presentation">
+              <li key={b._id} role="presentation">
                 <button
                   type="button"
                   role="option"
                   aria-selected={isSel}
                   onClick={() => {
-                    onChange(b.id);
+                    onChange(b._id);
                     setOpen(false);
                   }}
                   className={`w-full px-3 py-2.5 text-start text-sm leading-snug transition-colors ${
@@ -120,6 +120,7 @@ function BranchSelectDropdown({
 /** Same destination as `WhatsAppFloat` — customer contact for order follow-up. */
 const WHATSAPP_ORDER_CONTACT_HREF = "https://wa.me/967782183149";
 const WHATSAPP_DISPLAY_NUMBER = "+967 782 183 149";
+// TODO: Make WhatsApp number dynamic from social_links table
 
 const QTY_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
@@ -327,7 +328,7 @@ function CartCheckoutInner() {
   const [addressPanelOpen, setAddressPanelOpen] = useState(false);
   const [addressDraft, setAddressDraft] = useState<ProfileAddress>({ fullName: "", address: "", phone: "" });
   const [addressSaving, setAddressSaving] = useState(false);
-  const [branchKey, setBranchKey] = useState<string>(CHECKOUT_PICKUP_POINTS[0]?.id ?? "");
+  const [branchKey, setBranchKey] = useState<string>("");
   const [provinceId, setProvinceId] = useState<string>(CHECKOUT_PROVINCES[0]?.id ?? "sanaa");
   const cityScope = useMemo((): CityScope => getCheckoutProvinceById(provinceId)?.cityScope ?? "outside", [provinceId]);
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("direct");
@@ -392,14 +393,6 @@ function CartCheckoutInner() {
       setPaymentMethod("bank");
     }
   }, [cityScope]);
-
-  useEffect(() => {
-    const needsPickup = cityScope === "outside" || deliveryMethod === "pickup";
-    if (!needsPickup) return;
-    if (!CHECKOUT_PICKUP_POINTS.some((p) => p.id === branchKey)) {
-      setBranchKey(CHECKOUT_PICKUP_POINTS[0]?.id ?? "");
-    }
-  }, [cityScope, deliveryMethod, branchKey]);
 
   useEffect(() => {
     if (!paymentOrderId) {
@@ -1276,7 +1269,7 @@ function CartCheckoutInner() {
                 <div className="flex justify-between gap-4">
                   <span className="text-neutral-500">الاستلام</span>
                   <span className="font-medium text-neutral-900">
-                    {CHECKOUT_PICKUP_POINTS.find((p) => p.id === branchKey)?.name || "نقطة توصيل"}
+                    {branchKey || "نقطة توصيل"}
                   </span>
                 </div>
               ) : null}

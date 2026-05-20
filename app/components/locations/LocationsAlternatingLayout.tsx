@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Phone } from "lucide-react";
 import {
-  STORE_LOCATIONS,
+  getAllStoreLocations,
   buildGoogleMapsLink,
   buildMapEmbedUrl,
   type StoreLocation,
@@ -71,12 +71,14 @@ function LocationRow({ store, index }: { store: StoreLocation; index: number }) 
   );
 }
 
-export function LocationsAlternatingLayout() {
+export async function LocationsAlternatingLayout() {
+  const locations = await getAllStoreLocations();
+
   return (
     <div className={`mx-auto w-full max-w-[1920px] ${pagePaddingX}`}>
       <div className="flex flex-col gap-14 md:gap-20 lg:gap-24">
-        {STORE_LOCATIONS.map((store, index) => (
-          <LocationRow key={store.id} store={store} index={index} />
+        {locations.map((store, index) => (
+          <LocationRow key={store._id} store={store} index={index} />
         ))}
       </div>
     </div>

@@ -16,6 +16,7 @@ import {
 
 import { adminIconClassName, sans } from "@/lib/page-theme";
 import { formatSar } from "@/lib/format-sar";
+import type { StoreLocation } from "@/lib/store-locations";
 import { adminApiErrorAr, orderStatusAr } from "@/lib/admin-ar";
 import { AdminSkeletonOrderDetailPage } from "@/lib/admin-skeleton";
 import { getOrderLineSar, type OrderLineItem } from "@/lib/order-line-items";
@@ -102,6 +103,7 @@ export default function AdminOrderDetailPage() {
   const [editShipping, setEditShipping] = useState<ShippingAddress>({});
   const [editTracking, setEditTracking] = useState("");
   const [editCarrier, setEditCarrier] = useState("");
+  const [locationNames, setLocationNames] = useState<Record<string, string>>({});
   const [paymentBusy, setPaymentBusy] = useState(false);
 
   const fetchOrder = () =>
@@ -119,6 +121,17 @@ export default function AdminOrderDetailPage() {
       .catch((e) => setError(adminApiErrorAr(e instanceof Error ? e.message : "Error")))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    fetch("/api/store-locations")
+      .then((r) => r.json() as Promise<StoreLocation[]>)
+      .then((all) => {
+        const map: Record<string, string> = {};
+        for (const loc of all) map[loc._id] = loc.name;
+        setLocationNames(map);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (order && editShippingOpen) {
@@ -280,7 +293,7 @@ export default function AdminOrderDetailPage() {
           <h3 className="text-lg font-light text-black mb-3">الفرع المختار</h3>
           <p className="text-sm text-neutral-800">
             {order.branchKey
-              ? getStoreLocationById(order.branchKey)?.name ?? order.branchKey
+              ? locationNames[order.branchKey] ?? order.branchKey
               : "—"}
           </p>
         </section>

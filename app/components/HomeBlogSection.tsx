@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { CalendarDays, BookOpen, ArrowLeft } from "lucide-react";
 import { SafeImage } from "@/app/components/SafeImage";
+import { blogUrl } from "@/lib/slugs";
 import { sans } from "@/lib/page-theme";
 
 /** Matches HomeFaqSection */
@@ -35,7 +36,7 @@ function BlogCard({ post }: { post: HomeBlogPostItem }) {
 
   return (
     <Link
-      href={`/blog/${post.slug}`}
+      href={blogUrl(post._id, post.title)}
       className="group flex h-full flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-[0_1px_0_rgba(0,0,0,0.04)] transition-colors hover:border-neutral-300"
       dir="rtl"
     >

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
 import Link from "next/link";
+import { productUrl } from "@/lib/slugs";
 import { sans } from "@/lib/page-theme";
 import { useDisplayCurrency } from "@/app/context/CurrencyContext";
 import { formatPriceForDisplay } from "@/lib/price-format";
@@ -52,7 +53,7 @@ function ProductCard({ product }: { product: RecProduct }) {
   const displayMode = useDisplayCurrency();
   const priceLine = formatPriceForDisplay(displayMode, product.saudiRiyal, product.oldRiyal);
   return (
-    <Link href={`/product/${product.slug}`} className="group flex flex-col">
+    <Link href={productUrl(product.slug, product.name)} className="group flex flex-col">
       <div className="relative aspect-[3/5] w-full overflow-hidden rounded-2xl bg-white">
         <SafeImage
           src={product.image}

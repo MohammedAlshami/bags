@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { Package, Banknote, MapPin } from "lucide-react";
 import { sans } from "@/lib/page-theme";
 import { ProfileBreadcrumb, ProfileAccountNav, profileAccentIcon } from "@/app/components/profile/ProfileAccountChrome";
-import { getStoreLocationById } from "@/lib/store-locations";
+import { type StoreLocation } from "@/lib/store-locations";
 import { useDisplayCurrency } from "@/app/context/CurrencyContext";
 import { formatPriceForDisplay } from "@/lib/price-format";
 import { getOrderLineSar, type OrderLineItem } from "@/lib/order-line-items";
@@ -47,6 +47,7 @@ export default function ProfileOrderDetailPage() {
   const [user, setUser] = useState<{ username: string; role: string } | null>(null);
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [linePriceMetaBySlug, setLinePriceMetaBySlug] = useState<Record<string, LinePriceMeta>>({});
+  const [branchNames, setBranchNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const displayMode = useDisplayCurrency();
@@ -87,6 +88,17 @@ export default function ProfileOrderDetailPage() {
       .catch(() => setError("حدث خطأ."))
       .finally(() => setLoading(false));
   }, [id, router]);
+
+  useEffect(() => {
+    fetch("/api/store-locations")
+      .then((r) => r.json() as Promise<StoreLocation[]>)
+      .then((all) => {
+        const map: Record<string, string> = {};
+        for (const loc of all) map[loc._id] = loc.name;
+        setBranchNames(map);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const slugs = [...new Set((order?.items ?? []).map((item) => item.slug).filter((slug): slug is string => Boolean(slug)))];
@@ -171,7 +183,7 @@ export default function ProfileOrderDetailPage() {
     );
   }
 
-  const branch = order.branchKey ? getStoreLocationById(order.branchKey) : undefined;
+  const branchName = order.branchKey ? branchNames[order.branchKey] : undefined;
   const shortId = String(order._id).slice(-8);
 
   return (
@@ -239,7 +251,7 @@ export default function ProfileOrderDetailPage() {
                 الإجمالي: {formatPriceForDisplay(displayMode, Number(order.total), null)}
               </p>
 
-              {branch ? (
+              {branchName ? (
                 <div className="mt-6 flex items-start gap-3 rounded-xl bg-[#FCF0F2]/50 p-4">
                   <MapPin className={`mt-0.5 h-5 w-5 ${profileAccentIcon}`} strokeWidth={1.35} />
                   <div>
@@ -247,7 +259,7 @@ export default function ProfileOrderDetailPage() {
                       الفرع
                     </p>
                     <p className="mt-0.5 text-sm text-neutral-900" style={sans}>
-                      {branch.name}
+                      {branchName}
                     </p>
                   </div>
                 </div>

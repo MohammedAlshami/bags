@@ -490,7 +490,7 @@ export default function AdminBlogsPage() {
     const excerpt = editor.excerpt.trim();
     const authorName = editor.authorName.trim();
     const coverImage = editor.coverImage.trim();
-    const slug = editor.slug.trim() || slugifyBlogTitle(title);
+    const slug = slugifyBlogTitle(title);
     const seoTitle = editor.seoTitle.trim();
     const seoDescription = editor.seoDescription.trim();
     const tags = editor.tagsText
@@ -674,16 +674,6 @@ export default function AdminBlogsPage() {
                 value={editor.title}
                 onChange={(e) => setEditor((state) => ({ ...state, title: e.target.value }))}
                 className="rounded-xl border border-black/10 px-3 py-2 text-sm"
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-xs text-neutral-500">المسار (slug)</label>
-              <input
-                value={editor.slug}
-                onChange={(e) => setEditor((state) => ({ ...state, slug: e.target.value }))}
-                className="rounded-xl border border-black/10 px-3 py-2 text-sm"
-                dir="ltr"
               />
             </div>
 
@@ -923,7 +913,7 @@ export default function AdminBlogsPage() {
                     {post.status === "published" ? "إلغاء النشر" : "نشر"}
                   </button>
                   <Link
-                    href={`/blog/${post.slug}`}
+                    href={`/blog/${post._id.split("-")[0]}-${slugifyBlogTitle(post.title)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-full border border-black/10 px-3 py-2 text-xs hover:bg-neutral-50"

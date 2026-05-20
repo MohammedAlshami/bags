@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { HomePageClient } from "./components/HomePageClient";
 import { sql } from "@/lib/db";
 import { mapProduct, type ProductRow } from "@/lib/db-mappers";
@@ -7,6 +8,16 @@ import type { FeaturedProductItem } from "./components/FeaturedProductsClient";
 import type { HomeCategorySectionData } from "./components/HomeCategoryProductSections";
 import { mapBlogPost, type BlogPostRow } from "@/lib/blog";
 import type { HomeBlogPostItem } from "./components/HomeBlogSection";
+
+export const metadata: Metadata = {
+  description:
+    "اكتشفي تشكيلة واسعة من منتجات العناية بالبشرة والجمال من الملكة جولد. عطور، مكياج، كريمات عناية — مع خدمة التوصيل إلى اليمن والسعودية.",
+  openGraph: {
+    description:
+      "اكتشفي تشكيلة واسعة من منتجات العناية بالبشرة والجمال من الملكة جولد. عطور، مكياج، كريمات عناية — مع خدمة التوصيل إلى اليمن والسعودية.",
+    images: [{ url: "/logo_img.png", width: 512, height: 512 }],
+  },
+};
 
 type RankedProductRow = ProductRow & { rn: number };
 
