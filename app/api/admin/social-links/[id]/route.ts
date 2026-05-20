@@ -28,13 +28,12 @@ export async function PUT(
     const label = String(body.label ?? "");
     const url = String(body.url ?? "");
     const icon = body.icon ? String(body.icon) : null;
-    const displayOrder = Number(body.displayOrder ?? 0);
     const updatedAt = new Date().toISOString();
 
     await sql`
       UPDATE social_links
       SET platform = ${platform}, label = ${label}, url = ${url},
-          icon = ${icon}, display_order = ${displayOrder}, updated_at = ${updatedAt}
+          icon = ${icon}, updated_at = ${updatedAt}
       WHERE id = ${id}
     `;
     const rows = await sql`SELECT * FROM social_links WHERE id = ${id} LIMIT 1`;

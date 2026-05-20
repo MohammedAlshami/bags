@@ -13,7 +13,6 @@ type SocialLink = {
   label: string;
   url: string;
   icon: string | null;
-  displayOrder: number;
 };
 
 type PanelState = null | { mode: "create" } | { mode: "edit"; link: SocialLink };
@@ -31,7 +30,6 @@ export default function AdminSocialLinksPage() {
   const [formLabel, setFormLabel] = useState("");
   const [formUrl, setFormUrl] = useState("");
   const [formIcon, setFormIcon] = useState("");
-  const [formDisplayOrder, setFormDisplayOrder] = useState(0);
 
   const fetchList = async (): Promise<SocialLink[]> => {
     const res = await fetch("/api/admin/social-links");
@@ -71,13 +69,11 @@ export default function AdminSocialLinksPage() {
     setFormLabel("");
     setFormUrl("");
     setFormIcon("");
-    setFormDisplayOrder(0);
     setPanelError(null);
   };
 
   const openCreate = () => {
     resetFormFields();
-    setFormDisplayOrder(list.length);
     setPanel({ mode: "create" });
   };
 
@@ -86,7 +82,6 @@ export default function AdminSocialLinksPage() {
     setFormLabel(link.label);
     setFormUrl(link.url);
     setFormIcon(link.icon ?? "");
-    setFormDisplayOrder(link.displayOrder);
     setPanelError(null);
     setPanel({ mode: "edit", link });
   };
@@ -106,7 +101,6 @@ export default function AdminSocialLinksPage() {
         label: formLabel,
         url: formUrl,
         icon: formIcon || null,
-        displayOrder: formDisplayOrder,
       };
 
       if (panel.mode === "create") {
@@ -202,15 +196,6 @@ export default function AdminSocialLinksPage() {
           placeholder="whatsapp, instagram..."
         />
       </div>
-      <div>
-        <label className="block text-xs text-neutral-500 mb-1">ترتيب العرض</label>
-        <input
-          value={formDisplayOrder}
-          onChange={(e) => setFormDisplayOrder(parseInt(e.target.value) || 0)}
-          className="w-full border border-neutral-200 px-3 py-2 text-sm"
-          type="number"
-        />
-      </div>
       {panelError ? <p className="text-sm text-red-600" role="alert">{panelError}</p> : null}
       <div className="flex gap-2 flex-wrap pt-2">
         <button
@@ -275,7 +260,6 @@ export default function AdminSocialLinksPage() {
                 <th className="p-4 font-medium">المنصة</th>
                 <th className="p-4 font-medium">التسمية</th>
                 <th className="p-4 font-medium">الرابط</th>
-                <th className="p-4 font-medium">الترتيب</th>
                 <th className="p-4 font-medium">إجراءات</th>
               </tr>
             </thead>
@@ -289,7 +273,6 @@ export default function AdminSocialLinksPage() {
                       {link.url}
                     </a>
                   </td>
-                  <td className="p-4 text-neutral-600">{link.displayOrder}</td>
                   <td className="p-4">
                     <button type="button" onClick={() => openEdit(link)} className="text-black underline ms-3">تعديل</button>
                     <button type="button" onClick={() => setDeleteTarget(link)} className="inline-flex items-center gap-1 text-red-600 underline ms-3">

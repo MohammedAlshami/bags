@@ -2,18 +2,28 @@
 
 import Link from "next/link";
 import { Minus, Plus } from "lucide-react";
-import { useState } from "react";
-import { SITE_FAQ_ITEMS } from "@/lib/home-faq-items";
+import { useEffect, useState } from "react";
 import { sans } from "@/lib/page-theme";
 
 const SECTION_BG = "#FAF8F5";
+
+type FaqItem = { _id: string; question: string; answer: string };
 
 /** First items shown on home; rest on /about */
 const HOME_FAQ_COUNT = 5;
 
 export function HomeFaqSection() {
-  const items = SITE_FAQ_ITEMS.slice(0, HOME_FAQ_COUNT);
+  const [items, setItems] = useState<FaqItem[]>([]);
   const [open, setOpen] = useState<number | null>(0);
+
+  useEffect(() => {
+    fetch("/api/admin/faq-items")
+      .then((r) => r.json())
+      .then((data: FaqItem[]) => setItems(data.filter((_, i) => i < HOME_FAQ_COUNT)))
+      .catch(() => {});
+  }, []);
+
+  if (items.length === 0) return null;
 
   return (
     <section
@@ -54,7 +64,7 @@ export function HomeFaqSection() {
               const isOpen = open === i;
               return (
                 <div
-                  key={item.q}
+                  key={item._id}
                   className={`overflow-hidden rounded-xl border transition-colors ${
                     isOpen
                       ? "border-neutral-200 bg-white"
@@ -69,7 +79,7 @@ export function HomeFaqSection() {
                     style={sans}
                   >
                     <span className="text-[14px] font-semibold leading-snug text-neutral-900 sm:text-[15px]">
-                      {item.q}
+                      {item.question}
                     </span>
                     <span className="shrink-0 text-brand-primary" aria-hidden>
                       {isOpen ? (
@@ -84,7 +94,7 @@ export function HomeFaqSection() {
                       className="border-t border-neutral-100 px-4 pb-4 pt-0 text-[13px] leading-relaxed text-neutral-600 sm:px-5 sm:text-[14px]"
                       style={sans}
                     >
-                      {item.a}
+                      {item.answer}
                     </p>
                   ) : null}
                 </div>

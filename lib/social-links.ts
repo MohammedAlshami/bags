@@ -6,7 +6,6 @@ export type SocialLinkRow = {
   label: string;
   url: string;
   icon: string | null;
-  display_order: number;
   created_at: string;
   updated_at: string;
 };
@@ -17,7 +16,6 @@ export type SocialLink = {
   label: string;
   url: string;
   icon: string | null;
-  displayOrder: number;
 };
 
 export function mapSocialLink(row: SocialLinkRow): SocialLink {
@@ -27,7 +25,6 @@ export function mapSocialLink(row: SocialLinkRow): SocialLink {
     label: row.label,
     url: row.url,
     icon: row.icon,
-    displayOrder: row.display_order,
   };
 }
 

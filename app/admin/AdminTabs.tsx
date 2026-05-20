@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Boxes, LayoutDashboard, MapPin, Package, Users, ShoppingBag, Share2 } from "lucide-react";
+import { BookOpen, Boxes, LayoutDashboard, MapPin, Package, Users, ShoppingBag, Share2, Megaphone, Image, MessageSquare, HelpCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { adminIconClassName, sans } from "@/lib/page-theme";
@@ -16,6 +16,10 @@ const TABS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/admin/customers", label: "العملاء", icon: Users },
   { href: "/admin/orders", label: "الطلبات", icon: ShoppingBag },
   { href: "/admin/social-links", label: "روابط التواصل", icon: Share2 },
+  { href: "/admin/ad-strips", label: "الشريط الإعلاني", icon: Megaphone },
+  { href: "/admin/before-after", label: "قبل وبعد", icon: Image },
+  { href: "/admin/reviews", label: "التقييمات", icon: MessageSquare },
+  { href: "/admin/faq-items", label: "الأسئلة", icon: HelpCircle },
 ];
 
 export function AdminTabs() {

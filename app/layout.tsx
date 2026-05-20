@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Cormorant_Garamond, Tajawal } from "next/font/google
 import "./globals.css";
 import { getNavData } from "@/lib/get-nav-categories";
 import ConditionalNavbar from "./components/ConditionalNavbar";
+import { OffersBanner } from "./components/OffersBanner";
 import ConditionalFooter from "./components/ConditionalFooter";
 import { WhatsAppFloat } from "./components/WhatsAppFloat";
 import { CartProvider } from "./context/CartContext";
@@ -78,6 +79,7 @@ export default async function RootLayout({
         <CartProvider>
           <CurrencyProvider>
             <ConditionalNavbar categories={categories} hasBlog={hasBlog} />
+            <OffersBanner />
             {children}
           <ConditionalFooter hasBlog={hasBlog} />
           <WhatsAppFloat />

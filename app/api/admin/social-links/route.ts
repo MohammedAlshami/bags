@@ -5,7 +5,7 @@ import { mapSocialLink, type SocialLinkRow } from "@/lib/social-links";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const rows = await sql`SELECT * FROM social_links ORDER BY display_order ASC`;
+  const rows = await sql`SELECT * FROM social_links ORDER BY created_at ASC`;
   return NextResponse.json((rows as SocialLinkRow[]).map(mapSocialLink));
 }
 
@@ -17,11 +17,10 @@ export async function POST(request: Request) {
     const label = String(body.label ?? "");
     const url = String(body.url ?? "");
     const icon = body.icon ? String(body.icon) : null;
-    const displayOrder = Number(body.displayOrder ?? 0);
 
     await sql`
-      INSERT INTO social_links (id, platform, label, url, icon, display_order)
-      VALUES (${id}, ${platform}, ${label}, ${url}, ${icon}, ${displayOrder})
+      INSERT INTO social_links (id, platform, label, url, icon)
+      VALUES (${id}, ${platform}, ${label}, ${url}, ${icon})
     `;
     const rows = await sql`SELECT * FROM social_links WHERE id = ${id} LIMIT 1`;
     return NextResponse.json(mapSocialLink(rows[0] as SocialLinkRow), { status: 201 });

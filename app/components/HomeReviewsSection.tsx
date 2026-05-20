@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
 import { productUrl } from "@/lib/slugs";
 import { sans } from "@/lib/page-theme";
@@ -13,28 +13,14 @@ export type ReviewProductRef = {
   image: string;
 };
 
-const REVIEW_ENTRIES: { author: string; body: string }[] = [
-  {
-    author: "نورة ع.",
-    body: "النتيجة فاقت التوقعات؛ بشرتي أصبحت أكثر نعومة ولمعاناً منذ أسبوعين. التغليف أنيق والتوصيل سريع.",
-  },
-  {
-    author: "لينا م.",
-    body: "أول مرة أجرب منتجات محلية بهذه الجودة. رائحة خفيفة مريحة والتركيبة لا تثقل البشرة.",
-  },
-  {
-    author: "ريم س.",
-    body: "طلبت للعائلة والجميع راضٍ. خدمة العملاء على الواتساب استجابت بسرعة وساعدتني في اختيار المناسب.",
-  },
-  {
-    author: "هند أ.",
-    body: "أستخدم السيروم يومياً مع الكريم؛ الهالات خفت بشكل ملحوظ. أنصح به بصراحة.",
-  },
-  {
-    author: "دانة ك.",
-    body: "الشحن وصل قبل الموعد والمنتج مطابق للصور. أعد الطلب بكل ثقة.",
-  },
-];
+type ReviewData = {
+  _id: string;
+  author: string;
+  body: string;
+  productId: string | null;
+  sortOrder: number;
+  isActive: boolean;
+};
 
 function ReviewCard({
   author,
@@ -90,16 +76,25 @@ function ReviewCard({
 }
 
 export function HomeReviewsSection({ products }: { products: ReviewProductRef[] }) {
+  const [reviews, setReviews] = useState<ReviewData[]>([]);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [index, setIndex] = useState(0);
 
+  useEffect(() => {
+    fetch("/api/admin/reviews")
+      .then((r) => r.json())
+      .then((data: ReviewData[]) => setReviews(data.filter((r) => r.isActive)))
+      .catch(() => {});
+  }, []);
+
   const entries = useMemo(() => {
-    if (!products.length) return [];
-    return REVIEW_ENTRIES.map((r, i) => ({
-      ...r,
-      product: products[i % products.length]!,
-    }));
-  }, [products]);
+    if (reviews.length === 0 || products.length === 0) return [];
+    return reviews.map((r, i) => {
+      let product = products.find((p) => p.slug === r.productId);
+      if (!product) product = products[i % products.length]!;
+      return { author: r.author, body: r.body, product };
+    });
+  }, [reviews, products]);
 
   const scrollTo = useCallback((i: number) => {
     const n = entries.length;
@@ -159,9 +154,7 @@ export function HomeReviewsSection({ products }: { products: ReviewProductRef[] 
           {entries.map((item, idx) => (
             <div
               key={`${item.author}-${idx}`}
-              ref={(el) => {
-                cardRefs.current[idx] = el;
-              }}
+              ref={(el) => { cardRefs.current[idx] = el; }}
               className="flex shrink-0 self-stretch"
             >
               <ReviewCard author={item.author} body={item.body} product={item.product} />

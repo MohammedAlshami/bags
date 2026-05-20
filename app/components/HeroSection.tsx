@@ -119,7 +119,7 @@ export function HeroSection() {
       </nav>
 
       <div className="absolute inset-0 z-10 flex flex-col justify-end px-6 pb-14 md:px-16 md:pb-20 lg:px-20">
-        <div className="flex flex-col justify-end gap-8 md:flex-row md:items-end">
+          <div className="flex w-full flex-col justify-end gap-8 md:flex-row md:items-end md:justify-between">
           <h1
             className="text-3xl font-bold leading-tight text-white drop-shadow-sm md:text-4xl"
             style={brandName}
