@@ -89,11 +89,13 @@ export function HomeReviewsSection({ products }: { products: ReviewProductRef[] 
 
   const entries = useMemo(() => {
     if (reviews.length === 0 || products.length === 0) return [];
-    return reviews.map((r, i) => {
-      let product = products.find((p) => p.slug === r.productId);
-      if (!product) product = products[i % products.length]!;
-      return { author: r.author, body: r.body, product };
-    });
+    return reviews
+      .map((r) => {
+        const product = products.find((p) => p.slug === r.productId);
+        if (!product) return null;
+        return { author: r.author, body: r.body, product };
+      })
+      .filter(Boolean);
   }, [reviews, products]);
 
   const scrollTo = useCallback((i: number) => {
@@ -110,7 +112,7 @@ export function HomeReviewsSection({ products }: { products: ReviewProductRef[] 
   if (entries.length === 0) return null;
 
   return (
-    <section className="w-full bg-[#FAF8F5] py-14 md:py-20" aria-labelledby="home-reviews-heading" dir="rtl">
+    <section id="reviews" className="w-full bg-[#FAF8F5] py-14 md:py-20" aria-labelledby="home-reviews-heading" dir="rtl">
       <div className="mx-auto max-w-[1600px] px-4 sm:px-8 md:px-14 lg:px-24">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="text-start">
@@ -148,7 +150,7 @@ export function HomeReviewsSection({ products }: { products: ReviewProductRef[] 
         </div>
 
         <div
-          className="mt-10 flex items-stretch gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+           className="mt-10 flex items-stretch gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4"
           style={{ scrollSnapType: "x mandatory" }}
         >
           {entries.map((item, idx) => (

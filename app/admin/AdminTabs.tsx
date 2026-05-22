@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Boxes, LayoutDashboard, MapPin, Package, Users, ShoppingBag, Share2, Megaphone, Image, MessageSquare, HelpCircle } from "lucide-react";
+import { BookOpen, Boxes, LayoutDashboard, MapPin, Package, Users, ShoppingBag, Share2, Megaphone, Image, MessageSquare, HelpCircle, Shield, User } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { adminIconClassName, sans } from "@/lib/page-theme";
 
-const TABS: { href: string; label: string; icon: LucideIcon }[] = [
+const TABS: { href: string; label: string; icon: LucideIcon; superadminOnly?: boolean }[] = [
   { href: "/admin", label: "نظرة عامة", icon: LayoutDashboard },
   { href: "/admin/products", label: "المنتجات", icon: Package },
   { href: "/admin/packages", label: "الباقات", icon: Boxes },
@@ -16,20 +16,24 @@ const TABS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/admin/customers", label: "العملاء", icon: Users },
   { href: "/admin/orders", label: "الطلبات", icon: ShoppingBag },
   { href: "/admin/social-links", label: "روابط التواصل", icon: Share2 },
-  { href: "/admin/ad-strips", label: "الشريط الإعلاني", icon: Megaphone },
+  { href: "/admin/ad-strips", label: "تسويق الصفحة الرئيسية", icon: Megaphone },
   { href: "/admin/before-after", label: "قبل وبعد", icon: Image },
   { href: "/admin/reviews", label: "التقييمات", icon: MessageSquare },
   { href: "/admin/faq-items", label: "الأسئلة", icon: HelpCircle },
+  { href: "/admin/profile", label: "الملف الشخصي", icon: User },
+  { href: "/admin/users", label: "المستخدمين", icon: Shield, superadminOnly: true },
 ];
 
-export function AdminTabs() {
+export function AdminTabs({ role }: { role?: string }) {
   const pathname = usePathname();
+  const isSuperadmin = role === "superadmin";
+  const visibleTabs = TABS.filter((t) => !t.superadminOnly || isSuperadmin);
 
   return (
     <>
       <nav className="mb-8 hidden lg:block" aria-label="أقسام لوحة الإدارة">
         <div className="flex gap-6 overflow-x-auto">
-          {TABS.map(({ href, label, icon: Icon }) => {
+          {visibleTabs.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href));
             return (
               <Link
@@ -49,8 +53,8 @@ export function AdminTabs() {
       </nav>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden" aria-label="أقسام لوحة الإدارة">
-        <div className="mx-auto grid max-w-xl grid-cols-6 rounded-full border border-black/5 bg-white/95 px-2 py-2 shadow-[0_14px_40px_rgba(0,0,0,0.16)] backdrop-blur-xl">
-          {TABS.map(({ href, label, icon: Icon }) => {
+        <div className="mx-auto grid max-w-xl grid-cols-6 rounded-xl border border-black/5 bg-white/95 px-2 py-2 backdrop-blur-xl">
+          {visibleTabs.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href));
             return (
               <Link

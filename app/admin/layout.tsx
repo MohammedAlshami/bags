@@ -15,7 +15,7 @@ import { AdminTabs } from "./AdminTabs";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
-  if (!session || session.role !== "admin") {
+  if (!session || (session.role !== "admin" && session.role !== "superadmin")) {
     redirect("/login");
   }
 
@@ -37,7 +37,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <AdminLogoutButton />
             </div>
           </div>
-          <AdminTabs />
+          <AdminTabs role={session.role} />
         </div>
       </header>
       <main className="bg-white px-4 pb-28 pt-28 sm:px-6 sm:pb-30 sm:pt-32 md:px-10 lg:pb-24 lg:pt-32">

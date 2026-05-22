@@ -37,10 +37,23 @@ export function getCookieName() {
   return COOKIE_NAME;
 }
 
-/** Use in admin API routes: throws if not admin. Returns session. */
+const ADMIN_ROLES = ["admin", "superadmin"];
+
+/** Use in admin API routes: throws if not admin or superadmin. Returns session. */
 export async function requireAdmin(): Promise<SessionPayload> {
   const session = await getSession();
-  if (!session || session.role !== "admin") {
+  if (!session || !ADMIN_ROLES.includes(session.role)) {
+    const err = new Error("Forbidden") as Error & { status?: number };
+    err.status = 403;
+    throw err;
+  }
+  return session;
+}
+
+/** Use in superadmin-only API routes: throws if not superadmin. Returns session. */
+export async function requireSuperadmin(): Promise<SessionPayload> {
+  const session = await getSession();
+  if (!session || session.role !== "superadmin") {
     const err = new Error("Forbidden") as Error & { status?: number };
     err.status = 403;
     throw err;

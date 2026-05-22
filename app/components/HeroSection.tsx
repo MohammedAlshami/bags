@@ -3,68 +3,58 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { HERO_SLIDE_URLS } from "@/lib/hero-images";
 import { sans } from "@/lib/page-theme";
+import type { HeroImage } from "@/lib/hero-images-api";
 
 const brandName = { ...sans };
 
-const HERO_SLIDES = HERO_SLIDE_URLS;
-
 const SLIDE_MS = 6000;
 
-/** Thin quarter-arc above the active index; stroke reveals with `progress` 0→1 */
-function SlideArc({ progress }: { progress: number }) {
-  const d = "M 3 14 A 9 9 0 0 1 21 14";
-  return (
-    <svg
-      className="text-white"
-      width={24}
-      height={18}
-      viewBox="0 0 24 18"
-      aria-hidden
-    >
-      <path
-        d={d}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.25}
-        strokeLinecap="round"
-        pathLength={1}
-        strokeDasharray={1}
-        strokeDashoffset={1 - progress}
-      />
-    </svg>
-  );
-}
-
 export function HeroSection() {
+  const [slides, setSlides] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const start = Date.now();
-    const interval = window.setInterval(() => {
-      const elapsed = Date.now() - start;
-      const p = Math.min(1, elapsed / SLIDE_MS);
-      setProgress(p);
-    }, 32);
+    setLoading(true);
+    fetch("/api/admin/hero-images")
+      .then((r) => r.json() as Promise<HeroImage[]>)
+      .then((data) => {
+        const urls = data.map((img) => img.imageUrl);
+        setSlides(urls);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (slides.length === 0) return;
     const slideTimer = window.setTimeout(() => {
-      setIndex((i) => (i + 1) % HERO_SLIDES.length);
+      setIndex((i) => (i + 1) % slides.length);
     }, SLIDE_MS);
 
     return () => {
-      window.clearInterval(interval);
       window.clearTimeout(slideTimer);
     };
-  }, [index]);
+  }, [index, slides.length]);
 
   const goTo = (i: number) => {
     setIndex(i);
   };
 
+  if (loading) {
+    return (
+      <section className="relative h-screen w-full overflow-hidden bg-neutral-200" aria-hidden>
+        <div className="h-full w-full animate-pulse bg-neutral-300" />
+      </section>
+    );
+  }
+
+  if (slides.length === 0) return null;
+
   return (
     <section className="relative h-screen w-full overflow-hidden">
-      {HERO_SLIDES.map((src, i) => (
+      {slides.map((src, i) => (
         <div
           key={src}
           className={`absolute inset-0 transition-opacity duration-[700ms] ease-out ${
@@ -92,28 +82,24 @@ export function HeroSection() {
       />
 
       <nav
-        className="absolute end-6 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-5 md:end-10 md:gap-6"
+        className="absolute end-5 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-3 md:end-8"
         aria-label="شرائح العرض"
       >
-        {HERO_SLIDES.map((_, i) => {
+        {slides.map((_, i) => {
           const active = i === index;
           return (
-            <div key={i} className="flex flex-col items-center gap-1.5">
-              <div className="flex h-[18px] w-6 items-end justify-center text-white">
-                {active ? <SlideArc progress={progress} /> : <span className="h-[18px] w-6" aria-hidden />}
-              </div>
-              <button
-                type="button"
-                onClick={() => goTo(i)}
-                className={`flex aspect-square w-11 flex-none touch-manipulation items-center justify-center rounded-full p-0 text-sm font-light leading-none tabular-nums transition-colors ${
-                  active ? "text-white" : "text-white/55 hover:text-white/90"
-                }`}
-                aria-label={`الشريحة ${i + 1}`}
-                aria-current={active ? "true" : undefined}
-              >
-                {i + 1}
-              </button>
-            </div>
+            <button
+              key={i}
+              type="button"
+              onClick={() => goTo(i)}
+              className={`rounded-full transition-all ${
+                active
+                  ? "size-2.5 bg-white"
+                  : "size-2 bg-white/50 hover:bg-white/80"
+              }`}
+              aria-label={`الشريحة ${i + 1}`}
+              aria-current={active ? "true" : undefined}
+            />
           );
         })}
       </nav>

@@ -78,9 +78,9 @@ export function BeforeAfterSection() {
             <div
               key={img._id}
               ref={(el) => { refs.current[idx] = el; }}
-              className="flex shrink-0 self-stretch snap-center snap-aligned"
+              className="flex shrink-0 self-stretch snap-center"
             >
-              <div className="relative w-[min(100%,260px)] overflow-hidden rounded-2xl border border-neutral-200/90 bg-white ring-1 ring-black/[0.03] sm:w-[280px] md:w-[300px]">
+              <div className="relative w-[260px] overflow-hidden rounded-2xl border border-neutral-200/90 bg-white ring-1 ring-black/[0.03] sm:w-[280px] md:w-[300px]">
                 <div className="relative aspect-[4/5] w-full bg-neutral-100">
                   <SafeImage
                     src={img.imageUrl}

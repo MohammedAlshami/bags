@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { sql } from "@/lib/db";
-import { parseProductSlugParam } from "@/lib/slugs";
+import { parseIdParam } from "@/lib/slugs";
 import ProductClient from "./client";
 
 type Props = {
@@ -11,9 +11,9 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const { prefix } = parseProductSlugParam(slug);
+  const id = parseIdParam(slug);
   const rows = await sql`
-    SELECT name, description_ar, image FROM products WHERE id LIKE ${prefix + "%"} LIMIT 1
+    SELECT name, description_ar, image FROM products WHERE id = ${id} LIMIT 1
   `;
   const row = rows[0] as Record<string, unknown> | undefined;
   if (!row) {

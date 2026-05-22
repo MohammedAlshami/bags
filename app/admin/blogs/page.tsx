@@ -913,7 +913,7 @@ export default function AdminBlogsPage() {
                     {post.status === "published" ? "إلغاء النشر" : "نشر"}
                   </button>
                   <Link
-                    href={`/blog/${post._id.split("-")[0]}-${slugifyBlogTitle(post.title)}`}
+                    href={`/blog/${post._id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-full border border-black/10 px-3 py-2 text-xs hover:bg-neutral-50"

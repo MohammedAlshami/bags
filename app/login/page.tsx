@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { sans, pagePaddingX } from "@/lib/page-theme";
 
@@ -19,7 +19,6 @@ function safeNextPath(raw: string | null): string | null {
 }
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -41,8 +40,7 @@ function LoginForm() {
     }
     const role = typeof data?.user?.role === "string" ? data.user.role : "";
     const next = safeNextPath(searchParams.get("next"));
-    router.push(role === "admin" ? "/admin" : next ?? "/");
-    router.refresh();
+    window.location.href = role === "admin" || role === "superadmin" ? "/admin" : next ?? "/";
   };
 
   return (

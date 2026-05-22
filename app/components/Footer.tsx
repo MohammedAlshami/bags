@@ -9,7 +9,7 @@ const QUICK_LINKS_BASE = [
   { label: "المتجر الرئيسي", href: "/shop" },
   { label: "جديد المجموعة", href: "/shop" },
   { label: "العروض الخاصة", href: "/shop" },
-  { label: "آراء العملاء", href: "/shop" },
+  { label: "آراء العملاء", href: "/#reviews" },
 ] as const;
 
 function getQuickLinks(hasBlog: boolean) {
@@ -22,7 +22,7 @@ function getQuickLinks(hasBlog: boolean) {
 const ABOUT_LINKS = [
   { label: "من نحن", href: "/about" },
   { label: "نقاط البيع", href: "/locations" },
-  { label: "الأسئلة الشائعة", href: "/about" },
+  { label: "الأسئلة الشائعة", href: "/#faq" },
   { label: "تواصل معنا", href: "/about" },
 ];
 

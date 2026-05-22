@@ -109,14 +109,15 @@ export default async function Home() {
     };
   });
 
-  const reviewProducts: ReviewProductRef[] = productRows.map((row) => {
-    const mapped = mapProduct(row, true);
-    return {
-      slug: mapped._id,
-      name: mapped.name,
-      image: mapped.image,
-    };
-  });
+  const reviewProductRows = (await sql`
+    SELECT id, name, image FROM products ORDER BY created_at DESC
+  `) as { id: string; name: string; image: string }[];
+
+  const reviewProducts: ReviewProductRef[] = reviewProductRows.map((row) => ({
+    slug: row.id,
+    name: row.name,
+    image: row.image,
+  }));
 
   const blogRows = (await sql`
     SELECT id, title, slug, excerpt, cover_image, author_name, status, content, seo_title,

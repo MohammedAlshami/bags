@@ -28,7 +28,7 @@ function last30DaysRevenueSeries(
 
 export default async function AdminDashboardPage() {
   const session = await getSession();
-  if (!session || session.role !== "admin") redirect("/login");
+  if (!session || (session.role !== "admin" && session.role !== "superadmin")) redirect("/login");
 
   const [productCount, customerCount, orderCount, revenueRow, revenueDays, statusRows] =
     await Promise.all([

@@ -27,6 +27,7 @@ export function HomeFaqSection() {
 
   return (
     <section
+      id="faq"
       className="w-full py-14 md:py-20"
       style={{ backgroundColor: SECTION_BG }}
       aria-labelledby="home-faq-heading"

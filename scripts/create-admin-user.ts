@@ -22,7 +22,7 @@ if (existsSync(envPath)) {
   }
 }
 
-const ADMIN_USERNAME = "admin@admin.com";
+const ADMIN_USERNAME = "mansorreham5@gmail.com";
 const ADMIN_PASSWORD = "admin";
 
 async function main() {
@@ -37,7 +37,7 @@ async function main() {
     await sql`
       UPDATE users SET
         password = ${hashed},
-        role = 'admin',
+        role = 'superadmin',
         email = ${ADMIN_USERNAME},
         updated_at = now()
       WHERE username = ${ADMIN_USERNAME}
@@ -46,7 +46,7 @@ async function main() {
   } else {
     await sql`
       INSERT INTO users (username, password, role, email)
-      VALUES (${ADMIN_USERNAME}, ${hashed}, ${"admin"}, ${ADMIN_USERNAME})
+      VALUES (${ADMIN_USERNAME}, ${hashed}, ${"superadmin"}, ${ADMIN_USERNAME})
     `;
     console.log("Created admin user:", ADMIN_USERNAME);
   }

@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { SafeImage } from "@/app/components/SafeImage";
 import { sql } from "@/lib/db";
 import { mapBlogPost, type BlogBlock, type BlogPostRow } from "@/lib/blog";
-import { blogUrl, parseProductSlugParam } from "@/lib/slugs";
+import { blogUrl, parseIdParam } from "@/lib/slugs";
 import { pagePaddingX, sans } from "@/lib/page-theme";
 import { CalendarDays, BookOpen, Tag } from "lucide-react";
 
@@ -58,12 +58,12 @@ function renderBlock(block: BlogBlock) {
 }
 
 async function getBlogBySlug(param: string) {
-  const { prefix } = parseProductSlugParam(param);
+  const id = parseIdParam(param);
   const rows = await sql`
     SELECT id, title, slug, excerpt, cover_image, author_name, status, content, seo_title,
            seo_description, tags, published_at, created_at, updated_at
     FROM blog_posts
-    WHERE id LIKE ${prefix + "%"} AND status = 'published'
+    WHERE id = ${id} AND status = 'published'
     LIMIT 1
   `;
   return rows[0] ? mapBlogPost(rows[0] as BlogPostRow) : null;
@@ -74,7 +74,7 @@ async function getRelatedPosts(id: string) {
     SELECT id, title, slug, excerpt, cover_image, author_name, status, content, seo_title,
            seo_description, tags, published_at, created_at, updated_at
     FROM blog_posts
-    WHERE status = 'published' AND id <> ${id}::uuid
+    WHERE status = 'published' AND id <> ${id}
     ORDER BY COALESCE(published_at, created_at) DESC, created_at DESC
     LIMIT 3
   `;
