@@ -16,6 +16,7 @@ type TrackResult = {
 function statusAr(s: string) {
   const m: Record<string, string> = {
     pending: "قيد الانتظار",
+    paid: "مدفوع",
     processing: "قيد التجهيز",
     shipped: "تم الشحن",
     delivered: "تم التسليم",

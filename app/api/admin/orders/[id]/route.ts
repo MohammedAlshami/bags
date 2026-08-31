@@ -3,7 +3,7 @@ import { sql } from "@/lib/db";
 import { mapOrderAdminDetail, type OrderRow } from "@/lib/db-mappers";
 import { requireAdmin } from "@/lib/auth";
 import { isUuid } from "@/lib/id";
-import { sendOrderCompleteEmail } from "@/lib/order-emails";
+import { sendOrderCompleteEmail, sendOrderShippedEmail, sendOrderCancelledEmail } from "@/lib/order-emails";
 
 export const dynamic = "force-dynamic";
 
@@ -59,12 +59,8 @@ export async function PATCH(
 
     let status = orderBefore.status;
     const statusIn = body?.status;
-    if (
-      statusIn === "pending" ||
-      statusIn === "paid" ||
-      statusIn === "shipped" ||
-      statusIn === "cancelled"
-    ) {
+    const VALID_STATUSES = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"] as const;
+    if (statusIn && VALID_STATUSES.includes(statusIn)) {
       status = statusIn;
     }
 
@@ -148,6 +144,68 @@ export async function PATCH(
         }
       } catch (emailErr) {
         console.error("[Order Complete Email]", emailErr);
+      }
+    }
+
+    if (status === "shipped" && orderBefore.status !== "shipped") {
+      try {
+        const adminEmail = process.env.ADMIN_EMAIL;
+        if (adminEmail) {
+          const items = Array.isArray(order.items) ? order.items : [];
+          const sa = order.shipping_address && typeof order.shipping_address === "object"
+            ? order.shipping_address as Record<string, string>
+            : {};
+          await sendOrderShippedEmail({
+            adminEmail,
+            customerEmail: order.customer_email || "",
+            orderId: order.id,
+            customerName: order.customer_full_name || order.customer_username || "عميل",
+            customerPhone: order.customer_phone || "",
+            total: order.total,
+            status: order.status,
+            items: items.map((it: Record<string, unknown>) => ({
+              name: typeof it.name === "string" ? it.name : "",
+              quantity: typeof it.quantity === "number" ? it.quantity : 1,
+              price: typeof it.price === "number" ? it.price : 0,
+            })),
+            shippingAddress: sa,
+            trackingNumber: order.tracking_number || "",
+            carrier: order.carrier || "",
+            createdAt: order.created_at,
+          });
+        }
+      } catch (emailErr) {
+        console.error("[Order Shipped Email]", emailErr);
+      }
+    }
+
+    if (status === "cancelled" && orderBefore.status !== "cancelled") {
+      try {
+        const adminEmail = process.env.ADMIN_EMAIL;
+        if (adminEmail) {
+          const items = Array.isArray(order.items) ? order.items : [];
+          const sa = order.shipping_address && typeof order.shipping_address === "object"
+            ? order.shipping_address as Record<string, string>
+            : {};
+          await sendOrderCancelledEmail({
+            adminEmail,
+            customerEmail: order.customer_email || "",
+            orderId: order.id,
+            customerName: order.customer_full_name || order.customer_username || "عميل",
+            customerPhone: order.customer_phone || "",
+            total: order.total,
+            status: order.status,
+            items: items.map((it: Record<string, unknown>) => ({
+              name: typeof it.name === "string" ? it.name : "",
+              quantity: typeof it.quantity === "number" ? it.quantity : 1,
+              price: typeof it.price === "number" ? it.price : 0,
+            })),
+            shippingAddress: sa,
+            createdAt: order.created_at,
+          });
+        }
+      } catch (emailErr) {
+        console.error("[Order Cancelled Email]", emailErr);
       }
     }
 

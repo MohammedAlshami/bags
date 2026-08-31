@@ -37,8 +37,10 @@ function statusLabel(status: string): string {
   const map: Record<string, string> = {
     pending: "قيد الانتظار",
     paid: "مدفوع",
+    processing: "قيد التجهيز",
     shipped: "تم الشحن",
-    cancelled: "ملغي",
+    delivered: "تم التسليم",
+    cancelled: "ملغاة",
   };
   return map[status] ?? status;
 }
@@ -480,5 +482,255 @@ export async function sendReceiptSubmittedEmail(params: {
     const custText = `أهلاً ${customerName}،\n\nتم استلام إيصال الدفع للطلب #${shortId} بنجاح.\nالمبلغ: ${formatSar(total)}\nالتاريخ: ${formatDateAr(createdAt)}\n\nسيتم مراجعة الإيصال وتأكيد الطلب قريباً.\n\nشكراً لك!`;
 
     await sendAgentMail([customerEmail.trim()], `تم استلام إيصال الدفع — طلب #${shortId}`, custText, custHtml);
+  }
+}
+
+// ─── Order Shipped (when admin marks as shipped) ───
+
+export async function sendOrderShippedEmail(params: {
+  adminEmail: string;
+  customerEmail: string;
+  orderId: string;
+  customerName: string;
+  customerPhone: string;
+  total: number;
+  status: string;
+  items: Array<{ name: string; quantity: number; price: number }>;
+  shippingAddress: Record<string, string>;
+  trackingNumber: string;
+  carrier: string;
+  createdAt: string;
+}) {
+  const { adminEmail, customerEmail, orderId, customerName, customerPhone, total, status, items, shippingAddress, trackingNumber, carrier, createdAt } = params;
+  const shortId = orderId.slice(0, 8);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://goldqueen.store";
+
+  const adminItemsHtml = buildItemsHtml(items);
+  const adminAddressHtml = buildAddressHtml(shippingAddress);
+
+  const adminHtml = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;margin:0;padding:20px;direction:rtl;}
+  .wrapper{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+  .header{background:#0284c7;padding:28px 32px;text-align:center;}
+  .header h1{color:#fff;margin:0;font-size:20px;font-weight:600;}
+  .body{padding:32px;}
+  .body p{color:#333;font-size:14px;line-height:1.7;margin:0 0 12px;}
+  .badge{display:inline-block;background:#e0f2fe;color:#0284c7;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;}
+  table{width:100%;border-collapse:collapse;margin:16px 0;}
+  th{background:#fafafa;padding:10px 12px;text-align:right;font-size:13px;color:#666;border-bottom:2px solid #eee;}
+  .total-row td{background:#fafafa;font-weight:700;padding:12px;text-align:center;border-top:2px solid #eee;}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+  .info-box{background:#fafafa;border-radius:8px;padding:16px;}
+  .info-box h4{margin:0 0 8px;font-size:13px;color:#0284c7;}
+  .info-box p{margin:0;font-size:13px;color:#333;}
+  .footer{background:#f9f9f9;padding:16px 32px;text-align:center;font-size:12px;color:#aaa;border-top:1px solid #eee;}
+  .btn{display:inline-block;background:#0284c7;color:#fff;text-decoration:none;padding:10px 24px;border-radius:50px;font-size:14px;font-weight:600;margin:8px 0;}
+</style></head>
+<body>
+<div class="wrapper">
+  <div class="header"><h1>تم شحن الطلب — #${shortId}</h1></div>
+  <div class="body">
+    <p>تم تحديث الطلب <strong>#${shortId}</strong> إلى حالة <span class="badge">${statusLabel(status)}</span></p>
+    <p><strong>التاريخ:</strong> ${formatDateAr(createdAt)}</p>
+    ${trackingNumber ? `<p><strong>رقم التتبع:</strong> ${trackingNumber}</p>` : ""}
+    ${carrier ? `<p><strong>شركة الشحن:</strong> ${carrier}</p>` : ""}
+    <div class="info-grid">
+      <div class="info-box">
+        <h4>معلومات العميل</h4>
+        <p><strong>الاسم:</strong> ${customerName}</p>
+        <p><strong>البريد:</strong> ${customerEmail}</p>
+        <p><strong>الهاتف:</strong> ${customerPhone}</p>
+      </div>
+      <div class="info-box">
+        <h4>عنوان الشحن</h4>
+        <p>${adminAddressHtml}</p>
+      </div>
+    </div>
+    <h3 style="margin:24px 0 8px;font-size:16px;color:#333;">تفاصيل الطلب</h3>
+    <table>
+      <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>المجموع</th></tr></thead>
+      <tbody>${adminItemsHtml}
+        <tr class="total-row"><td colspan="3">المجموع الكلي</td><td>${formatSar(total)}</td></tr>
+      </tbody>
+    </table>
+    <p style="text-align:center;margin-top:24px;">
+      <a href="${siteUrl}/admin/orders" class="btn">عرض الطلب في لوحة الإدارة</a>
+    </p>
+  </div>
+  <div class="footer">© ${new Date().getFullYear()} الملكة جولد — جميع الحقوق محفوظة</div>
+</div>
+</body></html>`;
+
+  const adminText = `تم شحن الطلب\nالطلب: #${shortId}\nالحالة: ${statusLabel(status)}\nرقم التتبع: ${trackingNumber || "غير محدد"}\nشركة الشحن: ${carrier || "غير محدد"}\nالعميل: ${customerName}\nالبريد: ${customerEmail}\nالهاتف: ${customerPhone}\nالمجموع: ${formatSar(total)}\nالتاريخ: ${formatDateAr(createdAt)}\nعرض الطلب: ${siteUrl}/admin/orders`;
+
+  await sendAgentMail([adminEmail], `تم شحن الطلب #${shortId}`, adminText, adminHtml);
+
+  if (isValidEmail(customerEmail)) {
+    const custItemsHtml = buildItemsHtml(items);
+    const custAddressHtml = buildAddressHtml(shippingAddress);
+
+    const custHtml = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;margin:0;padding:20px;direction:rtl;}
+  .wrapper{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+  .header{background:#0284c7;padding:28px 32px;text-align:center;}
+  .header h1{color:#fff;margin:0;font-size:20px;font-weight:600;}
+  .body{padding:32px;}
+  .body p{color:#333;font-size:14px;line-height:1.7;margin:0 0 12px;}
+  .badge{display:inline-block;background:#e0f2fe;color:#0284c7;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;}
+  .info-box{background:#fafafa;border-radius:8px;padding:16px;margin:16px 0;}
+  .info-box h4{margin:0 0 8px;font-size:13px;color:#0284c7;}
+  .info-box p{margin:0;font-size:13px;color:#333;}
+  .footer{background:#f9f9f9;padding:16px 32px;text-align:center;font-size:12px;color:#aaa;border-top:1px solid #eee;}
+</style></head>
+<body>
+<div class="wrapper">
+  <div class="header"><h1>تم شحن طلبك</h1></div>
+  <div class="body">
+    <p>أهلاً <strong>${customerName}</strong>،</p>
+    <p>تم شحن الطلب <strong>#${shortId}</strong> <span class="badge">${statusLabel(status)}</span></p>
+    <p><strong>التاريخ:</strong> ${formatDateAr(createdAt)}</p>
+    ${trackingNumber ? `<p><strong>رقم التتبع:</strong> ${trackingNumber}</p>` : ""}
+    ${carrier ? `<p><strong>شركة الشحن:</strong> ${carrier}</p>` : ""}
+    <div class="info-box">
+      <h4>عنوان الشحن</h4>
+      <p>${custAddressHtml}</p>
+    </div>
+    <p style="font-size:13px;color:#888;">يمكنك تتبع شحنتك من صفحة طلباتك. شكراً لتسوقك معنا!</p>
+  </div>
+  <div class="footer">© ${new Date().getFullYear()} الملكة جولد — جميع الحقوق محفوظة</div>
+</div>
+</body></html>`;
+
+    const custText = `أهلاً ${customerName}،\n\nتم شحن الطلب #${shortId}.\nالحالة: ${statusLabel(status)}\nرقم التتبع: ${trackingNumber || "غير محدد"}\nشركة الشحن: ${carrier || "غير محدد"}\nالتاريخ: ${formatDateAr(createdAt)}\n\nيمكنك تتبع شحنتك من صفحة طلباتك.\n\nشكراً لتسوقك معنا!`;
+
+    await sendAgentMail([customerEmail.trim()], `تم شحن طلبك #${shortId}`, custText, custHtml);
+  }
+}
+
+// ─── Order Cancelled (when admin marks as cancelled) ───
+
+export async function sendOrderCancelledEmail(params: {
+  adminEmail: string;
+  customerEmail: string;
+  orderId: string;
+  customerName: string;
+  customerPhone: string;
+  total: number;
+  status: string;
+  items: Array<{ name: string; quantity: number; price: number }>;
+  shippingAddress: Record<string, string>;
+  createdAt: string;
+}) {
+  const { adminEmail, customerEmail, orderId, customerName, customerPhone, total, status, items, shippingAddress, createdAt } = params;
+  const shortId = orderId.slice(0, 8);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://goldqueen.store";
+
+  const adminItemsHtml = buildItemsHtml(items);
+  const adminAddressHtml = buildAddressHtml(shippingAddress);
+
+  const adminHtml = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;margin:0;padding:20px;direction:rtl;}
+  .wrapper{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+  .header{background:#dc2626;padding:28px 32px;text-align:center;}
+  .header h1{color:#fff;margin:0;font-size:20px;font-weight:600;}
+  .body{padding:32px;}
+  .body p{color:#333;font-size:14px;line-height:1.7;margin:0 0 12px;}
+  .badge{display:inline-block;background:#fee2e2;color:#dc2626;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;}
+  table{width:100%;border-collapse:collapse;margin:16px 0;}
+  th{background:#fafafa;padding:10px 12px;text-align:right;font-size:13px;color:#666;border-bottom:2px solid #eee;}
+  .total-row td{background:#fafafa;font-weight:700;padding:12px;text-align:center;border-top:2px solid #eee;}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0;}
+  .info-box{background:#fafafa;border-radius:8px;padding:16px;}
+  .info-box h4{margin:0 0 8px;font-size:13px;color:#dc2626;}
+  .info-box p{margin:0;font-size:13px;color:#333;}
+  .footer{background:#f9f9f9;padding:16px 32px;text-align:center;font-size:12px;color:#aaa;border-top:1px solid #eee;}
+  .btn{display:inline-block;background:#dc2626;color:#fff;text-decoration:none;padding:10px 24px;border-radius:50px;font-size:14px;font-weight:600;margin:8px 0;}
+</style></head>
+<body>
+<div class="wrapper">
+  <div class="header"><h1>تم إلغاء الطلب — #${shortId}</h1></div>
+  <div class="body">
+    <p>تم تحديث الطلب <strong>#${shortId}</strong> إلى حالة <span class="badge">${statusLabel(status)}</span></p>
+    <p><strong>التاريخ:</strong> ${formatDateAr(createdAt)}</p>
+    <div class="info-grid">
+      <div class="info-box">
+        <h4>معلومات العميل</h4>
+        <p><strong>الاسم:</strong> ${customerName}</p>
+        <p><strong>البريد:</strong> ${customerEmail}</p>
+        <p><strong>الهاتف:</strong> ${customerPhone}</p>
+      </div>
+      <div class="info-box">
+        <h4>عنوان الشحن</h4>
+        <p>${adminAddressHtml}</p>
+      </div>
+    </div>
+    <h3 style="margin:24px 0 8px;font-size:16px;color:#333;">تفاصيل الطلب</h3>
+    <table>
+      <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>المجموع</th></tr></thead>
+      <tbody>${adminItemsHtml}
+        <tr class="total-row"><td colspan="3">المجموع الكلي</td><td>${formatSar(total)}</td></tr>
+      </tbody>
+    </table>
+    <p style="text-align:center;margin-top:24px;">
+      <a href="${siteUrl}/admin/orders" class="btn">عرض الطلب في لوحة الإدارة</a>
+    </p>
+  </div>
+  <div class="footer">© ${new Date().getFullYear()} الملكة جولد — جميع الحقوق محفوظة</div>
+</div>
+</body></html>`;
+
+  const adminText = `تم إلغاء الطلب\nالطلب: #${shortId}\nالحالة: ${statusLabel(status)}\nالعميل: ${customerName}\nالبريد: ${customerEmail}\nالهاتف: ${customerPhone}\nالمجموع: ${formatSar(total)}\nالتاريخ: ${formatDateAr(createdAt)}\nعرض الطلب: ${siteUrl}/admin/orders`;
+
+  await sendAgentMail([adminEmail], `تم إلغاء الطلب #${shortId}`, adminText, adminHtml);
+
+  if (isValidEmail(customerEmail)) {
+    const custItemsHtml = buildItemsHtml(items);
+    const custAddressHtml = buildAddressHtml(shippingAddress);
+
+    const custHtml = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;margin:0;padding:20px;direction:rtl;}
+  .wrapper{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+  .header{background:#dc2626;padding:28px 32px;text-align:center;}
+  .header h1{color:#fff;margin:0;font-size:20px;font-weight:600;}
+  .body{padding:32px;}
+  .body p{color:#333;font-size:14px;line-height:1.7;margin:0 0 12px;}
+  .badge{display:inline-block;background:#fee2e2;color:#dc2626;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;}
+  .info-box{background:#fafafa;border-radius:8px;padding:16px;margin:16px 0;}
+  .info-box h4{margin:0 0 8px;font-size:13px;color:#dc2626;}
+  .info-box p{margin:0;font-size:13px;color:#333;}
+  .footer{background:#f9f9f9;padding:16px 32px;text-align:center;font-size:12px;color:#aaa;border-top:1px solid #eee;}
+</style></head>
+<body>
+<div class="wrapper">
+  <div class="header"><h1>تم إلغاء طلبك</h1></div>
+  <div class="body">
+    <p>أهلاً <strong>${customerName}</strong>،</p>
+    <p>تم إلغاء الطلب <strong>#${shortId}</strong> <span class="badge">${statusLabel(status)}</span></p>
+    <p><strong>التاريخ:</strong> ${formatDateAr(createdAt)}</p>
+    <div class="info-box">
+      <h4>تفاصيل الطلب</h4>
+      <p>${custAddressHtml}</p>
+    </div>
+    <p style="font-size:13px;color:#888;">إذا كان لديك أي استفسار، يرجى التواصل معنا. شكراً لتسوقك معنا!</p>
+  </div>
+  <div class="footer">© ${new Date().getFullYear()} الملكة جولد — جميع الحقوق محفوظة</div>
+</div>
+</body></html>`;
+
+    const custText = `أهلاً ${customerName}،\n\nتم إلغاء الطلب #${shortId}.\nالحالة: ${statusLabel(status)}\nالتاريخ: ${formatDateAr(createdAt)}\n\nإذا كان لديك أي استفسار، يرجى التواصل معنا.\n\nشكراً لتسوقك معنا!`;
+
+    await sendAgentMail([customerEmail.trim()], `تم إلغاء طلبك #${shortId}`, custText, custHtml);
   }
 }

@@ -62,7 +62,7 @@ type OrderDetail = {
   updatedAt?: string;
 };
 
-const STATUS_OPTIONS = ["pending", "paid", "shipped", "cancelled"] as const;
+const STATUS_OPTIONS = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"] as const;
 
 function formatShippingAddress(sa: ShippingAddress | null | undefined): string {
   if (!sa) return "";
@@ -79,7 +79,9 @@ function formatShippingAddress(sa: ShippingAddress | null | undefined): string {
 
 function paymentStatusSummary(order: OrderDetail): string {
   if (order.status === "cancelled") return "ملغى — لا يتطلب دفعاً.";
-  if (order.status === "shipped") return "مكتمل — كان قد دُفع أو وُثّق قبل الشحن.";
+  if (order.status === "delivered") return "تم التسليم — الطلب تم تسليمه للعميل.";
+  if (order.status === "shipped") return "قيد الشحن — الطلب في الطريق.";
+  if (order.status === "processing") return "قيد التجهيز — جاري تجهيز الطلب.";
   if (order.status === "paid") return "مدفوع — تم تأكيد استلام المبلغ.";
   if (order.status === "pending") {
     if (order.paymentProofUrl) {
@@ -442,8 +444,9 @@ export default function AdminOrderDetailPage() {
                 { key: "pending", label: "تم الطلب" },
                 { key: "paid", label: "مدفوع" },
                 { key: "shipped", label: "تم الشحن" },
+                { key: "delivered", label: "تم التسليم" },
               ].map((step, i) => {
-                const statusOrder = ["pending", "paid", "shipped"] as const;
+                const statusOrder = ["pending", "paid", "shipped", "delivered"] as const;
                 const currentIndex = statusOrder.indexOf(order.status as (typeof statusOrder)[number]);
                 const stepIndex = statusOrder.indexOf(step.key as (typeof statusOrder)[number]);
                 const isActive = currentIndex === stepIndex;
@@ -470,7 +473,7 @@ export default function AdminOrderDetailPage() {
                         {step.label}
                       </span>
                     </div>
-                    {i < 2 && (
+                    {i < 3 && (
                       <div
                         className={`flex-1 h-0.5 min-w-[12px] mx-0.5 ${
                           isPast ? "bg-black" : "bg-black/20"

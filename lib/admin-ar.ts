@@ -44,7 +44,6 @@ const API_ERR: Record<string, string> = {
   "Failed to create order": "تعذر إنشاء الطلب",
   "Customer required": "العميل مطلوب",
   "Invalid customer": "عميل غير صالح",
-  "Customer not found": "العميل غير موجود",
   "Items required": "يجب إضافة منتج واحد على الأقل",
   "Invalid items": "بنود غير صالحة",
   "Upload failed": "فشل الرفع",

@@ -32,9 +32,11 @@ type OrderDetail = {
 
 function statusAr(s: string) {
   const m: Record<string, string> = {
-    pending: "في انتظار الدفع",
+    pending: "قيد الانتظار",
     paid: "مدفوع",
+    processing: "قيد التجهيز",
     shipped: "تم الشحن",
+    delivered: "تم التسليم",
     cancelled: "ملغاة",
   };
   return m[s] ?? s;

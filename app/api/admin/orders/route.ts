@@ -84,12 +84,8 @@ export async function POST(request: Request) {
 
     let status = "pending";
     const statusIn = body.status;
-    if (
-      statusIn === "pending" ||
-      statusIn === "paid" ||
-      statusIn === "shipped" ||
-      statusIn === "cancelled"
-    ) {
+    const VALID_STATUSES = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"] as const;
+    if (statusIn && VALID_STATUSES.includes(statusIn)) {
       status = statusIn;
     }
 
