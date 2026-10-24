@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { sans } from "@/lib/page-theme";
 import type { HeroImage } from "@/lib/hero-images-api";
 
@@ -10,33 +10,58 @@ const brandName = { ...sans };
 
 const SLIDE_MS = 6000;
 
-export function HeroSection() {
-  const [slides, setSlides] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+/** `initialSlides` comes from the server render, so the first image is in the HTML and can be preloaded. */
+export function HeroSection({ initialSlides }: { initialSlides?: string[] }) {
+  const [slides, setSlides] = useState<string[]>(initialSlides ?? []);
+  const [loading, setLoading] = useState(initialSlides === undefined);
   const [index, setIndex] = useState(0);
+  // Slides after the first are mounted only once the first image is in, so on a slow connection
+  // the first hero image gets the whole pipe instead of racing two more full-screen photos.
+  const [extraReady, setExtraReady] = useState(false);
+  const firstSlideRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setLoading(true);
+    if (slides.length === 0 || extraReady) return;
+    const img = firstSlideRef.current?.querySelector("img");
+    const release = () => window.setTimeout(() => setExtraReady(true), 800);
+    let timer: number | undefined;
+    if (!img || img.complete) {
+      timer = release();
+    } else {
+      img.addEventListener("load", () => (timer = release()), { once: true });
+    }
+    // Never leave the carousel stuck on one slide if the load event is missed.
+    const fallback = window.setTimeout(() => setExtraReady(true), 12000);
+    return () => {
+      if (timer) window.clearTimeout(timer);
+      window.clearTimeout(fallback);
+    };
+  }, [slides.length, extraReady]);
+
+  const visibleSlides = extraReady ? slides : slides.slice(0, 1);
+
+  useEffect(() => {
+    if (initialSlides !== undefined) return;
     fetch("/api/admin/hero-images")
       .then((r) => r.json() as Promise<HeroImage[]>)
       .then((data) => {
-        const urls = data.map((img) => img.imageUrl);
+        const urls = data.filter((img) => img.isActive).map((img) => img.imageUrl);
         setSlides(urls);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [initialSlides]);
 
   useEffect(() => {
-    if (slides.length === 0) return;
+    if (visibleSlides.length < 2) return;
     const slideTimer = window.setTimeout(() => {
-      setIndex((i) => (i + 1) % slides.length);
+      setIndex((i) => (i + 1) % visibleSlides.length);
     }, SLIDE_MS);
 
     return () => {
       window.clearTimeout(slideTimer);
     };
-  }, [index, slides.length]);
+  }, [index, visibleSlides.length]);
 
   const goTo = (i: number) => {
     setIndex(i);
@@ -53,10 +78,11 @@ export function HeroSection() {
   if (slides.length === 0) return null;
 
   return (
-    <section className="relative h-screen w-full overflow-hidden">
-      {slides.map((src, i) => (
+    <section className="relative h-screen w-full overflow-hidden bg-[#f3dce6]">
+      {visibleSlides.map((src, i) => (
         <div
           key={src}
+          ref={i === 0 ? firstSlideRef : undefined}
           className={`absolute inset-0 transition-opacity duration-[700ms] ease-out ${
             i === index ? "z-0 opacity-100" : "z-0 opacity-0"
           }`}
@@ -66,6 +92,7 @@ export function HeroSection() {
             alt=""
             fill
             priority={i === 0}
+            fetchPriority={i === 0 ? "high" : "low"}
             sizes="100vw"
             className="object-cover"
             aria-hidden
@@ -85,7 +112,7 @@ export function HeroSection() {
         className="absolute end-5 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center gap-3 md:end-8"
         aria-label="شرائح العرض"
       >
-        {slides.map((_, i) => {
+        {visibleSlides.map((_, i) => {
           const active = i === index;
           return (
             <button

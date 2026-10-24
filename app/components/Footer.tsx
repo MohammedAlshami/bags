@@ -26,7 +26,7 @@ const ABOUT_LINKS = [
   { label: "تواصل معنا", href: "/about" },
 ];
 
-const LOGO_SRC = "/logo_img.png";
+const LOGO_SRC = "/logo_192.png";
 const BRAND_NAME = "الملكة جولد";
 
 const linkClass =

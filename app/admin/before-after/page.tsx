@@ -1,5 +1,6 @@
 "use client";
 
+import { postOptimizedImage } from "@/lib/upload-client";
 import { useRef, useEffect, useState, type ChangeEvent } from "react";
 import { ImagePlus, Loader2, Plus, X, Trash2 } from "lucide-react";
 import { adminIconClassName, sans } from "@/lib/page-theme";
@@ -69,9 +70,7 @@ export default function AdminBeforeAfterPage() {
     if (!file.type.startsWith("image/")) return;
     setUploading(true);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/admin/upload", { method: "POST", body: form, credentials: "include" });
+      const res = await postOptimizedImage("/api/admin/upload", file);
       if (!res.ok) {
         const d = await res.json().catch(() => ({})) as { error?: string };
         throw new Error(d.error || "فشل الرفع");

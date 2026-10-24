@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Boxes, LayoutDashboard, MapPin, Package, Users, ShoppingBag, Share2, Megaphone, Image, MessageSquare, HelpCircle, Shield, User } from "lucide-react";
+import { BookOpen, Boxes, LayoutDashboard, MapPin, Package, Users, ShoppingBag, Share2, Megaphone, Image, MessageSquare, HelpCircle, Shield, User, Ticket } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { adminIconClassName, sans } from "@/lib/page-theme";
@@ -15,6 +15,7 @@ const TABS: { href: string; label: string; icon: LucideIcon; superadminOnly?: bo
   { href: "/admin/blogs", label: "المدونة", icon: BookOpen },
   { href: "/admin/customers", label: "العملاء", icon: Users },
   { href: "/admin/orders", label: "الطلبات", icon: ShoppingBag },
+  { href: "/admin/discount-codes", label: "أكواد الخصم", icon: Ticket },
   { href: "/admin/social-links", label: "روابط التواصل", icon: Share2 },
   { href: "/admin/ad-strips", label: "تسويق الصفحة الرئيسية", icon: Megaphone },
   { href: "/admin/before-after", label: "قبل وبعد", icon: Image },

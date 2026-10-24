@@ -13,7 +13,7 @@ export type ReviewProductRef = {
   image: string;
 };
 
-type ReviewData = {
+export type ReviewData = {
   _id: string;
   author: string;
   body: string;
@@ -75,17 +75,24 @@ function ReviewCard({
   );
 }
 
-export function HomeReviewsSection({ products }: { products: ReviewProductRef[] }) {
-  const [reviews, setReviews] = useState<ReviewData[]>([]);
+export function HomeReviewsSection({
+  products,
+  initialReviews,
+}: {
+  products: ReviewProductRef[];
+  initialReviews?: ReviewData[];
+}) {
+  const [reviews, setReviews] = useState<ReviewData[]>(initialReviews ?? []);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
+    if (initialReviews !== undefined) return;
     fetch("/api/admin/reviews")
       .then((r) => r.json())
       .then((data: ReviewData[]) => setReviews(data.filter((r) => r.isActive)))
       .catch(() => {});
-  }, []);
+  }, [initialReviews]);
 
   const entries = useMemo(() => {
     if (reviews.length === 0 || products.length === 0) return [];

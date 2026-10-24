@@ -7,6 +7,7 @@ declare namespace Cloudflare {
 	}
 	interface Env {
 		MEDIA: R2Bucket;
+		IMAGES: ImagesBinding;
 		DB: D1Database;
 		ASSETS: Fetcher;
 		DATABASE_URL: string;

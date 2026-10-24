@@ -1,4 +1,11 @@
-/** Server + client: checkout voucher rules (keep in sync). */
+/** Pure checkout discount math — shared by the cart (client) and order creation (server). */
+
+export type DiscountRule = {
+  code: string;
+  type: "percent" | "fixed";
+  value: number;
+  minSubtotal: number;
+};
 
 export type CheckoutDiscountResult = {
   total: number;
@@ -6,17 +13,13 @@ export type CheckoutDiscountResult = {
   appliedCode: string | null;
 };
 
-export function applyCheckoutDiscount(subtotal: number, rawCode: string | undefined): CheckoutDiscountResult {
-  const code = (rawCode ?? "").trim().toUpperCase();
-  if (!code) {
+export function applyDiscountRule(subtotal: number, rule: DiscountRule | null | undefined): CheckoutDiscountResult {
+  if (!rule || subtotal < rule.minSubtotal) {
     return { total: round2(subtotal), discountAmount: 0, appliedCode: null };
   }
-  if (code === "QGB10") {
-    const discountAmount = round2(subtotal * 0.1);
-    const total = round2(subtotal - discountAmount);
-    return { total, discountAmount, appliedCode: "QGB10" };
-  }
-  return { total: round2(subtotal), discountAmount: 0, appliedCode: null };
+  const raw = rule.type === "percent" ? subtotal * (rule.value / 100) : rule.value;
+  const discountAmount = round2(Math.min(Math.max(raw, 0), subtotal));
+  return { total: round2(subtotal - discountAmount), discountAmount, appliedCode: rule.code };
 }
 
 function round2(n: number) {

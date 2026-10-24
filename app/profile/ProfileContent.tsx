@@ -39,6 +39,7 @@ type Tab = "orders" | "billing";
 function statusAr(s: string) {
   const m: Record<string, string> = {
     pending: "قيد الانتظار",
+    confirmed: "تم التأكيد",
     paid: "مدفوع",
     processing: "قيد التجهيز",
     shipped: "تم الشحن",

@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import { postOptimizedImage } from "@/lib/upload-client";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
 import Link from "next/link";
@@ -586,9 +587,7 @@ export default function AdminProductsPage() {
     if (!file.type.startsWith("image/")) return;
     setUploading(true);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/admin/upload", { method: "POST", body: form, credentials: "include" });
+      const res = await postOptimizedImage("/api/admin/upload", file);
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         const raw = typeof d.error === "string" ? d.error : "";

@@ -12,16 +12,17 @@ type FaqItem = { _id: string; question: string; answer: string };
 /** First items shown on home; rest on /about */
 const HOME_FAQ_COUNT = 5;
 
-export function HomeFaqSection() {
-  const [items, setItems] = useState<FaqItem[]>([]);
+export function HomeFaqSection({ initialItems }: { initialItems?: FaqItem[] }) {
+  const [items, setItems] = useState<FaqItem[]>(initialItems?.slice(0, HOME_FAQ_COUNT) ?? []);
   const [open, setOpen] = useState<number | null>(0);
 
   useEffect(() => {
+    if (initialItems !== undefined) return;
     fetch("/api/admin/faq-items")
       .then((r) => r.json())
       .then((data: FaqItem[]) => setItems(data.filter((_, i) => i < HOME_FAQ_COUNT)))
       .catch(() => {});
-  }, []);
+  }, [initialItems]);
 
   if (items.length === 0) return null;
 

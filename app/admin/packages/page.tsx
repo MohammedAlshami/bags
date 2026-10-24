@@ -1,5 +1,6 @@
 "use client";
 
+import { postOptimizedImage } from "@/lib/upload-client";
 import { useRef, useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { ImagePlus, MoreVertical, PackagePlus, X } from "lucide-react";
 
@@ -165,9 +166,7 @@ export default function AdminPackagesPage() {
     if (!file.type.startsWith("image/")) return;
     setUploading(true);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/admin/upload", { method: "POST", body: form, credentials: "include" });
+      const res = await postOptimizedImage("/api/admin/upload", file);
       const data = (await res.json().catch(() => ({}))) as { error?: string; url?: string };
       if (!res.ok || !data.url) throw new Error(data.error || "Upload failed");
       setImage(data.url);

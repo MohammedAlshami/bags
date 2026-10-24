@@ -1,5 +1,6 @@
 "use client";
 
+import { postOptimizedImage } from "@/lib/upload-client";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { SafeImage } from "@/app/components/SafeImage";
@@ -8,10 +9,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
 import { sans, pagePaddingX } from "@/lib/page-theme";
 import { ProvinceSelectDropdown } from "@/app/components/ProvinceSelectDropdown";
-import { getCheckoutProvinceById, CHECKOUT_PROVINCES, isValidCheckoutProvinceId, normalizeCheckoutProvinceId } from "@/lib/checkout-provinces";
+import {
+  getCheckoutProvinceById,
+  CHECKOUT_PROVINCES,
+  isValidCheckoutProvinceId,
+  normalizeCheckoutProvinceId,
+  branchMatchesProvince,
+} from "@/lib/checkout-provinces";
 import { type StoreLocation } from "@/lib/store-locations";
 import { YemenPaymentStepTransferSection, YemenPreCheckoutPaymentDeliveryGuide } from "@/app/components/cart/YemenCartCheckoutSections";
-import { applyCheckoutDiscount } from "@/lib/order-discount";
+import { applyDiscountRule, type DiscountRule } from "@/lib/order-discount";
 import { formatPriceForDisplay, formatCartSubtotalDisplay, type ProductSizePrice } from "@/lib/price-format";
 import { useDisplayCurrency } from "@/app/context/CurrencyContext";
 import type { CartItem } from "@/lib/cart";
@@ -329,12 +336,15 @@ function CartCheckoutInner() {
   const [addressDraft, setAddressDraft] = useState<ProfileAddress>({ fullName: "", address: "", phone: "" });
   const [addressSaving, setAddressSaving] = useState(false);
   const [branchKey, setBranchKey] = useState<string>("");
+  const [storeLocations, setStoreLocations] = useState<StoreLocation[]>([]);
   const [provinceId, setProvinceId] = useState<string>(CHECKOUT_PROVINCES[0]?.id ?? "sanaa");
   const cityScope = useMemo((): CityScope => getCheckoutProvinceById(provinceId)?.cityScope ?? "outside", [provinceId]);
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("direct");
   const [paymentMethod, setPaymentMethod] = useState<"bank" | "cod">("bank");
   const [voucherInput, setVoucherInput] = useState("");
   const [appliedVoucher, setAppliedVoucher] = useState<string | null>(null);
+  const [voucherRule, setVoucherRule] = useState<DiscountRule | null>(null);
+  const [voucherBusy, setVoucherBusy] = useState(false);
   const [voucherError, setVoucherError] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
   const [placeError, setPlaceError] = useState<string | null>(null);
@@ -393,6 +403,28 @@ function CartCheckoutInner() {
       setPaymentMethod("bank");
     }
   }, [cityScope]);
+
+  useEffect(() => {
+    if (me?.role !== "customer") return;
+    fetch("/api/store-locations")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setStoreLocations(Array.isArray(data) ? (data as StoreLocation[]) : []))
+      .catch(() => undefined);
+  }, [me]);
+
+  // Only the pickup points inside the chosen province are offered.
+  const provinceBranches = useMemo(
+    () => storeLocations.filter((b) => branchMatchesProvince(b.city, provinceId)),
+    [storeLocations, provinceId]
+  );
+  const needsBranch = cityScope === "outside" || deliveryMethod === "pickup";
+  // A province without any branch (e.g. Hajjah) is coordinated by customer service instead.
+  const branchRequired = needsBranch && provinceBranches.length > 0;
+  const selectedBranch = storeLocations.find((b) => b._id === branchKey);
+
+  useEffect(() => {
+    setBranchKey("");
+  }, [provinceId, deliveryMethod]);
 
   useEffect(() => {
     if (!paymentOrderId) {
@@ -486,9 +518,12 @@ function CartCheckoutInner() {
   }, [paymentProofDoneModalOpen]);
 
   const placeOrder = useCallback(async () => {
-    const needsBranch = cityScope === "outside" || deliveryMethod === "pickup";
     const normalizedPaymentMethod = cityScope === "outside" ? "bank" : paymentMethod;
-    if ((needsBranch && !branchKey) || items.length === 0) return;
+    if (items.length === 0) return;
+    if (branchRequired && !branchKey) {
+      setPlaceError("اختاري نقطة التوصيل أولاً.");
+      return;
+    }
     if (!profileAddress?.address?.trim()) {
       setPlaceError("أضف العنوان الكامل أولاً.");
       setAddressPanelOpen(true);
@@ -503,7 +538,7 @@ function CartCheckoutInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           provinceId,
-          branchKey: needsBranch ? branchKey : null,
+          branchKey: needsBranch && branchKey ? branchKey : null,
           deliveryMethod,
           paymentMethod: normalizedPaymentMethod,
           address: profileAddress,
@@ -540,11 +575,11 @@ function CartCheckoutInner() {
     } finally {
       setPlacing(false);
     }
-  }, [branchKey, cityScope, deliveryMethod, items, clearCart, router, paymentMethod, appliedVoucher, profileAddress, provinceId]);
+  }, [branchKey, branchRequired, needsBranch, cityScope, items, clearCart, router, paymentMethod, appliedVoucher, profileAddress, provinceId, deliveryMethod]);
 
   const checkoutTotals = useMemo(
-    () => applyCheckoutDiscount(subtotal, appliedVoucher ?? undefined),
-    [subtotal, appliedVoucher]
+    () => applyDiscountRule(subtotal, voucherRule),
+    [subtotal, voucherRule]
   );
 
   const uploadSlip = async (file: File) => {
@@ -552,9 +587,7 @@ function CartCheckoutInner() {
     setUploadBusy(true);
     setPaymentError(null);
     try {
-      const fd = new FormData();
-      fd.set("file", file);
-      const up = await fetch("/api/me/upload", { method: "POST", body: fd, credentials: "include" });
+      const up = await postOptimizedImage("/api/me/upload", file);
       const upData = (await up.json().catch(() => ({}))) as { error?: string; url?: string };
       if (!up.ok) {
         const err = typeof upData.error === "string" ? upData.error : "";
@@ -997,23 +1030,39 @@ function CartCheckoutInner() {
                       />
                       <button
                         type="button"
-                        onClick={() => {
+                        disabled={voucherBusy}
+                        onClick={async () => {
                           setVoucherError(null);
                           const raw = voucherInput.trim();
                           if (!raw) {
                             setAppliedVoucher(null);
+                            setVoucherRule(null);
                             return;
                           }
-                          const r = applyCheckoutDiscount(subtotal, raw);
-                          if (!r.appliedCode) {
-                            setVoucherError("كود الخصم غير صالح");
-                            setAppliedVoucher(null);
-                            return;
+                          setVoucherBusy(true);
+                          try {
+                            const res = await fetch("/api/discount-codes/validate", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ code: raw, subtotal }),
+                            });
+                            const data = (await res.json().catch(() => ({}))) as { rule?: DiscountRule; error?: string };
+                            if (!res.ok || !data.rule) {
+                              setVoucherError(data.error || "كود الخصم غير صالح");
+                              setAppliedVoucher(null);
+                              setVoucherRule(null);
+                              return;
+                            }
+                            setAppliedVoucher(data.rule.code);
+                            setVoucherRule(data.rule);
+                            setVoucherInput("");
+                          } catch {
+                            setVoucherError("تعذر التحقق من الكود، حاول مجدداً");
+                          } finally {
+                            setVoucherBusy(false);
                           }
-                          setAppliedVoucher(r.appliedCode);
-                          setVoucherInput("");
                         }}
-                        className="shrink-0 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-brand-primary ring-1 ring-brand-primary transition-colors hover:bg-brand-light"
+                        className="shrink-0 rounded-xl px-4 py-2.5 text-[13px] font-semibold text-brand-primary ring-1 ring-brand-primary transition-colors hover:bg-brand-light disabled:opacity-50"
                         style={sans}
                       >
                         تطبيق
@@ -1024,6 +1073,7 @@ function CartCheckoutInner() {
                         type="button"
                         onClick={() => {
                           setAppliedVoucher(null);
+                          setVoucherRule(null);
                           setVoucherInput("");
                           setVoucherError(null);
                         }}
@@ -1152,9 +1202,30 @@ function CartCheckoutInner() {
                       </details>
                     )}
 
-                    <div>
-                      {(cityScope === "outside" || deliveryMethod === "pickup") ? null : null}
-                    </div>
+                    {needsBranch ? (
+                      <div>
+                        {provinceBranches.length > 0 ? (
+                          <>
+                            <label htmlFor="checkout-branch" className="mb-2 block text-xs font-medium text-neutral-500" style={sans}>
+                              نقطة التوصيل / الاستلام
+                            </label>
+                            <BranchSelectDropdown
+                              id="checkout-branch"
+                              value={branchKey}
+                              onChange={(id) => {
+                                setBranchKey(id);
+                                setPlaceError(null);
+                              }}
+                              locations={provinceBranches}
+                            />
+                          </>
+                        ) : (
+                          <p className="text-[11px] text-neutral-400" style={sans}>
+                            لا توجد نقطة استلام في هذه المحافظة؛ سنتواصل معك لتنسيق التوصيل.
+                          </p>
+                        )}
+                      </div>
+                    ) : null}
 
                     <div>
                       <p className="text-xs font-medium text-neutral-500" style={sans}>
@@ -1208,7 +1279,15 @@ function CartCheckoutInner() {
                     <button
                       type="button"
                       disabled={placing || items.length === 0}
-                      onClick={() => setConfirmModalOpen(true)}
+                      onClick={() => {
+                        if (branchRequired && !branchKey) {
+                          setPlaceError("اختاري نقطة التوصيل أولاً.");
+                          document.getElementById("checkout-branch")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                          return;
+                        }
+                        setPlaceError(null);
+                        setConfirmModalOpen(true);
+                      }}
                       className="qgb-btn-primary flex w-full justify-center disabled:pointer-events-none disabled:opacity-45"
                       style={sans}
                     >
@@ -1269,7 +1348,7 @@ function CartCheckoutInner() {
                 <div className="flex justify-between gap-4">
                   <span className="text-neutral-500">الاستلام</span>
                   <span className="font-medium text-neutral-900">
-                    {branchKey || "نقطة توصيل"}
+                    {selectedBranch ? selectedBranch.name : "سيتم التنسيق معك"}
                   </span>
                 </div>
               ) : null}

@@ -15,7 +15,7 @@ import { ShopByCategorySection } from "./ShopByCategorySection";
 import type { HomeCategorySectionData } from "./HomeCategoryProductSections";
 import type { ShopByCategoryStripItem } from "./ShopByCategorySection";
 import type { SocialReelProduct } from "./SocialMediaSection";
-import type { ReviewProductRef } from "./HomeReviewsSection";
+import type { ReviewProductRef, ReviewData } from "./HomeReviewsSection";
 
 type HomeBg = "white" | "pink";
 type HomeVisibility = {
@@ -61,12 +61,20 @@ export function HomePageClient({
   socialReelProducts,
   reviewProducts,
   homeBlogPosts,
+  heroSlides,
+  faqItems,
+  beforeAfterImages,
+  reviews,
 }: {
   shopByCategoryItems: ShopByCategoryStripItem[];
   categorySections: HomeCategorySectionData[];
   socialReelProducts: SocialReelProduct[];
   reviewProducts: ReviewProductRef[];
   homeBlogPosts: HomeBlogPostItem[];
+  heroSlides: string[];
+  faqItems: { _id: string; question: string; answer: string }[];
+  beforeAfterImages: { _id: string; imageUrl: string }[];
+  reviews: ReviewData[];
 }) {
   const [bg, setBg] = useState<HomeBg>("white");
   const [visibility, setVisibility] = useState<HomeVisibility>(DEFAULT_VISIBILITY);
@@ -90,13 +98,13 @@ export function HomePageClient({
       className="min-h-screen overflow-x-hidden"
       style={{ backgroundColor: bg === "pink" ? QGB.color.light : QGB.color.white }}
     >
-      {visibility.hero ? <HeroSection /> : null}
+      {visibility.hero ? <HeroSection initialSlides={heroSlides} /> : null}
       <ShopByCategorySection items={shopByCategoryItems} />
       {visibility.featured ? <HomeCategoryProductSections sections={categorySections} /> : null}
       {visibility.social ? <SocialMediaSection products={socialReelProducts} /> : null}
-      {visibility.reviews ? <HomeReviewsSection products={reviewProducts} /> : null}
-      {visibility.beforeAfter ? <BeforeAfterSection /> : null}
-      {visibility.faq ? <HomeFaqSection /> : null}
+      {visibility.reviews ? <HomeReviewsSection products={reviewProducts} initialReviews={reviews} /> : null}
+      {visibility.beforeAfter ? <BeforeAfterSection initialImages={beforeAfterImages} /> : null}
+      {visibility.faq ? <HomeFaqSection initialItems={faqItems} /> : null}
       {visibility.blogs ? <HomeBlogSection posts={homeBlogPosts} /> : null}
       {visibility.locations ? <StoreLocationsSection variant="fullBleed" /> : null}
     </main>

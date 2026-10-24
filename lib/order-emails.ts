@@ -36,6 +36,7 @@ function isValidEmail(email: string): boolean {
 function statusLabel(status: string): string {
   const map: Record<string, string> = {
     pending: "قيد الانتظار",
+    confirmed: "تم التأكيد",
     paid: "مدفوع",
     processing: "قيد التجهيز",
     shipped: "تم الشحن",

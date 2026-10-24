@@ -7,17 +7,18 @@ import { sans, serif, pagePaddingX } from "@/lib/page-theme";
 
 type BaImage = { _id: string; imageUrl: string; sortOrder: number };
 
-export function BeforeAfterSection() {
-  const [images, setImages] = useState<BaImage[]>([]);
+export function BeforeAfterSection({ initialImages }: { initialImages?: { _id: string; imageUrl: string }[] }) {
+  const [images, setImages] = useState<BaImage[]>((initialImages as BaImage[] | undefined) ?? []);
   const refs = useRef<(HTMLDivElement | null)[]>([]);
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
+    if (initialImages !== undefined) return;
     fetch("/api/admin/before-after")
       .then((r) => r.json())
       .then(setImages)
       .catch(() => {});
-  }, []);
+  }, [initialImages]);
 
   const scrollTo = useCallback((i: number) => {
     const n = images.length;

@@ -1,9 +1,12 @@
+import { adminGuard } from "@/lib/admin-guard";
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const denied = await adminGuard();
+  if (denied) return denied;
   try {
     const { id } = await params;
     await sql`DELETE FROM hero_images WHERE id = ${id}`;

@@ -50,3 +50,19 @@ export function getCheckoutProvinceById(id: string): CheckoutProvince | undefine
 export function isValidCheckoutProvinceId(id: string): boolean {
   return CHECKOUT_PROVINCES.some((p) => p.id === normalizeCheckoutProvinceId(id));
 }
+
+/** store_locations.city values that don't contain their province's Arabic name. */
+const EXTRA_BRANCH_CITIES: Record<string, string[]> = {
+  hadramawt: ["المكلا", "الشرج", "المساكن", "غيل باوزير", "الشحر", "سيئون", "القطن"],
+  mahrah: ["الغيضة"],
+};
+
+/** True when a pickup point (store location) sits inside the given checkout province. */
+export function branchMatchesProvince(branchCity: string, provinceId: string): boolean {
+  const province = getCheckoutProvinceById(provinceId);
+  if (!province) return false;
+  const city = branchCity.trim();
+  if (!city) return false;
+  if (city.includes(province.label)) return true;
+  return (EXTRA_BRANCH_CITIES[province.id] ?? []).some((c) => city.includes(c));
+}

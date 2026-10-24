@@ -8,6 +8,13 @@ import type { FeaturedProductItem } from "./components/FeaturedProductsClient";
 import type { HomeCategorySectionData } from "./components/HomeCategoryProductSections";
 import { mapBlogPost, type BlogPostRow } from "@/lib/blog";
 import type { HomeBlogPostItem } from "./components/HomeBlogSection";
+import { getActiveHeroImages } from "@/lib/hero-images-api";
+import { getActiveFaqItems } from "@/lib/faq-items";
+import { getBeforeAfterImages } from "@/lib/before-after";
+import { getActiveReviews } from "@/lib/reviews";
+
+// Rendered per request: the hero, FAQ, reviews and products are admin-edited and must show up without a redeploy.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   description:
@@ -35,15 +42,14 @@ function rowToFeaturedItem(row: ProductRow): FeaturedProductItem {
 }
 
 export default async function Home() {
-  const categoryRows = await sql`
+  // All queries are independent: fire them together instead of paying D1 latency five times in a row.
+  const categoriesQuery = sql`
     SELECT id, name, sort_order
     FROM categories
     ORDER BY sort_order ASC, name ASC
   `;
 
-  const categories = categoryRows as { id: string; name: string; sort_order: number }[];
-
-  const rankedRows = (await sql`
+  const rankedQuery = sql`
     WITH ranked AS (
       SELECT
         p.id, p.name, p.saudi_riyal, p.old_riyal, p.sizes, p.category, p.category_id, p.image,
@@ -56,7 +62,59 @@ export default async function Home() {
       LEFT JOIN collections c ON c.id = p.collection_id
     )
     SELECT * FROM ranked WHERE rn <= 8 ORDER BY cat_id, rn
-  `) as RankedProductRow[];
+  `;
+
+  const recentQuery = sql`
+    SELECT p.id, p.name, p.saudi_riyal, p.old_riyal, p.sizes, p.category, p.category_id, p.image,
+           p.created_at, p.updated_at,
+           cat.id AS cat_id, cat.name AS cat_name,
+           c.id AS col_id, c.name AS col_name, c.slug AS col_slug
+    FROM products p
+    LEFT JOIN categories cat ON cat.id = p.category_id
+    LEFT JOIN collections c ON c.id = p.collection_id
+    ORDER BY p.created_at DESC
+    LIMIT 8
+  `;
+
+  // Only products that an active review points at are needed for the review cards.
+  const reviewProductsQuery = sql`
+    SELECT id, name, image FROM products
+    WHERE id IN (SELECT product_id FROM reviews WHERE is_active = 1 AND product_id IS NOT NULL)
+  `;
+
+  const blogsQuery = sql`
+    SELECT id, title, slug, excerpt, cover_image, author_name, status, content, seo_title,
+           seo_description, tags, published_at, created_at, updated_at
+    FROM blog_posts
+    WHERE status = 'published'
+    ORDER BY COALESCE(published_at, created_at) DESC, created_at DESC
+    LIMIT 3
+  `;
+
+  const [
+    categoryRows,
+    rankedRowsRaw,
+    recentRows,
+    reviewProductRows,
+    blogRows,
+    heroImages,
+    faqItems,
+    beforeAfterImages,
+    reviewsList,
+  ] = await Promise.all([
+    categoriesQuery,
+    rankedQuery,
+    recentQuery,
+    reviewProductsQuery,
+    blogsQuery,
+    getActiveHeroImages(),
+    getActiveFaqItems(),
+    getBeforeAfterImages(),
+    getActiveReviews(),
+  ]);
+
+  const categories = categoryRows as { id: string; name: string; sort_order: number }[];
+  const rankedRows = rankedRowsRaw as RankedProductRow[];
 
   const byCategoryId = new Map<string, FeaturedProductItem[]>();
   for (const row of rankedRows) {
@@ -81,19 +139,7 @@ export default async function Home() {
     imageSrc: byCategoryId.get(c.id)?.[0]?.image ?? null,
   }));
 
-  const recentRows = (await sql`
-    SELECT p.id, p.name, p.saudi_riyal, p.old_riyal, p.sizes, p.category, p.category_id, p.image,
-           p.created_at, p.updated_at,
-           cat.id AS cat_id, cat.name AS cat_name,
-           c.id AS col_id, c.name AS col_name, c.slug AS col_slug
-    FROM products p
-    LEFT JOIN categories cat ON cat.id = p.category_id
-    LEFT JOIN collections c ON c.id = p.collection_id
-    ORDER BY p.created_at DESC
-    LIMIT 8
-  `) as ProductRow[];
-
-  const productRows = recentRows;
+  const productRows = recentRows as ProductRow[];
 
   const socialReelProducts: SocialReelProduct[] = productRows.slice(0, 4).map((row) => {
     const mapped = mapProduct(row, true);
@@ -109,26 +155,13 @@ export default async function Home() {
     };
   });
 
-  const reviewProductRows = (await sql`
-    SELECT id, name, image FROM products ORDER BY created_at DESC
-  `) as { id: string; name: string; image: string }[];
-
-  const reviewProducts: ReviewProductRef[] = reviewProductRows.map((row) => ({
+  const reviewProducts: ReviewProductRef[] = (reviewProductRows as { id: string; name: string; image: string }[]).map((row) => ({
     slug: row.id,
     name: row.name,
     image: row.image,
   }));
 
-  const blogRows = (await sql`
-    SELECT id, title, slug, excerpt, cover_image, author_name, status, content, seo_title,
-           seo_description, tags, published_at, created_at, updated_at
-    FROM blog_posts
-    WHERE status = 'published'
-    ORDER BY COALESCE(published_at, created_at) DESC, created_at DESC
-    LIMIT 3
-  `) as BlogPostRow[];
-
-  const homeBlogPosts: HomeBlogPostItem[] = blogRows.map((row) => {
+  const homeBlogPosts: HomeBlogPostItem[] = (blogRows as BlogPostRow[]).map((row) => {
     const p = mapBlogPost(row);
     return {
       _id: p._id,
@@ -149,6 +182,10 @@ export default async function Home() {
       socialReelProducts={socialReelProducts}
       reviewProducts={reviewProducts}
       homeBlogPosts={homeBlogPosts}
+      heroSlides={heroImages.map((h) => h.imageUrl)}
+      faqItems={faqItems.map((f) => ({ _id: f._id, question: f.question, answer: f.answer }))}
+      beforeAfterImages={beforeAfterImages}
+      reviews={reviewsList}
     />
   );
 }

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:local": "LOCAL_CF=1 CLOUDFLARE_D1_TOKEN= AGENTMAIL_API_KEY= R2_ACCESS_KEY_ID= R2_SECRET_ACCESS_KEY= next dev",
     "build": "next build --webpack",
     "start": "next start",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
@@ -43,6 +44,7 @@
     "eslint-config-next": "16.2.4",
     "iconv-lite": "^0.7.2",
     "playwright": "^1.60.0",
+    "sharp": "^0.35.5",
     "tailwindcss": "^4",
     "typescript": "^5",
     "wrangler": "^4.86.0"

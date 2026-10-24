@@ -1,3 +1,4 @@
+import { adminGuard } from "@/lib/admin-guard";
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { mapSocialLink, type SocialLinkRow } from "@/lib/social-links";
@@ -10,6 +11,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const denied = await adminGuard();
+  if (denied) return denied;
   try {
     const body = (await request.json()) as Record<string, unknown>;
     const id = crypto.randomUUID();

@@ -387,7 +387,7 @@ export default function Navbar({ categories, hasBlog }: NavbarProps) {
   const topBarBg = isShopPink ? "#FAEFF6" : "#ffffff";
   const mainNavClass = isShopPink ? "bg-[#FAEFF6]" : "bg-white";
   const iconAccent = isShopPink ? "text-[#B63A6B] hover:text-black" : "text-gray-500 hover:text-black";
-  const logoSrc = "/logo_img.png";
+  const logoSrc = "/logo_192.png";
 
   const showHeaderBar = headerBarVisible || cartMounted || mobileMenuOpen;
   const isAdmin = user?.role === "admin";

@@ -1,5 +1,6 @@
 "use client";
 
+import { postOptimizedImage } from "@/lib/upload-client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -62,7 +63,7 @@ type OrderDetail = {
   updatedAt?: string;
 };
 
-const STATUS_OPTIONS = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"] as const;
+const STATUS_OPTIONS = ["pending", "confirmed", "paid", "processing", "shipped", "delivered", "cancelled"] as const;
 
 function formatShippingAddress(sa: ShippingAddress | null | undefined): string {
   if (!sa) return "";
@@ -82,6 +83,7 @@ function paymentStatusSummary(order: OrderDetail): string {
   if (order.status === "delivered") return "تم التسليم — الطلب تم تسليمه للعميل.";
   if (order.status === "shipped") return "قيد الشحن — الطلب في الطريق.";
   if (order.status === "processing") return "قيد التجهيز — جاري تجهيز الطلب.";
+  if (order.status === "confirmed") return "تم التأكيد — تم تأكيد الطلب مع العميل وسيُجهَّز قريباً.";
   if (order.status === "paid") return "مدفوع — تم تأكيد استلام المبلغ.";
   if (order.status === "pending") {
     if (order.paymentProofUrl) {
@@ -183,9 +185,7 @@ export default function AdminOrderDetailPage() {
   };
 
   const uploadPaymentProof = async (file: File) => {
-    const fd = new FormData();
-    fd.set("file", file);
-    const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+    const res = await postOptimizedImage("/api/admin/upload", file);
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
       const raw = typeof d.error === "string" ? d.error : "";
@@ -446,7 +446,7 @@ export default function AdminOrderDetailPage() {
                 { key: "shipped", label: "تم الشحن" },
                 { key: "delivered", label: "تم التسليم" },
               ].map((step, i) => {
-                const statusOrder = ["pending", "paid", "shipped", "delivered"] as const;
+                const statusOrder = ["pending", "confirmed", "paid", "shipped", "delivered"] as const;
                 const currentIndex = statusOrder.indexOf(order.status as (typeof statusOrder)[number]);
                 const stepIndex = statusOrder.indexOf(step.key as (typeof statusOrder)[number]);
                 const isActive = currentIndex === stepIndex;

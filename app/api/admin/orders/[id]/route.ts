@@ -59,7 +59,7 @@ export async function PATCH(
 
     let status = orderBefore.status;
     const statusIn = body?.status;
-    const VALID_STATUSES = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"] as const;
+    const VALID_STATUSES = ["pending", "confirmed", "paid", "processing", "shipped", "delivered", "cancelled"] as const;
     if (statusIn && VALID_STATUSES.includes(statusIn)) {
       status = statusIn;
     }

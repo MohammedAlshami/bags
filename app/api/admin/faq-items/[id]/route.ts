@@ -1,3 +1,4 @@
+import { adminGuard } from "@/lib/admin-guard";
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { mapFaqItem, type FaqItemRow } from "@/lib/faq-items";
@@ -8,6 +9,8 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await adminGuard();
+  if (denied) return denied;
   try {
     const { id } = await params;
     const body = (await request.json()) as Record<string, unknown>;
@@ -35,6 +38,8 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const denied = await adminGuard();
+  if (denied) return denied;
   try {
     const { id } = await params;
     await sql`DELETE FROM faq_items WHERE id = ${id}`;

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { SafeImage } from "@/app/components/SafeImage";
 import { useAddToCartWithToast } from "@/lib/use-add-to-cart-with-toast";
-import { addToCartCardOutlineButtonClassName } from "@/lib/add-to-cart-ui";
+import { addToCartCardCompactButtonClassName, addToCartCardOverlayClassName } from "@/lib/add-to-cart-ui";
+import { ShoppingBag } from "lucide-react";
 import { useDisplayCurrency } from "@/app/context/CurrencyContext";
 import {
   formatPriceForDisplay,
@@ -78,13 +79,14 @@ export function FeaturedProductCard({ item }: { item: FeaturedProductItem }) {
           <StarIcon className="size-3.5 shrink-0 text-amber-500" />
           <span className="text-[12px] font-semibold tabular-nums text-neutral-900">{ratingText}</span>
         </div>
-        <div className="pointer-events-none absolute inset-x-2 bottom-3 z-20 opacity-0 transition-opacity duration-300 group-hover:pointer-events-auto group-hover:opacity-100">
+        <div className={addToCartCardOverlayClassName}>
           <button
             type="button"
             onClick={handleAddToCart}
-            className={addToCartCardOutlineButtonClassName}
+            className={addToCartCardCompactButtonClassName}
             style={sans}
           >
+            <ShoppingBag className="size-3.5 shrink-0 [@media(hover:hover)]:hidden" strokeWidth={2} aria-hidden />
             أضف إلى السلة
           </button>
         </div>

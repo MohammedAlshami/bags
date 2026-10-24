@@ -5,6 +5,6 @@
 export function imageSrcNeedsUnoptimized(src: string): boolean {
   if (!src) return false;
   if (src.startsWith("data:")) return true;
-  if (src.startsWith("http") && !/unsplash|ebayimg|r2\.dev/i.test(src)) return true;
+  if (src.startsWith("http") && !/unsplash|ebayimg|r2\.dev|cdn\.goldqueen\.store/i.test(src)) return true;
   return false;
 }

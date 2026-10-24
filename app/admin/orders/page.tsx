@@ -142,7 +142,7 @@ function ProductLinePicker({
 
 type LineDraft = { productSlug: string; quantity: string };
 
-const STATUS_OPTIONS = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"] as const;
+const STATUS_OPTIONS = ["pending", "confirmed", "paid", "processing", "shipped", "delivered", "cancelled"] as const;
 
 export default function AdminOrdersPage() {
   const [list, setList] = useState<OrderRow[]>([]);

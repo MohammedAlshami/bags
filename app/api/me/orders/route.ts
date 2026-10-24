@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getSession, requireCustomer } from "@/lib/auth";
-import { getCheckoutProvinceById } from "@/lib/checkout-provinces";
+import { getCheckoutProvinceById, branchMatchesProvince } from "@/lib/checkout-provinces";
 import {
   collectSlugsFromOrderItemsJson,
   enrichOrderItemsWithCatalog,
@@ -12,7 +12,8 @@ import {
   type OrderLineItem,
 } from "@/lib/order-line-items";
 import { mapOrderAdminDetail, type OrderRow } from "@/lib/db-mappers";
-import { applyCheckoutDiscount } from "@/lib/order-discount";
+import { applyDiscountRule } from "@/lib/order-discount";
+import { claimDiscountUse, discountErrorAr, lookupDiscountCode } from "@/lib/discount-codes";
 import { sendOrderCreatedEmail } from "@/lib/order-emails";
 
 export const dynamic = "force-dynamic";
@@ -141,13 +142,17 @@ export async function POST(request: Request) {
     const needsBranch = cityScope === "outside" || deliveryMethod === "pickup";
     const rawBranchKey = typeof body.branchKey === "string" ? body.branchKey.trim() : "";
     const branchKey = needsBranch ? rawBranchKey : "";
-    if (needsBranch && branchKey) {
-      const locRows = await sql`SELECT 1 FROM store_locations WHERE id = ${branchKey} LIMIT 1`;
-      if (locRows.length === 0) {
-        return NextResponse.json({ error: "Branch required" }, { status: 400 });
+    if (needsBranch) {
+      const locRows = (await sql`SELECT id, city FROM store_locations`) as { id: string; city: string }[];
+      const provinceBranchIds = locRows.filter((l) => branchMatchesProvince(l.city, province.id)).map((l) => l.id);
+      // Only pickup points inside the chosen province are valid.
+      if (branchKey && !provinceBranchIds.includes(branchKey)) {
+        return NextResponse.json({ error: "نقطة التوصيل غير صالحة لهذه المحافظة" }, { status: 400 });
       }
-    } else if (needsBranch && !branchKey) {
-      return NextResponse.json({ error: "Branch required" }, { status: 400 });
+      // Provinces with no pickup point are coordinated by customer service, so no branch is needed there.
+      if (!branchKey && provinceBranchIds.length > 0) {
+        return NextResponse.json({ error: "اختيار نقطة التوصيل مطلوب" }, { status: 400 });
+      }
     }
 
     let items: OrderLineItem[];
@@ -159,9 +164,15 @@ export async function POST(request: Request) {
 
     const subtotal = items.reduce((sum, it) => sum + getOrderLineSar(it) * it.quantity, 0);
     const rawDiscountCode = typeof body.discountCode === "string" ? body.discountCode.trim() : "";
-    const discountOutcome = applyCheckoutDiscount(subtotal, rawDiscountCode || undefined);
-    if (rawDiscountCode && !discountOutcome.appliedCode) {
-      return NextResponse.json({ error: "كود الخصم غير صالح" }, { status: 400 });
+    let discountId: string | null = null;
+    let discountOutcome = applyDiscountRule(subtotal, null);
+    if (rawDiscountCode) {
+      const lookup = await lookupDiscountCode(rawDiscountCode, subtotal);
+      if (!lookup.ok) {
+        return NextResponse.json({ error: discountErrorAr(lookup.reason, lookup.minSubtotal) }, { status: 400 });
+      }
+      discountId = lookup.id;
+      discountOutcome = applyDiscountRule(subtotal, lookup.rule);
     }
     const total = discountOutcome.total;
     const itemsJson = JSON.stringify(items);
@@ -195,6 +206,10 @@ export async function POST(request: Request) {
       paymentMethod,
       ...(discountOutcome.appliedCode ? { discountCode: discountOutcome.appliedCode } : {}),
     };
+
+    if (discountId && !(await claimDiscountUse(discountId))) {
+      return NextResponse.json({ error: discountErrorAr("exhausted") }, { status: 400 });
+    }
 
     const inserted = await sql`
       INSERT INTO orders (

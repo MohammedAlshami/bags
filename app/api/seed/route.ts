@@ -1,3 +1,4 @@
+import { seedGuard } from "@/lib/admin-guard";
 import { randomUUID } from "crypto";
 import { sql } from "@/lib/db";
 import {
@@ -18,6 +19,8 @@ const SEED_CUSTOMER_USERNAME = "customer";
 const SEED_CUSTOMER_PASSWORD = "customer";
 
 export async function POST() {
+  const denied = await seedGuard();
+  if (denied) return denied;
   try {
     await sql`DELETE FROM orders`;
     await sql`DELETE FROM products`;

@@ -1,9 +1,22 @@
 import type { NextConfig } from "next";
 import path from "path";
 import { fileURLToPath } from "url";
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+
+// `npm run dev:local` swaps in local D1/R2 bindings (wrangler.local.jsonc) so dev never touches production.
+if (process.env.LOCAL_CF === "1") {
+  void initOpenNextCloudflareForDev({
+    configPath: "wrangler.local.jsonc",
+    persist: { path: ".wrangler/local-state/v3" },
+  });
+}
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
-const r2Patterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [];
+const r2Patterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [
+  // Public R2 bucket: custom CDN domain + the legacy r2.dev host still referenced by older rows/orders.
+  { protocol: "https", hostname: "cdn.goldqueen.store", port: "", pathname: "/**" },
+  { protocol: "https", hostname: "pub-9f312be7e4a94c53b384bfcf5701085e.r2.dev", port: "", pathname: "/**" },
+];
 
 const r2PublicUrl = process.env.R2_PUBLIC_URL;
 if (r2PublicUrl) {
@@ -36,6 +49,10 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    // Pre-optimized uploads are served straight from storage; everything else uses /_next/image.
+    loaderFile: "./lib/image-loader.ts",
+    formats: ["image/webp"],
+    minimumCacheTTL: 60 * 60 * 24 * 365,
     remotePatterns: [
       ...r2Patterns,
       {

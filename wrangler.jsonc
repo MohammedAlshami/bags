@@ -24,7 +24,7 @@
 
   "vars": {
     "R2_BUCKET_NAME": "makeup",
-    "R2_PUBLIC_URL": "https://pub-9f312be7e4a94c53b384bfcf5701085e.r2.dev"
+    "R2_PUBLIC_URL": "https://cdn.goldqueen.store"
   },
 
   "assets": {
@@ -48,6 +48,12 @@
       "bucket_name": "makeup"
     }
   ],
+
+  // Enables real resizing/format conversion for /_next/image (legacy and external images).
+  // Without this binding OpenNext returns the original file untouched.
+  "images": {
+    "binding": "IMAGES"
+  },
 
   "observability": {
     "enabled": true

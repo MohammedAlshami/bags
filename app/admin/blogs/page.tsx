@@ -1,5 +1,6 @@
 "use client";
 
+import { postOptimizedImage } from "@/lib/upload-client";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import {
@@ -470,13 +471,7 @@ export default function AdminBlogsPage() {
 
   const uploadCover = async (file: File) => {
     if (!file.type.startsWith("image/")) return;
-    const form = new FormData();
-    form.append("file", file);
-    const res = await fetch("/api/admin/upload", {
-      method: "POST",
-      body: form,
-      credentials: "include",
-    });
+    const res = await postOptimizedImage("/api/admin/upload", file);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const raw = typeof data.error === "string" ? data.error : "";

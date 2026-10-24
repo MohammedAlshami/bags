@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Cormorant_Garamond, Tajawal } from "next/font/google";
+import { Geist_Mono, Cormorant_Garamond, Tajawal } from "next/font/google";
+
+// Only Tajawal (the body font) is preloaded. The rest load on demand so they never compete with the
+// CSS and the hero image on slow connections.
 import "./globals.css";
 import { getNavData } from "@/lib/get-nav-categories";
 import ConditionalNavbar from "./components/ConditionalNavbar";
@@ -11,20 +14,16 @@ import { CurrencyProvider } from "./context/CurrencyContext";
 import { CartToaster } from "./components/CartToaster";
 import { sql } from "@/lib/db";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 const tajawal = Tajawal({
   variable: "--font-tajawal",
   subsets: ["arabic", "latin"],
-  weight: ["400", "500", "700", "800"],
+  weight: ["400", "700"],
   display: "swap",
 });
 
@@ -32,6 +31,8 @@ const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -74,7 +75,7 @@ export default async function RootLayout({
         <link rel="apple-touch-icon" href="/logo_img.png" />
       </head>
       <body
-        className={`${tajawal.variable} ${geistSans.variable} ${geistMono.variable} ${cormorant.variable} antialiased font-sans overflow-x-hidden`}
+        className={`${tajawal.variable} ${geistMono.variable} ${cormorant.variable} antialiased font-sans overflow-x-hidden`}
       >
         <CartProvider>
           <CurrencyProvider>

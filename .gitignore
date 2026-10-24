@@ -59,3 +59,7 @@ next-env.d.ts
 
 
 .env.local
+
+# one-off image migration maps (keep locally for rollback)
+scripts/out/
+

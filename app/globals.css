@@ -24,7 +24,7 @@
   --color-caption: #aaaaaa;
   --color-title: #222222;
   --color-old: #cccccc;
-  --font-sans: var(--font-tajawal), var(--font-geist-sans), system-ui, sans-serif;
+  --font-sans: var(--font-tajawal), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 

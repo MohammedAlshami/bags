@@ -1,3 +1,4 @@
+import { seedGuard } from "@/lib/admin-guard";
 import { sql } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { SEED_CUSTOMER_PROFILE, SEED_SHIPPING_ADDRESS } from "@/lib/seed-data";
@@ -8,6 +9,8 @@ const SEED_CUSTOMER_USERNAME = "customer";
 
 /** Backfill shipping/address on existing seed customer and their orders. Does not delete or change products/landing. */
 export async function POST() {
+  const denied = await seedGuard();
+  if (denied) return denied;
   try {
     const seedRows = await sql`
       SELECT id FROM users WHERE username = ${SEED_CUSTOMER_USERNAME} AND role = 'customer' LIMIT 1

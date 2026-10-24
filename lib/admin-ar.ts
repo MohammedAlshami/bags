@@ -2,6 +2,7 @@
 
 export const ORDER_STATUS_AR: Record<string, string> = {
   pending: "قيد الانتظار",
+  confirmed: "تم التأكيد",
   paid: "مدفوع",
   processing: "قيد التجهيز",
   shipped: "تم الشحن",
