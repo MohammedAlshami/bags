@@ -139,7 +139,8 @@ export async function POST(request: Request) {
     }
     const cityScope = province.cityScope;
     const deliveryMethod = cityScope === "outside" ? "pickup" : body.deliveryMethod === "pickup" ? "pickup" : "direct";
-    const needsBranch = cityScope === "outside" || deliveryMethod === "pickup";
+    // Outside Sanaa orders go to the Al-Qudsi office, so no pickup point is chosen.
+    const needsBranch = cityScope === "sanaa" && deliveryMethod === "pickup";
     const rawBranchKey = typeof body.branchKey === "string" ? body.branchKey.trim() : "";
     const branchKey = needsBranch ? rawBranchKey : "";
     if (needsBranch) {

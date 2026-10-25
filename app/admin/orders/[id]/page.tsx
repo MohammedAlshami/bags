@@ -296,7 +296,9 @@ export default function AdminOrderDetailPage() {
           <p className="text-sm text-neutral-800">
             {order.branchKey
               ? locationNames[order.branchKey] ?? order.branchKey
-              : "—"}
+              : (order.shippingAddress as { cityScope?: string } | undefined)?.cityScope === "outside"
+                ? "مكتب القدسي"
+                : "—"}
           </p>
         </section>
         <section className="bg-white border border-black/10 rounded-sm p-6 md:p-8">

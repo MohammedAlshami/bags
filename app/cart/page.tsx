@@ -417,8 +417,9 @@ function CartCheckoutInner() {
     () => storeLocations.filter((b) => branchMatchesProvince(b.city, provinceId)),
     [storeLocations, provinceId]
   );
-  const needsBranch = cityScope === "outside" || deliveryMethod === "pickup";
-  // A province without any branch (e.g. Hajjah) is coordinated by customer service instead.
+  // Outside Sanaa every order is delivered to the Al-Qudsi office, so only Sanaa pickup chooses a point.
+  const needsBranch = cityScope === "sanaa" && deliveryMethod === "pickup";
+  // A province without any branch is coordinated by customer service instead.
   const branchRequired = needsBranch && provinceBranches.length > 0;
   const selectedBranch = storeLocations.find((b) => b._id === branchKey);
 
@@ -1192,6 +1193,7 @@ function CartCheckoutInner() {
                         </summary>
                         <div className="border-t border-neutral-200/70 px-4 pb-4 pt-1">
                           <ul className="list-disc space-y-2 pe-1 ps-5 text-sm leading-relaxed text-neutral-600 marker:text-brand-primary/70">
+                            <li>الاستلام يكون من مكتب القدسي في جميع المحافظات.</li>
                             <li>توصيل سريع: اليوم التالي أو في نفس اليوم حسب التوفر.</li>
                             <li>الدفع عند الاستلام عند استلام الشحنة من المكتب.</li>
                             <li>رسوم التوصيل للمحافظات الأخرى: 1000 ريال يمني أو 8 ريال سعودي (حسب التنسيق).</li>
@@ -1201,6 +1203,15 @@ function CartCheckoutInner() {
                         </div>
                       </details>
                     )}
+
+                    {cityScope === "outside" ? (
+                      <div className="rounded-xl border border-brand-primary/25 bg-brand-light/20 px-4 py-3 text-sm leading-relaxed text-neutral-800" style={sans}>
+                        <p className="font-semibold text-brand-dark">الاستلام من مكتب القدسي</p>
+                        <p className="mt-1 text-[13px] text-neutral-700">
+                          نوصّل الطلبات إلى مكتب القدسي في جميع المحافظات.
+                        </p>
+                      </div>
+                    ) : null}
 
                     {needsBranch ? (
                       <div>
@@ -1348,7 +1359,7 @@ function CartCheckoutInner() {
                 <div className="flex justify-between gap-4">
                   <span className="text-neutral-500">الاستلام</span>
                   <span className="font-medium text-neutral-900">
-                    {selectedBranch ? selectedBranch.name : "سيتم التنسيق معك"}
+                    {cityScope === "outside" ? "مكتب القدسي" : selectedBranch ? selectedBranch.name : "سيتم التنسيق معك"}
                   </span>
                 </div>
               ) : null}

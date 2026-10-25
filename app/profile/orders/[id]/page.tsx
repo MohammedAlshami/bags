@@ -186,7 +186,11 @@ export default function ProfileOrderDetailPage() {
     );
   }
 
-  const branchName = order.branchKey ? branchNames[order.branchKey] : undefined;
+  const branchName = order.branchKey
+    ? branchNames[order.branchKey]
+    : (order.shippingAddress as { cityScope?: string } | undefined)?.cityScope === "outside"
+      ? "مكتب القدسي"
+      : undefined;
   const shortId = String(order._id).slice(-8);
 
   return (
